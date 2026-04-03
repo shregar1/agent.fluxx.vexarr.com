@@ -1,17 +1,12 @@
-//! Library documentation for agent-fluxx-dev.
+//! Fluxx Agent: High-performance network agent.
 
 pub mod config;
-pub mod handlers;
-pub mod models;
-pub mod services;
+pub mod core;
+pub mod protocols;
+pub mod transport;
 pub mod utils;
 
+// Re-exports
+pub use core::Engine;
+pub use core::traits::{Capturer, Event, Processor, Transporter};
 pub use config::Config;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}

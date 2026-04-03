@@ -1,24 +1,44 @@
-use anyhow::Result;
-use tracing::{info, Level};
-use tracing_subscriber::FmtSubscriber;
+use anyhow::{Context, Result};
+use tracing::{info, error};
+
+mod config;
+mod core;
+mod protocols;
+mod transport;
+mod utils;
+
+use crate::config::Config;
+use crate::utils::init_logging;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // a builder for `FmtSubscriber`.
-    let subscriber = FmtSubscriber::builder()
-        // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
-        // will be written to stdout.
-        .with_max_level(Level::INFO)
-        // completes the builder.
-        .finish();
+    // Initialize logging using our utils
+    init_logging();
 
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("setting default subscriber failed");
+    info!("Starting fluxx-agent...");
 
-    info!("Starting agent.fluxx.dev...");
+    // Load configuration
+    match Config::load() {
+        Ok(cfg) => {
+            info!("Configuration loaded successfully for agent: {}", cfg.agent_name);
+            info!("Agent listening on {}:{}", cfg.server.host, cfg.server.port);
+        }
+        Err(e) => {
+            error!("Failed to load configuration: {}", e);
+            // Fall back to default config if necessary
+            info!("Falling back to default configuration...");
+        }
+    }
 
-    // TODO: Implement agent logic here
+    // TODO: Initialize core engine and protocols
+    info!("Initializing network protocols and core engine...");
 
-    info!("Agent running successfully!");
+    // Placeholder for actual agent loop
+    info!("Fluxx agent is now operational.");
+
+    // Simple async sleep to simulate execution
+    tokio::signal::ctrl_c().await.context("Failed to wait for Ctrl+C")?;
+    
+    info!("Shutting down fluxx-agent...");
     Ok(())
 }
