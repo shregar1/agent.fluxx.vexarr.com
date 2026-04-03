@@ -11,6 +11,21 @@ pub struct Event {
     pub payload: Vec<u8>,
 }
 
+/// The minimal, focused trait for network protocols.
+/// Each protocol implementation should focus on its unique initialization and cleanup.
+#[async_trait]
+pub trait Protocol: Send + Sync + Debug {
+    /// Unique name of the protocol.
+    fn name(&self) -> &str;
+
+    /// Protocol-specific startup logic.
+    async fn start(&self) -> Result<()>;
+
+    /// Protocol-specific shutdown logic.
+    async fn stop(&self) -> Result<()>;
+}
+
+// Keeping existing traits compatible
 #[async_trait]
 pub trait Capturer: Send + Sync + Debug {
     async fn capture(&self) -> Result<Event>;

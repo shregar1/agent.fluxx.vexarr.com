@@ -1,44 +1,49 @@
-use anyhow::{Context, Result};
-use tracing::{info, error};
-
-mod config;
-mod core;
-mod protocols;
-mod transport;
-mod utils;
-
-use crate::config::Config;
-use crate::utils::init_logging;
+use anyhow::Result;
+use fluxx_agent::Agent;
+use fluxx_agent::protocols::http::HttpCapturer;
+use fluxx_agent::transport::stdout::StdoutTransporter;
+use fluxx_agent::config::Config;
+use fluxx_agent::utils::init_logging;
+use std::sync::Arc;
+use tracing::{error, info};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize logging using our utils
     init_logging();
 
-    info!("Starting fluxx-agent...");
+    info!("Starting fluxx-agent daemon...");
 
     // Load configuration
-    match Config::load() {
-        Ok(cfg) => {
-            info!("Configuration loaded successfully for agent: {}", cfg.agent_name);
-            info!("Agent listening on {}:{}", cfg.server.host, cfg.server.port);
+    let config = Config::load().unwrap_or_default();
+    info!("Configuration loaded for agent: {}", config.agent_name);
+
+    // Initialize Agent core
+    let mut agent = Agent::new();
+
+    // Setup modular components (Dependency Injection)
+    let github_zen = Arc::new(HttpCapturer::new("https://api.github.com/zen", "GithubZen"));
+    agent.add_capturer(github_zen);
+
+    let stdout_transport = Arc::new(StdoutTransporter);
+    agent.add_transporter(stdout_transport);
+
+    // Orchestrate startup and graceful shutdown
+    let agent_handle = Arc::new(agent);
+    let agent_run = agent_handle.clone();
+
+    tokio::select! {
+        res = agent_run.start() => {
+            if let Err(e) = res {
+                error!("Agent runtime error: {}", e);
+            }
         }
-        Err(e) => {
-            error!("Failed to load configuration: {}", e);
-            // Fall back to default config if necessary
-            info!("Falling back to default configuration...");
+        _ = tokio::signal::ctrl_c() => {
+            info!("Ctrl+C received! Initiating graceful shutdown...");
+            agent_handle.shutdown();
         }
     }
 
-    // TODO: Initialize core engine and protocols
-    info!("Initializing network protocols and core engine...");
-
-    // Placeholder for actual agent loop
-    info!("Fluxx agent is now operational.");
-
-    // Simple async sleep to simulate execution
-    tokio::signal::ctrl_c().await.context("Failed to wait for Ctrl+C")?;
-    
-    info!("Shutting down fluxx-agent...");
+    info!("Fluxx agent shutdown complete. Goodbye!");
     Ok(())
 }
