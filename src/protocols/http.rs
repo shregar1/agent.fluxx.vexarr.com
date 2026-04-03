@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use crate::core::error::{Error, Result};
-use crate::core::traits::{Capturer, Event};
-use std::collections::HashMap;
+use crate::core::traits::Capturer;
+use crate::core::event::{Event, ProtocolType};
 use tracing::info;
 
 #[derive(Debug)]
@@ -41,15 +41,14 @@ impl Capturer for HttpCapturer {
             .await
             .map_err(|e| Error::Capture(format!("Fetch body failed: {}", e)))?;
 
-        Ok(Event {
-            id: uuid::Uuid::new_v4().to_string(),
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs(),
-            metadata: HashMap::new(),
-            payload: body.to_vec(),
-        })
+        let mut event = Event::new(uuid::Uuid::new_v4().to_string(), ProtocolType::Http);
+        event.payload = Some(body.to_vec());
+        
+        // Use structured, deduplicated metadata
+        event.metadata.user_agent = Some("fluxx-agent/0.1.0".to_string());
+        event.metadata.add("url", &self.url);
+        
+        Ok(event)
     }
 
     fn name(&self) -> &str {

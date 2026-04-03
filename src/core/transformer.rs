@@ -12,9 +12,9 @@ impl Processor for JsonTransformer {
         debug!("Processing event {}", event.id);
 
         // Simple transformation: add a 'processed_at' tag to metadata
-        event.metadata.insert(
-            "processed_at".to_string(),
-            std::time::SystemTime::now()
+        event.metadata.add(
+            "processed_at",
+            &std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_secs()
