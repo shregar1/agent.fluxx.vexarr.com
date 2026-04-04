@@ -45,6 +45,7 @@ pub enum ProtocolType {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Event {
     pub id: String,
+    pub session_id: Option<String>, // Enables cross-protocol session correlation
     pub timestamp_us: u64,
     pub protocol: ProtocolType,
     pub latency_us: u64,
@@ -57,6 +58,7 @@ impl Event {
     pub fn new(id: String, protocol: ProtocolType) -> Self {
         Self {
             id,
+            session_id: None,
             timestamp_us: SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
                 .unwrap_or_default()
@@ -66,6 +68,11 @@ impl Event {
             payload: None,
             metadata: Metadata::new(),
         }
+    }
+
+    pub fn with_session(mut self, session_id: String) -> Self {
+        self.session_id = Some(session_id);
+        self
     }
 
     pub fn with_payload(mut self, data: impl Into<Bytes>) -> Self {

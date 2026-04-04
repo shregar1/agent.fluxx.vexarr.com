@@ -3,6 +3,9 @@
 pub mod config;
 pub mod core;
 pub mod protocols;
+pub mod replay;
+pub mod sessions;
+pub mod storage;
 pub mod transport;
 pub mod processing;
 pub mod models;
