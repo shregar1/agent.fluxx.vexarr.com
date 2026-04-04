@@ -209,6 +209,7 @@ impl TicketingProvider for JiraClient {
 mod tests {
     use super::*;
     use crate::diagnostic::models::{ErrorContext, RootCauseAnalysis};
+    use std::collections::HashMap;
 
     fn create_test_config() -> JiraConfig {
         JiraConfig {

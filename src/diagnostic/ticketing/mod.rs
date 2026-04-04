@@ -76,10 +76,7 @@ impl TicketTemplate {
         );
 
         description.push_str(&format!(
-            "*Message:* {}\n"
-            "*Type:* {}\n"
-            "*Source:* {}\n"
-            "*Diagnostic ID:* {}\n\n",
+            "*Message:* {}\n*Type:* {}\n*Source:* {}\n*Diagnostic ID:* {}\n\n",
             report.error.message,
             report.error.error_type,
             report.error.source,
@@ -88,8 +85,7 @@ impl TicketTemplate {
 
         description.push_str("h2. Root Cause Analysis\n\n");
         description.push_str(&format!(
-            "*Primary Cause:* {}\n"
-            "*Explanation:* {}\n\n",
+            "*Primary Cause:* {}\n*Explanation:* {}\n\n",
             report.root_cause.primary_cause,
             report.root_cause.explanation
         ));
@@ -98,9 +94,7 @@ impl TicketTemplate {
             description.push_str("h2. Suggested Fixes\n\n");
             for (i, fix) in report.suggested_fixes.iter().enumerate() {
                 description.push_str(&format!(
-                    "# *{}* (confidence: {:.0}%)\n"
-                    "{}\n"
-                    "Steps:\n",
+                    "# *{}* (confidence: {:.0}%)\n{}\nSteps:\n",
                     fix.title,
                     fix.confidence * 100.0,
                     fix.description
@@ -116,11 +110,7 @@ impl TicketTemplate {
             description.push_str("h2. Code Samples\n\n");
             for sample in &report.code_samples {
                 description.push_str(&format!(
-                    "*{}* ({}):\n"
-                    "{{code:{}}}\n"
-                    "{}\n"
-                    "{{code}}\n\n"
-                    "{}\n\n",
+                    "*{}* ({}):\n{{code:{}}}\n{}\n{{code}}\n\n{}\n\n",
                     sample.title,
                     sample.language,
                     sample.language,
@@ -151,10 +141,7 @@ pub fn format_github_markdown(report: &DiagnosticReport) -> String {
     );
 
     md.push_str(&format!(
-        "- **Message:** {}\n"
-        "- **Type:** {}\n"
-        "- **Source:** {}\n"
-        "- **Diagnostic ID:** {}\n\n",
+        "- **Message:** {}\n- **Type:** {}\n- **Source:** {}\n- **Diagnostic ID:** {}\n\n",
         report.error.message,
         report.error.error_type,
         report.error.source,
@@ -163,8 +150,7 @@ pub fn format_github_markdown(report: &DiagnosticReport) -> String {
 
     md.push_str("## Root Cause Analysis\n\n");
     md.push_str(&format!(
-        "**Primary Cause:** {}\n\n"
-        "**Explanation:** {}\n\n",
+        "**Primary Cause:** {}\n\n**Explanation:** {}\n\n",
         report.root_cause.primary_cause,
         report.root_cause.explanation
     ));
@@ -173,9 +159,7 @@ pub fn format_github_markdown(report: &DiagnosticReport) -> String {
         md.push_str("## Suggested Fixes\n\n");
         for (i, fix) in report.suggested_fixes.iter().enumerate() {
             md.push_str(&format!(
-                "### {}. {} (confidence: {:.0}%)\n\n"
-                "{}\n\n"
-                "**Steps:**\n",
+                "### {}. {} (confidence: {:.0}%)\n\n{}\n\n**Steps:**\n",
                 i + 1,
                 fix.title,
                 fix.confidence * 100.0,
@@ -192,12 +176,7 @@ pub fn format_github_markdown(report: &DiagnosticReport) -> String {
         md.push_str("## Code Samples\n\n");
         for sample in &report.code_samples {
             md.push_str(&format!(
-                "### {}\n\n"
-                "_{}_\n\n"
-                "```{}\n"
-                "{}\n"
-                "```\n\n"
-                "{}\n\n",
+                "### {}\n\n_{}_\n\n```{}\n{}\n```\n\n{}\n\n",
                 sample.title,
                 sample.description,
                 sample.language,

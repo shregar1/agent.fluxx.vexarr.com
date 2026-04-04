@@ -30,6 +30,16 @@
    - *The case for edge-native observability*
    - Cost comparison, performance analysis, and when to choose each approach
 
+### 🤖 AI Diagnostics & Remediation
+
+6. **[AI-Powered Diagnostics: From Error to Resolution in 30 Seconds](16-ai-powered-diagnostics.md)**
+   - *How Fluxx Agent uses LLMs to automate incident response*
+   - GPT-4 integration, root cause analysis, and 80% MTTR reduction
+
+7. **[Automated Ticketing: From Error to Jira in 3 Seconds](17-ticketing-integrations.md)**
+   - *Stop manually copying errors into tickets*
+   - Jira, GitHub, and Linear integrations with smart prioritization
+
 ---
 
 ## Series
@@ -70,6 +80,11 @@ Real stories from developers worldwide using Fluxx Agent:
 - [The $1M Observability Architecture](08-the-one-million-dollar-architecture.md)
 - [Datadog's $65M Secret](09-datadog-65m-secret.md)
 - [Mesh vs Centralized](15-mesh-vs-centralized-observability.md)
+
+### AI & Automation
+- [AI-Powered Diagnostics](16-ai-powered-diagnostics.md)
+- [Automated Ticketing](17-ticketing-integrations.md)
+- [Diagnostic Documentation](../docs/DIAGNOSTIC.md)
 
 ### Community
 - [The Manifesto](11-the-manifesto.md)

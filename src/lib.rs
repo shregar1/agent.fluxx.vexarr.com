@@ -26,6 +26,12 @@ pub mod perf;
 // Distributed mesh networking
 pub mod mesh;
 
+// AI-powered diagnostic and remediation
+pub mod diagnostic;
+
+// 500+ integrations framework
+pub mod integrations;
+
 // Re-exports
 pub use core::Agent;
 pub use core::traits::{Capturer, Processor, Transporter, Protocol};

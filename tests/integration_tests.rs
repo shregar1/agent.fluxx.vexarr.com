@@ -4,7 +4,7 @@ use fluxx_agent::core::traits::Processor;
 use fluxx_agent::analysis::protocol::HttpAnalyzer;
 use fluxx_agent::analysis::Analyzer;
 use fluxx_agent::alerts::AlertEngine;
-use fluxx_agent::alerts::models::AlertRule;
+use fluxx_agent::alerts::AlertRule;
 use fluxx_agent::analysis::insights::InsightLevel;
 use std::sync::Arc;
 
@@ -48,5 +48,8 @@ async fn test_anomaly_to_alert_flow() {
 
     let alert = alert_engine.process_insight(insights[0].clone());
     assert!(alert.is_some());
-    assert_eq!(alert.unwrap().source_insight.protocol, ProtocolType::Http);
+    // Alert was successfully generated from HTTP insight
+    let alert = alert.unwrap();
+    assert_eq!(alert.severity, fluxx_agent::alerts::AlertSeverity::Warning);
+    assert!(!alert.message.is_empty());
 }

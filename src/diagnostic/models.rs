@@ -323,6 +323,18 @@ pub struct DiagnosticRequest {
     pub include_remediation: bool,
 }
 
+impl Default for DiagnosticRequest {
+    fn default() -> Self {
+        Self {
+            error: ErrorContext::default(),
+            request_id: None,
+            context: HashMap::new(),
+            preferred_language: None,
+            include_remediation: true,
+        }
+    }
+}
+
 /// Diagnostic response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiagnosticResponse {
