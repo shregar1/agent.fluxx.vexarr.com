@@ -1,35 +1,77 @@
 # Fluxx Edge Agent: Feature Architecture
 
-Fluxx is a high-performance network observability agent designed for the edge. It provides a modular, middleware-driven pipeline for capturing, processing, and delivering network events at massive scale.
+Fluxx is a high-performance, modular network observability agent designed for the modern edge. It provides deep visibility into protocol semantics with minimal overhead.
 
-## 1. Multi-Protocol Ingestion (Capture Layer)
-The agent leverages specialized **Capturers** for heterogeneous protocol sources:
-- **HTTP/Fetch**: Periodic or on-demand capture from REST endpoints using `reqwest`.
-- **WebSockets (WS)**: High-performance TCP-backed WebSocket server logic using `tokio-tungstenite`.
-- **QUIC**: Native support for bi-directional UDP-based streams using the `quinn` implementation.
-- **gRPC**: Low-latency RPC observation using `tonic` and `prost` interceptors.
-- **eBPF (TCP/UDP)**: Kernel-level packet observation via XDP/TC probes using the `aya` framework (TCP/UDP ingress/egress).
+---
 
-## 2. Event Processing Pipeline (Middleware Layer)
-Fluxx employs a linear, sequential middleware pattern for event enrichment and transformation:
-- **Tagging**: Enriches events with environment-specific metadata (e.g., `region`, `env`, `agent_id`).
-- **Latency Tracking**: Microsecond-precision calculation of system processing delay.
-- **Categorical Bucketization**: Automatic classification of events into latency buckets (e.g., `10ms`, `50ms`, `overflow`).
-- **Dynamic Filtering**: Logic-based dropping of noisy or irrelevant events to save downstream bandwidth.
+## 1. Multi-Protocol Capture Layer
 
-## 3. High-Performance Runtime
-Optimized for zero-copy efficiency and resource management:
-- **Zero-Copy Payloads**: Payload sharing across multiple delivery sinks using `bytes::Bytes`.
-- **Reference Sharing**: Heavy event structures (metadata) are shared via `Arc<Event>` across all transporters.
-- **Worker Pooling**: Concurrency-limited processing tasks via `tokio::sync::Semaphore` to prevent thread exhaustion.
-- **Bounded Backpressure**: Native buffer management via `mpsc::channel` ensures ingestion scales with downstream throughput.
+Fluxx captures and normalizes traffic from disparate network sources into a unified event format.
 
-## 4. Reliable Event Transport (Delivery Layer)
-- **Managed Retries**: Automatic delivery retries with exponential backoff for network-bound transporters.
-- **JSON Serialization**: Efficient, field-mapped serialization for upstream analytics ingestion.
-- **Multiplexed Destinations**: Parallel fan-out support for delivery to multiple sinks (e.g., HTTP Analytics, Local Logs, Stdout).
+- **HTTP/S**: Periodic health and endpoint observation.
+- **WebSocket**: Full-duplex stream monitoring with handshake extraction.
+- **gRPC**: Low-latency RPC tracing using interceptors.
+- **QUIC**: Modern UDP-based transport observation using `quinn`.
+- **eBPF (XDP)**: Kernel-level packet capture with zero-context-switch metadata extraction (TCP/UDP, Port, Payload Size).
 
-## 5. Architectural Principles
-- **Scalable**: Built for high-throughput edge environments.
-- **Decoupled**: Clean separation between protocol handlers, core logic, and CLI.
-- **Observable**: Structured logging and granular error diagnostics throughout.
+## 2. Asynchronous Event Pipeline
+
+Events flow through a high-concurrency, middleware-driven pipeline.
+
+- **`CaptureChannel`**: Managed MPSC buffers with backpressure support to prevent memory spikes during traffic surges.
+- **`WorkerPool`**: Semaphore-bounded concurrency to ensure predictable CPU utilization.
+
+## 3. Protocol Intelligence (Analysis)
+
+An anomaly detection layer that identifies patterns without storing entire payloads.
+
+- **`HTTPAnalyzer`**: Detects high-latency endpoints and payload anomalies.
+- **`WebSocketAnalyzer`**: Specifically detects **Reconnect Storms** and connection lifecycle patterns.
+- **`GrpcAnalyzer`**: Identifies RPC spikes and stream resets.
+- **`EbpfAnalyzer`**: Monitors kernel-level traffic surges and volume spikes.
+
+## 4. Logical Session Tracking
+
+Group related events into logical units.
+
+- **Session Linking**: Automatic correlation of events via `session_id`.
+- **Timeline Management**: Maintains a chronological history of a session's activity.
+- **Eviction**: Automatic memory management for stale sessions.
+
+## 5. Security & Privacy Layer
+
+Enforces data protection policies before events leave the agent.
+
+- **PII Masking**: High-performance regex engine for redacting Emails, CCs, and Auth Tokens.
+- **Local-Only Mode**: Prevents sensitive data from being transported to remote sinks.
+- **Encryption**: (Conceptual) In-pipeline payload protection.
+
+## 6. Time-Travel & Traffic Replay
+
+Diagnostic tools for reproducing edge conditions.
+
+- **`EventStore`**: BTreeMap-indexed historical storage for O(log N) range queries.
+- **`ReplayEngine`**: Chronological streaming with deterministic sorting.
+- **Chaos Replay**: Pluggable strategies to inject **Latency**, **Drop %**, and **Payload Mutations** during simulation.
+
+## 7. Real-Time Flow Graph
+
+Visualizes service topology and request flow.
+
+- **Dynamic Mapping**: Automatically identifies Nodes (services) and Edges (transactions).
+- **Metric Aggregation**: Tracks average latency and call volume per flow.
+- **JSON Export**: Real-time topology streaming for HUD-style dashboards.
+
+## 8. Plugin Architecture
+
+A trait-based extension system allowing third-party modules to inject custom `Processors` and `Analyzers`.
+
+---
+
+## 9. CLI Interface
+
+Control the agent via the terminal:
+
+- `fluxx inspect <target>`: Real-time protocol diagnostics.
+- `fluxx start`: Activation with configurable flags (`--config`, `--enable-ebpf`).
+- `fluxx config`: Manage local deployment settings.

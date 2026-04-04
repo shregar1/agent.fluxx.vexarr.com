@@ -3,6 +3,12 @@
 pub mod config;
 pub mod core;
 pub mod protocols;
+pub mod plugins;
+pub mod security;
+pub mod graph;
+pub mod analysis;
+pub mod alerts;
+pub mod api;
 pub mod replay;
 pub mod sessions;
 pub mod storage;

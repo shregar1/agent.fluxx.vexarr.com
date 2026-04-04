@@ -45,7 +45,10 @@ pub enum ProtocolType {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Event {
     pub id: String,
-    pub session_id: Option<String>, // Enables cross-protocol session correlation
+    pub session_id: Option<String>, 
+    pub project_id: Option<String>,
+    pub environment_id: Option<String>,
+    pub service_id: Option<String>,
     pub timestamp_us: u64,
     pub protocol: ProtocolType,
     pub latency_us: u64,
