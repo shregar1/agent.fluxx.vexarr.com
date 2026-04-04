@@ -62,6 +62,8 @@ pub mod containers;
 pub mod cloud;
 pub mod queue;
 pub mod cache;
+pub mod observability;
+pub mod security;
 pub mod framework;
 
 pub use framework::{
@@ -360,6 +362,347 @@ impl IntegrationManager {
             }
             Err(e) => {
                 error!(error = %e, "Failed to create Varnish integration");
+            }
+        }
+        self
+    }
+
+    /// Add Cassandra integration
+    pub fn with_cassandra(&mut self, hosts: &[&str], port: u16) -> &mut Self {
+        match db::cassandra::CassandraIntegration::new(hosts, port) {
+            Ok(cassandra) => {
+                self.register("cassandra", cassandra);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Cassandra integration");
+            }
+        }
+        self
+    }
+
+    /// Add ClickHouse integration
+    pub fn with_clickhouse(&mut self, host: &str, port: u16, database: &str) -> &mut Self {
+        match db::clickhouse::ClickHouseIntegration::new(host, port, database) {
+            Ok(clickhouse) => {
+                self.register("clickhouse", clickhouse);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create ClickHouse integration");
+            }
+        }
+        self
+    }
+
+    /// Add Elasticsearch integration
+    pub fn with_elasticsearch(&mut self, base_url: &str) -> &mut Self {
+        match db::elasticsearch::ElasticsearchIntegration::new(base_url) {
+            Ok(es) => {
+                self.register("elasticsearch", es);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Elasticsearch integration");
+            }
+        }
+        self
+    }
+
+    /// Add DigitalOcean integration
+    pub fn with_digitalocean(&mut self, api_token: &str) -> &mut Self {
+        match cloud::digitalocean::DigitalOceanIntegration::new(api_token) {
+            Ok(do_integration) => {
+                self.register("digitalocean", do_integration);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create DigitalOcean integration");
+            }
+        }
+        self
+    }
+
+    /// Add Linode integration
+    pub fn with_linode(&mut self, api_token: &str) -> &mut Self {
+        match cloud::linode::LinodeIntegration::new(api_token) {
+            Ok(linode) => {
+                self.register("linode", linode);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Linode integration");
+            }
+        }
+        self
+    }
+
+    /// Add IBM Cloud integration
+    pub fn with_ibm_cloud(&mut self, api_key: &str, region: &str) -> &mut Self {
+        match cloud::ibm::IbmCloudIntegration::new(api_key, region) {
+            Ok(ibm) => {
+                self.register(format!("ibm_{}", region).as_str(), ibm);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create IBM Cloud integration");
+            }
+        }
+        self
+    }
+
+    /// Add NATS integration
+    pub fn with_nats(&mut self, server_url: &str) -> &mut Self {
+        match queue::nats::NatsIntegration::new(server_url) {
+            Ok(nats) => {
+                self.register("nats", nats);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create NATS integration");
+            }
+        }
+        self
+    }
+
+    /// Add Pulsar integration
+    pub fn with_pulsar(&mut self, admin_url: &str) -> &mut Self {
+        match queue::pulsar::PulsarIntegration::new(admin_url) {
+            Ok(pulsar) => {
+                self.register("pulsar", pulsar);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Pulsar integration");
+            }
+        }
+        self
+    }
+
+    /// Add ActiveMQ integration
+    pub fn with_activemq(&mut self, admin_url: &str, username: &str, password: &str) -> &mut Self {
+        match queue::activemq::ActiveMqIntegration::new(admin_url, username, password) {
+            Ok(activemq) => {
+                self.register("activemq", activemq);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create ActiveMQ integration");
+            }
+        }
+        self
+    }
+
+    /// Add Travis CI integration
+    pub fn with_travis_ci(&mut self, token: &str, owner: &str, repo: &str) -> &mut Self {
+        match cicd::travisci::TravisCiIntegration::new_repo(token, owner, repo) {
+            Ok(travis) => {
+                self.register("travisci", travis);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Travis CI integration");
+            }
+        }
+        self
+    }
+
+    /// Add TeamCity integration
+    pub fn with_teamcity(&mut self, base_url: &str, username: &str, password: &str) -> &mut Self {
+        match cicd::teamcity::TeamCityIntegration::new(base_url, username, password) {
+            Ok(teamcity) => {
+                self.register("teamcity", teamcity);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create TeamCity integration");
+            }
+        }
+        self
+    }
+
+    /// Add Bamboo integration
+    pub fn with_bamboo(&mut self, base_url: &str, username: &str, password: &str) -> &mut Self {
+        match cicd::bamboo::BambooIntegration::new(base_url, username, password) {
+            Ok(bamboo) => {
+                self.register("bamboo", bamboo);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Bamboo integration");
+            }
+        }
+        self
+    }
+
+    /// Add Prometheus integration
+    pub fn with_prometheus(&mut self, base_url: &str) -> &mut Self {
+        match observability::prometheus::PrometheusIntegration::new(base_url) {
+            Ok(prometheus) => {
+                self.register("prometheus", prometheus);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Prometheus integration");
+            }
+        }
+        self
+    }
+
+    /// Add Grafana integration
+    pub fn with_grafana(&mut self, base_url: &str, api_token: &str) -> &mut Self {
+        match observability::grafana::GrafanaIntegration::new(base_url, api_token) {
+            Ok(grafana) => {
+                self.register("grafana", grafana);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Grafana integration");
+            }
+        }
+        self
+    }
+
+    /// Add Jaeger integration
+    pub fn with_jaeger(&mut self, query_url: &str) -> &mut Self {
+        match observability::jaeger::JaegerIntegration::new(query_url) {
+            Ok(jaeger) => {
+                self.register("jaeger", jaeger);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Jaeger integration");
+            }
+        }
+        self
+    }
+
+    /// Add Zipkin integration
+    pub fn with_zipkin(&mut self, base_url: &str) -> &mut Self {
+        match observability::zipkin::ZipkinIntegration::new(base_url) {
+            Ok(zipkin) => {
+                self.register("zipkin", zipkin);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Zipkin integration");
+            }
+        }
+        self
+    }
+
+    /// Add Neo4j integration
+    pub fn with_neo4j(&mut self, host: &str, port: u16, username: &str, password: &str) -> &mut Self {
+        match db::neo4j::Neo4jIntegration::new(host, port, username, password) {
+            Ok(neo4j) => {
+                self.register("neo4j", neo4j);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Neo4j integration");
+            }
+        }
+        self
+    }
+
+    /// Add InfluxDB integration
+    pub fn with_influxdb(&mut self, base_url: &str, org: &str, token: &str) -> &mut Self {
+        match db::influxdb::InfluxDbIntegration::new(base_url, org, token) {
+            Ok(influxdb) => {
+                self.register("influxdb", influxdb);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create InfluxDB integration");
+            }
+        }
+        self
+    }
+
+    /// Add TimescaleDB integration
+    pub fn with_timescaledb(&mut self, host: &str, port: u16, database: &str) -> &mut Self {
+        match db::timescaledb::TimescaleDbIntegration::new(host, port, database) {
+            Ok(timescaledb) => {
+                self.register("timescaledb", timescaledb);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create TimescaleDB integration");
+            }
+        }
+        self
+    }
+
+    /// Add CockroachDB integration
+    pub fn with_cockroachdb(&mut self, host: &str, port: u16) -> &mut Self {
+        match db::cockroachdb::CockroachDbIntegration::new(host, port) {
+            Ok(cockroachdb) => {
+                self.register("cockroachdb", cockroachdb);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create CockroachDB integration");
+            }
+        }
+        self
+    }
+
+    /// Add Oracle Cloud integration
+    pub fn with_oracle_cloud(&mut self, region: &str, tenancy_ocid: &str) -> &mut Self {
+        match cloud::oracle::OracleCloudIntegration::new(region, tenancy_ocid) {
+            Ok(oracle) => {
+                self.register(format!("oracle_{}", region).as_str(), oracle);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Oracle Cloud integration");
+            }
+        }
+        self
+    }
+
+    /// Add Alibaba Cloud integration
+    pub fn with_alibaba_cloud(&mut self, region: &str, access_key_id: &str, access_key_secret: &str) -> &mut Self {
+        match cloud::alibaba::AlibabaCloudIntegration::new(region, access_key_id, access_key_secret) {
+            Ok(alibaba) => {
+                self.register(format!("alibaba_{}", region).as_str(), alibaba);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Alibaba Cloud integration");
+            }
+        }
+        self
+    }
+
+    /// Add Datadog integration
+    pub fn with_datadog(&mut self, api_key: &str, app_key: &str) -> &mut Self {
+        match observability::datadog::DatadogIntegration::new(api_key, app_key) {
+            Ok(datadog) => {
+                self.register("datadog", datadog);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create Datadog integration");
+            }
+        }
+        self
+    }
+
+    /// Add New Relic integration
+    pub fn with_newrelic(&mut self, api_key: &str, account_id: &str) -> &mut Self {
+        match observability::newrelic::NewRelicIntegration::new(api_key, account_id) {
+            Ok(newrelic) => {
+                self.register("newrelic", newrelic);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create New Relic integration");
+            }
+        }
+        self
+    }
+
+    /// Add Vault integration
+    pub fn with_vault(&mut self, address: &str, token: Option<&str>) -> &mut Self {
+        let mut vault = match security::vault::VaultIntegration::new(address) {
+            Ok(v) => v,
+            Err(e) => {
+                error!(error = %e, "Failed to create Vault integration");
+                return self;
+            }
+        };
+        if let Some(t) = token {
+            vault = vault.with_token(t);
+        }
+        self.register("vault", vault);
+        self
+    }
+
+    /// Add LDAP integration
+    pub fn with_ldap(&mut self, host: &str, port: u16) -> &mut Self {
+        match security::ldap::LdapIntegration::new(host, port) {
+            Ok(ldap) => {
+                self.register(format!("ldap_{}", host).as_str(), ldap);
+            }
+            Err(e) => {
+                error!(error = %e, "Failed to create LDAP integration");
             }
         }
         self

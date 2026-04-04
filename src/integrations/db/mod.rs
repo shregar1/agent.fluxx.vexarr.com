@@ -2,19 +2,27 @@
 
 pub mod cassandra;
 pub mod clickhouse;
+pub mod cockroachdb;
 pub mod elasticsearch;
+pub mod influxdb;
 pub mod mysql;
+pub mod neo4j;
 pub mod postgres;
 pub mod redis;
 pub mod mongodb;
+pub mod timescaledb;
 
 pub use cassandra::CassandraIntegration;
 pub use clickhouse::ClickHouseIntegration;
+pub use cockroachdb::CockroachDbIntegration;
 pub use elasticsearch::ElasticsearchIntegration;
+pub use influxdb::InfluxDbIntegration;
 pub use mysql::MySqlIntegration;
+pub use neo4j::Neo4jIntegration;
 pub use postgres::PostgresIntegration;
 pub use redis::RedisIntegration;
 pub use mongodb::MongoDbIntegration;
+pub use timescaledb::TimescaleDbIntegration;
 
 use super::framework::*;
 use async_trait::async_trait;
