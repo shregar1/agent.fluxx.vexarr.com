@@ -1,0 +1,41 @@
+# Simple 2-Node Mesh Configuration
+#
+# Deploy two Fluxx Agent nodes that form a mesh.
+# Each node needs its own config with the other as a peer.
+
+# Node 1 configuration (save as node1.yaml)
+# node_id: node-1
+# bind: 0.0.0.0:7946
+# peers:
+#   - node-2.local:7946
+
+# Node 2 configuration (save as node2.yaml)  
+# node_id: node-2
+# bind: 0.0.0.0:7946
+# peers:
+#   - node-1.local:7946
+
+# For this example, here's a standalone config:
+node_id: mesh-demo-node
+bind: 0.0.0.0:7946
+
+# No peers = standalone mode (will still run mesh protocol)
+peers: []
+
+# Gossip protocol settings
+gossip:
+  interval_ms: 200
+  timeout_ms: 1000
+  fanout: 3
+
+# Query federation
+federation:
+  enabled: true
+  timeout_secs: 30
+  max_concurrent: 10
+
+# Data replication
+replication:
+  factor: 2
+  cross_region: true
+  async_replication: true

@@ -1,0 +1,563 @@
+warning: unused import: `FilterProcessor`
+ --> src/core/runtime.rs:8:81
+  |
+8 | use crate::processing::{TagProcessor, LatencyProcessor, LatencyBucketProcessor, FilterProcessor};
+  |                                                                                 ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `crate::replay::ReplayEngine`
+  --> src/core/runtime.rs:11:5
+   |
+11 | use crate::replay::ReplayEngine;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `debug`
+  --> src/core/runtime.rs:17:28
+   |
+17 | use tracing::{info, error, debug};
+   |                            ^^^^^
+
+warning: unused import: `ProtocolType`
+ --> src/protocols/ebpf/mod.rs:4:35
+  |
+4 | use crate::models::event::{Event, ProtocolType};
+  |                                   ^^^^^^^^^^^^
+
+warning: unused import: `crate::protocols::common::CaptureChannel`
+ --> src/protocols/ebpf/mod.rs:5:5
+  |
+5 | use crate::protocols::common::CaptureChannel;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+  --> src/protocols/ebpf/mod.rs:15:5
+   |
+15 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+warning: unused imports: `debug`, `error`, and `info`
+  --> src/protocols/ebpf/mod.rs:16:15
+   |
+16 | use tracing::{info, error, debug};
+   |               ^^^^  ^^^^^  ^^^^^
+
+warning: unused import: `warn`
+ --> src/security/mod.rs:6:22
+  |
+6 | use tracing::{debug, warn};
+  |                      ^^^^
+
+warning: unused import: `crate::models::event::Event`
+ --> src/security/masking.rs:1:5
+  |
+1 | use crate::models::event::Event;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Edge`
+ --> src/graph/mod.rs:1:41
+  |
+1 | use crate::models::graph::{Graph, Node, Edge};
+  |                                         ^^^^
+
+warning: unused import: `crate::core::error::Result`
+ --> src/analysis/mod.rs:3:5
+  |
+3 | use crate::core::error::Result;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::core::error::Result`
+ --> src/alerts/mod.rs:3:5
+  |
+3 | use crate::core::error::Result;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `warn`
+ --> src/alerts/mod.rs:5:21
+  |
+5 | use tracing::{info, warn};
+  |                     ^^^^
+
+warning: unused import: `debug`
+ --> src/comparison/mod.rs:7:21
+  |
+7 | use tracing::{info, debug};
+  |                     ^^^^^
+
+warning: unused import: `Json`
+ --> src/api/server.rs:6:5
+  |
+6 |     Json, Router,
+  |     ^^^^
+
+warning: unused import: `error`
+  --> src/api/server.rs:10:21
+   |
+10 | use tracing::{info, error};
+   |                     ^^^^^
+
+warning: unused import: `crate::core::error::Result`
+ --> src/replay/strategy.rs:2:5
+  |
+2 | use crate::core::error::Result;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> src/replay/strategy.rs:3:5
+  |
+3 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Instant`
+ --> src/sessions/models.rs:3:29
+  |
+3 | use std::time::{SystemTime, Instant};
+  |                             ^^^^^^^
+
+warning: unused import: `ProtocolType`
+ --> src/processing/mod.rs:3:35
+  |
+3 | use crate::models::event::{Event, ProtocolType};
+  |                                   ^^^^^^^^^^^^
+
+warning: unused import: `debug`
+ --> src/processing/pipeline.rs:7:28
+  |
+7 | use tracing::{error, info, debug, warn};
+  |                            ^^^^^
+
+warning: unused import: `Lifecycle`
+ --> src/cli/dev.rs:1:42
+  |
+1 | use crate::core::runtime::{AgentService, Lifecycle};
+  |                                          ^^^^^^^^^
+
+warning: unused import: `warn`
+ --> src/cli/dev.rs:3:21
+  |
+3 | use tracing::{info, warn};
+  |                     ^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> src/cli/dev.rs:4:5
+  |
+4 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `MmapOptions`
+ --> src/perf/mmap_storage.rs:8:30
+  |
+8 | use memmap2::{Mmap, MmapMut, MmapOptions};
+  |                              ^^^^^^^^^^^
+
+warning: variable does not need to be mutable
+  --> src/cli/dev.rs:34:13
+   |
+34 |         let mut service_ref = &mut self.service;
+   |             ----^^^^^^^^^^^
+   |             |
+   |             help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+
+warning: unused variable: `event`
+  --> src/analysis/protocol.rs:75:23
+   |
+75 |     fn analyze(&self, event: &Event) -> Vec<Insight> {
+   |                       ^^^^^ help: if this is intentional, prefix it with an underscore: `_event`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: variable does not need to be mutable
+  --> src/analysis/protocol.rs:76:13
+   |
+76 |         let mut insights = Vec::new();
+   |             ----^^^^^^^^
+   |             |
+   |             help: remove this `mut`
+
+warning: unused variable: `restarts`
+  --> src/analysis/industrial.rs:46:21
+   |
+46 |         if let Some(restarts) = event.metadata.extra.get("ecu_resets") {
+   |                     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_restarts`
+
+warning: method `listen_task` is never used
+  --> src/protocols/quic/mod.rs:28:14
+   |
+19 | impl QuicCapturer {
+   | ----------------- method in this implementation
+...
+28 |     async fn listen_task(&self, endpoint: Endpoint) -> Result<()> {
+   |              ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: field `file` is never read
+  --> src/perf/mmap_storage.rs:15:5
+   |
+14 | pub struct MmapLog {
+   |            ------- field in this struct
+15 |     file: File,
+   |     ^^^^
+
+warning: unused import: `Metadata`
+  --> src/sessions/manager.rs:77:53
+   |
+77 |     use crate::models::event::{Event, ProtocolType, Metadata};
+   |                                                     ^^^^^^^^
+
+warning: unused import: `std::io::Write`
+   --> src/perf/mmap_storage.rs:171:9
+    |
+171 |     use std::io::Write;
+    |         ^^^^^^^^^^^^^^
+
+warning: unused variable: `json`
+   --> src/sessions/models.rs:226:13
+    |
+226 | ...   let json = r#"{"id":"sess-1","created_at_us":1000,"last_seen_us":2000,"events":[{"id":"evt-1","timestamp_us":1500,"source":"test","...
+    |           ^^^^ help: if this is intentional, prefix it with an underscore: `_json`
+
+warning: unused variable: `i`
+   --> src/sessions/manager.rs:427:13
+    |
+427 |         for i in 0..10 {
+    |             ^ help: if this is intentional, prefix it with an underscore: `_i`
+
+warning: variable does not need to be mutable
+   --> src/models/explanation.rs:360:13
+    |
+360 |         let mut expl1 = StructuredExplanation::mock("test");
+    |             ----^^^^^
+    |             |
+    |             help: remove this `mut`
+
+warning: unused variable: `compressed`
+  --> src/perf/compression.rs:78:14
+   |
+78 |         let (compressed, stats) = compress_tracked(&json_like).unwrap();
+   |              ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_compressed`
+
+warning: comparison is useless due to type limits
+   --> src/sessions/models.rs:327:17
+    |
+327 |         assert!(session.events.capacity() >= 0);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_comparisons)]` on by default
+
+warning: `fluxx-agent` (lib) generated 31 warnings (run `cargo fix --lib -p fluxx-agent` to apply 27 suggestions)
+warning: `fluxx-agent` (lib test) generated 36 warnings (29 duplicates) (run `cargo fix --lib -p fluxx-agent --tests` to apply 3 suggestions)
+warning: unused imports: `AtomicU64` and `Ordering`
+  --> examples/ultra_optimized_load_test.rs:17:25
+   |
+17 | use std::sync::atomic::{AtomicU64, Ordering};
+   |                         ^^^^^^^^^  ^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused variable: `binary_mbps`
+   --> examples/ultra_optimized_load_test.rs:249:22
+    |
+249 |     let (binary_eps, binary_mbps, size_reduction) = test_binary_protocol(&events);
+    |                      ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_binary_mbps`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `size_reduction`
+   --> examples/ultra_optimized_load_test.rs:249:35
+    |
+249 |     let (binary_eps, binary_mbps, size_reduction) = test_binary_protocol(&events);
+    |                                   ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_size_reduction`
+
+warning: unused variable: `compress_eps`
+   --> examples/ultra_optimized_load_test.rs:250:10
+    |
+250 |     let (compress_eps, compress_ratio) = test_compression(&events);
+    |          ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_compress_eps`
+
+warning: unused variable: `compress_ratio`
+   --> examples/ultra_optimized_load_test.rs:250:24
+    |
+250 |     let (compress_eps, compress_ratio) = test_compression(&events);
+    |                        ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_compress_ratio`
+
+warning: unused variable: `mt_mbps`
+   --> examples/ultra_optimized_load_test.rs:251:18
+    |
+251 |     let (mt_eps, mt_mbps) = test_multithreaded(TEST_EVENTS);
+    |                  ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mt_mbps`
+
+warning: unused variable: `batch_mbps`
+   --> examples/ultra_optimized_load_test.rs:252:21
+    |
+252 |     let (batch_eps, batch_mbps) = test_batch_processing(TEST_EVENTS);
+    |                     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_batch_mbps`
+
+   Compiling fluxx-agent v0.1.0 (/Users/shreyansh/Documents/fluxx.dev/agent.fluxx.dev)
+warning: unused import: `std::sync::Arc`
+ --> tests/integration_tests.rs:9:5
+  |
+9 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: `fluxx-agent` (example "ultra_optimized_load_test") generated 7 warnings (run `cargo fix --example "ultra_optimized_load_test"` to apply 1 suggestion)
+warning: `fluxx-agent` (test "integration_tests") generated 1 warning (run `cargo fix --test "integration_tests"` to apply 1 suggestion)
+warning: function `check_processor` is never used
+   --> tests/core_tests.rs:107:8
+    |
+107 |     fn check_processor<T: Processor>() {}
+    |        ^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: function `check_capturer` is never used
+   --> tests/core_tests.rs:114:8
+    |
+114 |     fn check_capturer<T: Capturer>() {}
+    |        ^^^^^^^^^^^^^^
+
+warning: function `check_transporter` is never used
+   --> tests/core_tests.rs:121:8
+    |
+121 |     fn check_transporter<T: Transporter>() {}
+    |        ^^^^^^^^^^^^^^^^^
+
+warning: function `check_protocol` is never used
+   --> tests/core_tests.rs:128:8
+    |
+128 |     fn check_protocol<T: Protocol>() {}
+    |        ^^^^^^^^^^^^^^
+
+warning: `fluxx-agent` (test "core_tests") generated 4 warnings
+error: unknown format trait `f`
+   --> examples/optimized_load_test.rs:228:60
+    |
+228 |     println!("   │ Compute ({} nodes):             ${:>10.0f}/year │", ha_nodes, compute_annual);
+    |                                                            ^
+    |
+    = note: the only appropriate formatting traits are:
+            - ``, which uses the `Display` trait
+            - `?`, which uses the `Debug` trait
+            - `e`, which uses the `LowerExp` trait
+            - `E`, which uses the `UpperExp` trait
+            - `o`, which uses the `Octal` trait
+            - `p`, which uses the `Pointer` trait
+            - `b`, which uses the `Binary` trait
+            - `x`, which uses the `LowerHex` trait
+            - `X`, which uses the `UpperHex` trait
+
+error: unknown format trait `f`
+   --> examples/optimized_load_test.rs:230:60
+    |
+230 |     println!("   │ Storage (tiered):               ${:>10.0f}/year │", storage_annual);
+    |                                                            ^
+    |
+    = note: the only appropriate formatting traits are:
+            - ``, which uses the `Display` trait
+            - `?`, which uses the `Debug` trait
+            - `e`, which uses the `LowerExp` trait
+            - `E`, which uses the `UpperExp` trait
+            - `o`, which uses the `Octal` trait
+            - `p`, which uses the `Pointer` trait
+            - `b`, which uses the `Binary` trait
+            - `x`, which uses the `LowerHex` trait
+            - `X`, which uses the `UpperHex` trait
+
+error: unknown format trait `f`
+   --> examples/optimized_load_test.rs:232:60
+    |
+232 |     println!("   │ Network (peering):              ${:>10.0f}/year │", network_annual);
+    |                                                            ^
+    |
+    = note: the only appropriate formatting traits are:
+            - ``, which uses the `Display` trait
+            - `?`, which uses the `Debug` trait
+            - `e`, which uses the `LowerExp` trait
+            - `E`, which uses the `UpperExp` trait
+            - `o`, which uses the `Octal` trait
+            - `p`, which uses the `Pointer` trait
+            - `b`, which uses the `Binary` trait
+            - `x`, which uses the `LowerHex` trait
+            - `X`, which uses the `UpperHex` trait
+
+error: unknown format trait `f`
+   --> examples/optimized_load_test.rs:233:60
+    |
+233 |     println!("   │ Personnel (20 engineers):       ${:>10.0f}/year │", team_annual);
+    |                                                            ^
+    |
+    = note: the only appropriate formatting traits are:
+            - ``, which uses the `Display` trait
+            - `?`, which uses the `Debug` trait
+            - `e`, which uses the `LowerExp` trait
+            - `E`, which uses the `UpperExp` trait
+            - `o`, which uses the `Octal` trait
+            - `p`, which uses the `Pointer` trait
+            - `b`, which uses the `Binary` trait
+            - `x`, which uses the `LowerHex` trait
+            - `X`, which uses the `UpperHex` trait
+
+error: unknown format trait `f`
+   --> examples/optimized_load_test.rs:235:60
+    |
+235 |     println!("   │ TOTAL:                          ${:>10.0f}/year │", total_annual);
+    |                                                            ^
+    |
+    = note: the only appropriate formatting traits are:
+            - ``, which uses the `Display` trait
+            - `?`, which uses the `Debug` trait
+            - `e`, which uses the `LowerExp` trait
+            - `E`, which uses the `UpperExp` trait
+            - `o`, which uses the `Octal` trait
+            - `p`, which uses the `Pointer` trait
+            - `b`, which uses the `Binary` trait
+            - `x`, which uses the `LowerHex` trait
+            - `X`, which uses the `UpperHex` trait
+
+error: unknown format trait `f`
+   --> examples/optimized_load_test.rs:240:47
+    |
+240 |         println!("   Savings vs Datadog: ${:.1f}M/year", 18.0 - (total_annual / 1_000_000.0));
+    |                                               ^
+    |
+    = note: the only appropriate formatting traits are:
+            - ``, which uses the `Display` trait
+            - `?`, which uses the `Debug` trait
+            - `e`, which uses the `LowerExp` trait
+            - `E`, which uses the `UpperExp` trait
+            - `o`, which uses the `Octal` trait
+            - `p`, which uses the `Pointer` trait
+            - `b`, which uses the `Binary` trait
+            - `x`, which uses the `LowerHex` trait
+            - `X`, which uses the `UpperHex` trait
+
+error: unknown format trait `f`
+   --> examples/optimized_load_test.rs:243:36
+    |
+243 |         println!("   Current: ${:.1f}M/year", total_annual / 1_000_000.0);
+    |                                    ^
+    |
+    = note: the only appropriate formatting traits are:
+            - ``, which uses the `Display` trait
+            - `?`, which uses the `Debug` trait
+            - `e`, which uses the `LowerExp` trait
+            - `E`, which uses the `UpperExp` trait
+            - `o`, which uses the `Octal` trait
+            - `p`, which uses the `Pointer` trait
+            - `b`, which uses the `Binary` trait
+            - `x`, which uses the `LowerHex` trait
+            - `X`, which uses the `UpperHex` trait
+
+error: unknown format trait `f`
+   --> examples/optimized_load_test.rs:252:39
+    |
+252 |     println!("      └─ Savings: ~${:.1f}M/year", compute_annual * 0.15 / 1_000_000.0);
+    |                                       ^
+    |
+    = note: the only appropriate formatting traits are:
+            - ``, which uses the `Display` trait
+            - `?`, which uses the `Debug` trait
+            - `e`, which uses the `LowerExp` trait
+            - `E`, which uses the `UpperExp` trait
+            - `o`, which uses the `Octal` trait
+            - `p`, which uses the `Pointer` trait
+            - `b`, which uses the `Binary` trait
+            - `x`, which uses the `LowerHex` trait
+            - `X`, which uses the `UpperHex` trait
+
+error: unknown format trait `f`
+   --> examples/optimized_load_test.rs:262:47
+    |
+262 |     println!("      └─ Storage savings: ~${:.0f}K/year", storage_annual * 0.8 / 1000.0);
+    |                                               ^
+    |
+    = note: the only appropriate formatting traits are:
+            - ``, which uses the `Display` trait
+            - `?`, which uses the `Debug` trait
+            - `e`, which uses the `LowerExp` trait
+            - `E`, which uses the `UpperExp` trait
+            - `o`, which uses the `Octal` trait
+            - `p`, which uses the `Pointer` trait
+            - `b`, which uses the `Binary` trait
+            - `x`, which uses the `LowerHex` trait
+            - `X`, which uses the `UpperHex` trait
+
+error: unknown format trait `f`
+   --> examples/optimized_load_test.rs:267:39
+    |
+267 |     println!("      └─ Savings: ~${:.1f}M/year", compute_annual * 0.7 / 1_000_000.0);
+    |                                       ^
+    |
+    = note: the only appropriate formatting traits are:
+            - ``, which uses the `Display` trait
+            - `?`, which uses the `Debug` trait
+            - `e`, which uses the `LowerExp` trait
+            - `E`, which uses the `UpperExp` trait
+            - `o`, which uses the `Octal` trait
+            - `p`, which uses the `Pointer` trait
+            - `b`, which uses the `Binary` trait
+            - `x`, which uses the `LowerHex` trait
+            - `X`, which uses the `UpperHex` trait
+
+error: unknown format trait `f`
+   --> examples/optimized_load_test.rs:290:60
+    |
+290 |     println!("   │ Projected Annual Cost:          ${:>10.0f}/year │", optimized_total);
+    |                                                            ^
+    |
+    = note: the only appropriate formatting traits are:
+            - ``, which uses the `Display` trait
+            - `?`, which uses the `Debug` trait
+            - `e`, which uses the `LowerExp` trait
+            - `E`, which uses the `UpperExp` trait
+            - `o`, which uses the `Octal` trait
+            - `p`, which uses the `Pointer` trait
+            - `b`, which uses the `Binary` trait
+            - `x`, which uses the `LowerHex` trait
+            - `X`, which uses the `UpperHex` trait
+
+warning: unused import: `std::sync::Arc`
+  --> examples/optimized_load_test.rs:11:5
+   |
+11 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: `fluxx-agent` (example "optimized_load_test") generated 1 warning
+error: could not compile `fluxx-agent` (example "optimized_load_test") due to 11 previous errors; 1 warning emitted
+warning: build failed, waiting for other jobs to finish...
+warning: unused variable: `laptop_power_watts`
+   --> examples/load_test.rs:354:9
+    |
+354 |     let laptop_power_watts = 65.0;
+    |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_laptop_power_watts`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: fields `events_dropped` and `peak_memory_mb` are never read
+  --> examples/load_test.rs:15:5
+   |
+13 | struct LoadMetrics {
+   |        ----------- fields in this struct
+14 |     events_processed: AtomicU64,
+15 |     events_dropped: AtomicU64,
+   |     ^^^^^^^^^^^^^^
+...
+18 |     peak_memory_mb: AtomicU64,
+   |     ^^^^^^^^^^^^^^
+   |
+   = note: `LoadMetrics` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` on by default
+
+warning: function `get_memory_usage_mb` is never used
+  --> examples/load_test.rs:79:4
+   |
+79 | fn get_memory_usage_mb() -> u64 {
+   |    ^^^^^^^^^^^^^^^^^^^
+
+warning: `fluxx-agent` (example "load_test") generated 3 warnings

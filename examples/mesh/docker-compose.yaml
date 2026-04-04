@@ -1,0 +1,104 @@
+version: '3.8'
+
+# 3-Node Fluxx Agent Mesh for Local Testing
+# 
+# Run: docker-compose -f docker-compose.yaml up -d
+# Check status: docker-compose logs -f
+
+services:
+  fluxx-node-1:
+    image: fluxx/agent:latest
+    container_name: fluxx-node-1
+    hostname: node-1
+    environment:
+      - FLUXX_NODE_ID=node-1
+      - FLUXX_MESH_BIND=0.0.0.0:7946
+      - FLUXX_MESH_PEERS=fluxx-node-2:7946,fluxx-node-3:7946
+      - RUST_LOG=info
+    ports:
+      - "7947:7946"
+      - "8080:8080"
+    volumes:
+      - node1-data:/data
+    networks:
+      - fluxx-mesh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  fluxx-node-2:
+    image: fluxx/agent:latest
+    container_name: fluxx-node-2
+    hostname: node-2
+    environment:
+      - FLUXX_NODE_ID=node-2
+      - FLUXX_MESH_BIND=0.0.0.0:7946
+      - FLUXX_MESH_PEERS=fluxx-node-1:7946,fluxx-node-3:7946
+      - RUST_LOG=info
+    ports:
+      - "7948:7946"
+      - "8081:8080"
+    volumes:
+      - node2-data:/data
+    networks:
+      - fluxx-mesh
+    depends_on:
+      - fluxx-node-1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  fluxx-node-3:
+    image: fluxx/agent:latest
+    container_name: fluxx-node-3
+    hostname: node-3
+    environment:
+      - FLUXX_NODE_ID=node-3
+      - FLUXX_MESH_BIND=0.0.0.0:7946
+      - FLUXX_MESH_PEERS=fluxx-node-1:7946,fluxx-node-2:7946
+      - RUST_LOG=info
+    ports:
+      - "7949:7946"
+      - "8082:8080"
+    volumes:
+      - node3-data:/data
+    networks:
+      - fluxx-mesh
+    depends_on:
+      - fluxx-node-1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Load balancer for the mesh
+  nginx:
+    image: nginx:alpine
+    container_name: fluxx-lb
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - fluxx-mesh
+    depends_on:
+      - fluxx-node-1
+      - fluxx-node-2
+      - fluxx-node-3
+
+volumes:
+  node1-data:
+  node2-data:
+  node3-data:
+
+networks:
+  fluxx-mesh:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -225,22 +225,22 @@ fn main() {
     
     println!("\n📊 COST BREAKDOWN (Aggressively Optimized)");
     println!("   ┌────────────────────────────────────────────────────────┐");
-    println!("   │ Compute ({} nodes):             ${:>10.0f}/year │", ha_nodes, compute_annual);
+    println!("   │ Compute ({} nodes):             ${:>10.0}/year │", ha_nodes, compute_annual);
     println!("   │   └─ 70% spot + 30% reserved                           │");
-    println!("   │ Storage (tiered):               ${:>10.0f}/year │", storage_annual);
+    println!("   │ Storage (tiered):               ${:>10.0}/year │", storage_annual);
     println!("   │   └─ Hot/Warm/Cold/Archive tiering                     │");
-    println!("   │ Network (peering):              ${:>10.0f}/year │", network_annual);
-    println!("   │ Personnel (20 engineers):       ${:>10.0f}/year │", team_annual);
+    println!("   │ Network (peering):              ${:>10.0}/year │", network_annual);
+    println!("   │ Personnel (20 engineers):       ${:>10.0}/year │", team_annual);
     println!("   ├────────────────────────────────────────────────────────┤");
-    println!("   │ TOTAL:                          ${:>10.0f}/year │", total_annual);
+    println!("   │ TOTAL:                          ${:>10.0}/year │", total_annual);
     println!("   └────────────────────────────────────────────────────────┘");
     
     if total_annual < 7_000_000.0 {
         println!("\n✅ TARGET ACHIEVED: Under $7M/year!");
-        println!("   Savings vs Datadog: ${:.1f}M/year", 18.0 - (total_annual / 1_000_000.0));
+        println!("   Savings vs Datadog: ${:.1}M/year", 18.0 - (total_annual / 1_000_000.0));
     } else {
         println!("\n⚠️  Need more optimization to hit $7M target");
-        println!("   Current: ${:.1f}M/year", total_annual / 1_000_000.0);
+        println!("   Current: ${:.1}M/year", total_annual / 1_000_000.0);
     }
     
     // Additional optimization strategies
@@ -249,7 +249,7 @@ fn main() {
     println!("   1. USE GRAVITON (ARM) INSTANCES");
     println!("      ├─ 20% cheaper: $0.65/hr vs $0.82/hr spot");
     println!("      ├─ 40% better performance per watt");
-    println!("      └─ Savings: ~${:.1f}M/year", compute_annual * 0.15 / 1_000_000.0);
+    println!("      └─ Savings: ~${:.1}M/year", compute_annual * 0.15 / 1_000_000.0);
     println!("");
     println!("   2. VERTICAL SCALING (BIGGER NODES)");
     println!("      ├─ Use c6i.48xlarge (192 cores) instead of 16xlarge");
@@ -259,12 +259,12 @@ fn main() {
     println!("   3. AGGRESSIVE COMPRESSION");
     println!("      ├─ Zstd compression: 5-10× smaller than JSON");
     println!("      ├─ Columnar format (Parquet): 10× smaller");
-    println!("      └─ Storage savings: ~${:.0f}K/year", storage_annual * 0.8 / 1000.0);
+    println!("      └─ Storage savings: ~${:.0}K/year", storage_annual * 0.8 / 1000.0);
     println!("");
     println!("   4. CUSTOM HARDWARE (if scale big enough)");
     println!("      ├─ Build own servers: 3-5× cheaper than AWS");
     println!("      ├─ Colocation: $0.10/hr vs $0.82/hr spot");
-    println!("      └─ Savings: ~${:.1f}M/year", compute_annual * 0.7 / 1_000_000.0);
+    println!("      └─ Savings: ~${:.1}M/year", compute_annual * 0.7 / 1_000_000.0);
     println!("");
     println!("   5. REDUCE RETENTION");
     println!("      ├─ 7 days hot → 3 days hot");
@@ -287,7 +287,7 @@ fn main() {
     
     println!("   WITH ALL OPTIMIZATIONS:");
     println!("   ┌────────────────────────────────────────────────────────┐");
-    println!("   │ Projected Annual Cost:          ${:>10.0f}/year │", optimized_total);
+    println!("   │ Projected Annual Cost:          ${:>10.0}/year │", optimized_total);
     println!("   └────────────────────────────────────────────────────────┘");
     
     if optimized_total < 7_000_000.0 {

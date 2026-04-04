@@ -1,135 +1,172 @@
-use serde::{Deserialize, Serialize};
-use crate::analysis::insights::Insight;
-use crate::models::event::ProtocolType;
+//! Alert Models
 
-/// Alert: A high-priority notification triggered by protocol anomalies or insights.
+use serde::{Deserialize, Serialize};
+use crate::alerts::config::AlertSeverity;
+
+/// Alert: A notification triggered by threshold breaches or anomalies
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Alert {
     pub id: String,
     pub severity: AlertSeverity,
     pub message: String,
-    pub source_insight: Insight,
+    pub source: String,
     pub timestamp_us: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum AlertSeverity {
-    Info,
-    Warning,
-    Critical,
-}
-
-/// AlertRule: Defines the conditions under which an insight triggers an alert.
-#[derive(Debug, Clone)]
-pub struct AlertRule {
-    pub name: String,
-    pub target_protocol: Option<ProtocolType>,
-    pub min_severity: crate::analysis::insights::InsightLevel,
-}
-
-impl AlertRule {
-    pub fn matches(&self, insight: &Insight) -> bool {
-        // 1. Check protocol match
-        if let Some(proto) = self.target_protocol {
-            if proto != insight.protocol {
-                return false;
-            }
+impl Alert {
+    /// Create a new alert
+    pub fn new(
+        severity: AlertSeverity,
+        message: impl Into<String>,
+        source: impl Into<String>,
+    ) -> Self {
+        Self {
+            id: uuid::Uuid::new_v4().to_string(),
+            severity,
+            message: message.into(),
+            source: source.into(),
+            timestamp_us: chrono::Utc::now().timestamp_micros() as u64,
         }
-        
-        // 2. Check severity threshold (simplified)
-        // (Assuming InsightLevel has a priority order similar to AlertSeverity)
-        insight.level == self.min_severity || insight.level == crate::analysis::insights::InsightLevel::Critical
+    }
+
+    /// Get alert digest for deduplication
+    pub fn digest(&self) -> String {
+        format!("{}:{}:{}", self.source, self.severity as u8, self.message)
+    }
+
+    /// Get short ID (first 8 chars)
+    pub fn short_id(&self) -> &str {
+        &self.id[..8.min(self.id.len())]
+    }
+}
+
+/// Alert state for tracking
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AlertState {
+    /// Alert is firing
+    Firing,
+    /// Alert has been acknowledged
+    Acknowledged,
+    /// Alert has been resolved
+    Resolved,
+    /// Alert was suppressed
+    Suppressed,
+}
+
+/// Tracked alert with state
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrackedAlert {
+    pub alert: Alert,
+    pub state: AlertState,
+    pub created_at: u64,
+    pub updated_at: u64,
+    pub acknowledged_by: Option<String>,
+    pub resolved_at: Option<u64>,
+    pub notification_count: u32,
+}
+
+impl TrackedAlert {
+    pub fn new(alert: Alert) -> Self {
+        let now = chrono::Utc::now().timestamp_micros() as u64;
+        Self {
+            alert,
+            state: AlertState::Firing,
+            created_at: now,
+            updated_at: now,
+            acknowledged_by: None,
+            resolved_at: None,
+            notification_count: 0,
+        }
+    }
+
+    pub fn acknowledge(&mut self, by: impl Into<String>) {
+        self.state = AlertState::Acknowledged;
+        self.acknowledged_by = Some(by.into());
+        self.updated_at = chrono::Utc::now().timestamp_micros() as u64;
+    }
+
+    pub fn resolve(&mut self) {
+        self.state = AlertState::Resolved;
+        self.resolved_at = Some(chrono::Utc::now().timestamp_micros() as u64);
+        self.updated_at = self.resolved_at.unwrap();
+    }
+
+    pub fn increment_notification(&mut self) {
+        self.notification_count += 1;
+    }
+}
+
+/// Alert rule result
+#[derive(Debug, Clone)]
+pub struct AlertRuleResult {
+    pub triggered: bool,
+    pub severity: Option<AlertSeverity>,
+    pub message: Option<String>,
+}
+
+impl AlertRuleResult {
+    pub fn no_match() -> Self {
+        Self {
+            triggered: false,
+            severity: None,
+            message: None,
+        }
+    }
+
+    pub fn trigger(severity: AlertSeverity, message: impl Into<String>) -> Self {
+        Self {
+            triggered: true,
+            severity: Some(severity),
+            message: Some(message.into()),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::analysis::insights::{Insight, InsightLevel};
 
-    // Test 171: AlertSeverity equality
     #[test]
-    fn test_alert_severity_equality() {
-        assert_eq!(AlertSeverity::Info, AlertSeverity::Info);
-        assert_eq!(AlertSeverity::Warning, AlertSeverity::Warning);
-        assert_eq!(AlertSeverity::Critical, AlertSeverity::Critical);
+    fn test_alert_creation() {
+        let alert = Alert::new(
+            AlertSeverity::Critical,
+            "Test message",
+            "test_source",
+        );
+        
+        assert_eq!(alert.severity, AlertSeverity::Critical);
+        assert_eq!(alert.message, "Test message");
+        assert_eq!(alert.source, "test_source");
+        assert!(!alert.id.is_empty());
     }
 
-    // Test 172: AlertSeverity inequality
     #[test]
-    fn test_alert_severity_inequality() {
-        assert_ne!(AlertSeverity::Info, AlertSeverity::Warning);
-        assert_ne!(AlertSeverity::Critical, AlertSeverity::Info);
+    fn test_alert_digest() {
+        let alert1 = Alert::new(AlertSeverity::Warning, "Same message", "source1");
+        let alert2 = Alert::new(AlertSeverity::Warning, "Same message", "source1");
+        let alert3 = Alert::new(AlertSeverity::Critical, "Same message", "source1");
+        
+        assert_eq!(alert1.digest(), alert2.digest());
+        assert_ne!(alert1.digest(), alert3.digest());
     }
 
-    // Test 173: AlertRule matches protocol
     #[test]
-    fn test_alert_rule_matches_protocol() {
-        let rule = AlertRule {
-            name: "Test".to_string(),
-            target_protocol: Some(ProtocolType::Http),
-            min_severity: InsightLevel::Warning,
-        };
-        let insight = Insight::new(ProtocolType::Http, InsightLevel::Warning, "Test");
-        assert!(rule.matches(&insight));
-    }
-
-    // Test 174: AlertRule no match different protocol
-    #[test]
-    fn test_alert_rule_no_match_protocol() {
-        let rule = AlertRule {
-            name: "Test".to_string(),
-            target_protocol: Some(ProtocolType::Http),
-            min_severity: InsightLevel::Warning,
-        };
-        let insight = Insight::new(ProtocolType::Ws, InsightLevel::Warning, "Test");
-        assert!(!rule.matches(&insight));
-    }
-
-    // Test 175: AlertRule matches any protocol when None
-    #[test]
-    fn test_alert_rule_matches_any_protocol() {
-        let rule = AlertRule {
-            name: "Test".to_string(),
-            target_protocol: None,
-            min_severity: InsightLevel::Warning,
-        };
-        let insight = Insight::new(ProtocolType::Grpc, InsightLevel::Warning, "Test");
-        assert!(rule.matches(&insight));
-    }
-
-    // Test 176: AlertRule matches critical regardless
-    #[test]
-    fn test_alert_rule_matches_critical() {
-        let rule = AlertRule {
-            name: "Test".to_string(),
-            target_protocol: Some(ProtocolType::Http),
-            min_severity: InsightLevel::Warning,
-        };
-        let insight = Insight::new(ProtocolType::Http, InsightLevel::Critical, "Test");
-        assert!(rule.matches(&insight));
-    }
-
-    // Test 177: AlertSeverity serialization
-    #[test]
-    fn test_alert_severity_serialization() {
-        let severity = AlertSeverity::Critical;
-        let json = serde_json::to_string(&severity).unwrap();
-        assert!(json.contains("Critical"));
-    }
-
-    // Test 178: Alert serialization
-    #[test]
-    fn test_alert_serialization() {
-        let alert = Alert {
-            id: "alert-1".to_string(),
-            severity: AlertSeverity::Warning,
-            message: "Test alert".to_string(),
-            source_insight: Insight::new(ProtocolType::Http, InsightLevel::Warning, "Test"),
-            timestamp_us: 12345,
-        };
-        let json = serde_json::to_string(&alert).unwrap();
-        assert!(json.contains("alert-1"));
-        assert!(json.contains("Test alert"));
+    fn test_tracked_alert_state() {
+        let alert = Alert::new(AlertSeverity::Warning, "Test", "source");
+        let mut tracked = TrackedAlert::new(alert);
+        
+        assert_eq!(tracked.state, AlertState::Firing);
+        assert_eq!(tracked.notification_count, 0);
+        
+        tracked.increment_notification();
+        assert_eq!(tracked.notification_count, 1);
+        
+        tracked.acknowledge("admin");
+        assert_eq!(tracked.state, AlertState::Acknowledged);
+        assert_eq!(tracked.acknowledged_by, Some("admin".to_string()));
+        
+        tracked.resolve();
+        assert_eq!(tracked.state, AlertState::Resolved);
+        assert!(tracked.resolved_at.is_some());
     }
 }

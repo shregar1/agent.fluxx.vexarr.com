@@ -1,4 +1,5 @@
 pub mod dev;
+pub mod mesh;
 
 use clap::{Parser, Subcommand};
 use crate::config::Config;
@@ -67,6 +68,9 @@ pub enum Commands {
         #[arg(long)]
         instance: Option<String>,
     },
+    
+    /// Mesh networking commands
+    Mesh(mesh::MeshArgs),
 }
 
 pub async fn run() -> anyhow::Result<()> {
@@ -101,6 +105,9 @@ pub async fn run() -> anyhow::Result<()> {
         } => {
             let res = service.deploy_fleet(provider, region, env, hub_ip, cluster_uri, project, instance).await?;
             println!("{}", res);
+        }
+        Commands::Mesh(args) => {
+            mesh::handle_command(args)?;
         }
     }
 

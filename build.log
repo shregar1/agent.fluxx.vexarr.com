@@ -1,0 +1,209 @@
+   Compiling tower v0.4.13
+   Compiling axum v0.6.20
+   Compiling tonic v0.11.0
+   Compiling fluxx-agent v0.1.0 (/Users/shreyansh/Documents/fluxx.dev/agent.fluxx.dev)
+warning: unused import: `FilterProcessor`
+ --> src/core/runtime.rs:8:81
+  |
+8 | use crate::processing::{TagProcessor, LatencyProcessor, LatencyBucketProcessor, FilterProcessor};
+  |                                                                                 ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `crate::replay::ReplayEngine`
+  --> src/core/runtime.rs:11:5
+   |
+11 | use crate::replay::ReplayEngine;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `debug`
+  --> src/core/runtime.rs:17:28
+   |
+17 | use tracing::{info, error, debug};
+   |                            ^^^^^
+
+warning: unused import: `ProtocolType`
+ --> src/protocols/ebpf/mod.rs:4:35
+  |
+4 | use crate::models::event::{Event, ProtocolType};
+  |                                   ^^^^^^^^^^^^
+
+warning: unused import: `crate::protocols::common::CaptureChannel`
+ --> src/protocols/ebpf/mod.rs:5:5
+  |
+5 | use crate::protocols::common::CaptureChannel;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+  --> src/protocols/ebpf/mod.rs:15:5
+   |
+15 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+warning: unused imports: `debug`, `error`, and `info`
+  --> src/protocols/ebpf/mod.rs:16:15
+   |
+16 | use tracing::{info, error, debug};
+   |               ^^^^  ^^^^^  ^^^^^
+
+warning: unused import: `warn`
+ --> src/security/mod.rs:6:22
+  |
+6 | use tracing::{debug, warn};
+  |                      ^^^^
+
+warning: unused import: `crate::models::event::Event`
+ --> src/security/masking.rs:1:5
+  |
+1 | use crate::models::event::Event;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Edge`
+ --> src/graph/mod.rs:1:41
+  |
+1 | use crate::models::graph::{Graph, Node, Edge};
+  |                                         ^^^^
+
+warning: unused import: `crate::core::error::Result`
+ --> src/analysis/mod.rs:3:5
+  |
+3 | use crate::core::error::Result;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::core::error::Result`
+ --> src/alerts/mod.rs:3:5
+  |
+3 | use crate::core::error::Result;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `warn`
+ --> src/alerts/mod.rs:5:21
+  |
+5 | use tracing::{info, warn};
+  |                     ^^^^
+
+warning: unused import: `debug`
+ --> src/comparison/mod.rs:7:21
+  |
+7 | use tracing::{info, debug};
+  |                     ^^^^^
+
+warning: unused import: `Json`
+ --> src/api/server.rs:6:5
+  |
+6 |     Json, Router,
+  |     ^^^^
+
+warning: unused import: `error`
+  --> src/api/server.rs:10:21
+   |
+10 | use tracing::{info, error};
+   |                     ^^^^^
+
+warning: unused import: `crate::core::error::Result`
+ --> src/replay/strategy.rs:2:5
+  |
+2 | use crate::core::error::Result;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> src/replay/strategy.rs:3:5
+  |
+3 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Instant`
+ --> src/sessions/models.rs:3:29
+  |
+3 | use std::time::{SystemTime, Instant};
+  |                             ^^^^^^^
+
+warning: unused import: `ProtocolType`
+ --> src/processing/mod.rs:3:35
+  |
+3 | use crate::models::event::{Event, ProtocolType};
+  |                                   ^^^^^^^^^^^^
+
+warning: unused import: `debug`
+ --> src/processing/pipeline.rs:7:28
+  |
+7 | use tracing::{error, info, debug, warn};
+  |                            ^^^^^
+
+warning: unused import: `Lifecycle`
+ --> src/cli/dev.rs:1:42
+  |
+1 | use crate::core::runtime::{AgentService, Lifecycle};
+  |                                          ^^^^^^^^^
+
+warning: unused import: `warn`
+ --> src/cli/dev.rs:3:21
+  |
+3 | use tracing::{info, warn};
+  |                     ^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> src/cli/dev.rs:4:5
+  |
+4 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `MmapOptions`
+ --> src/perf/mmap_storage.rs:8:30
+  |
+8 | use memmap2::{Mmap, MmapMut, MmapOptions};
+  |                              ^^^^^^^^^^^
+
+warning: variable does not need to be mutable
+  --> src/cli/dev.rs:34:13
+   |
+34 |         let mut service_ref = &mut self.service;
+   |             ----^^^^^^^^^^^
+   |             |
+   |             help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+
+warning: unused variable: `event`
+  --> src/analysis/protocol.rs:75:23
+   |
+75 |     fn analyze(&self, event: &Event) -> Vec<Insight> {
+   |                       ^^^^^ help: if this is intentional, prefix it with an underscore: `_event`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: variable does not need to be mutable
+  --> src/analysis/protocol.rs:76:13
+   |
+76 |         let mut insights = Vec::new();
+   |             ----^^^^^^^^
+   |             |
+   |             help: remove this `mut`
+
+warning: unused variable: `restarts`
+  --> src/analysis/industrial.rs:46:21
+   |
+46 |         if let Some(restarts) = event.metadata.extra.get("ecu_resets") {
+   |                     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_restarts`
+
+warning: method `listen_task` is never used
+  --> src/protocols/quic/mod.rs:28:14
+   |
+19 | impl QuicCapturer {
+   | ----------------- method in this implementation
+...
+28 |     async fn listen_task(&self, endpoint: Endpoint) -> Result<()> {
+   |              ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: field `file` is never read
+  --> src/perf/mmap_storage.rs:15:5
+   |
+14 | pub struct MmapLog {
+   |            ------- field in this struct
+15 |     file: File,
+   |     ^^^^
+
+warning: `fluxx-agent` (lib) generated 31 warnings (run `cargo fix --lib -p fluxx-agent` to apply 27 suggestions)
+    Finished `release` profile [optimized] target(s) in 8.97s

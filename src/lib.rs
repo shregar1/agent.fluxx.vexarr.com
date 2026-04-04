@@ -23,6 +23,9 @@ pub mod utils;
 // High-performance optimizations module
 pub mod perf;
 
+// Distributed mesh networking
+pub mod mesh;
+
 // Re-exports
 pub use core::Agent;
 pub use core::traits::{Capturer, Processor, Transporter, Protocol};

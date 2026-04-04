@@ -1,0 +1,146 @@
+# Kubernetes StatefulSet for Fluxx Agent Mesh
+#
+# Deploys a 3-node mesh using StatefulSet for stable network identities.
+#
+# Apply: kubectl apply -f kubernetes.yaml
+# Check: kubectl get pods -l app=fluxx-agent
+# Logs:  kubectl logs fluxx-agent-0
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fluxx
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluxx-mesh-config
+  namespace: fluxx
+data:
+  mesh.yaml: |
+    gossip:
+      interval_ms: 500
+      timeout_ms: 3000
+      fanout: 3
+    federation:
+      enabled: true
+      timeout_secs: 30
+      max_concurrent: 10
+    replication:
+      factor: 2
+      cross_region: false
+      async_replication: true
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: fluxx-agent
+  namespace: fluxx
+  labels:
+    app: fluxx-agent
+spec:
+  serviceName: fluxx-agent
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fluxx-agent
+  template:
+    metadata:
+      labels:
+        app: fluxx-agent
+    spec:
+      containers:
+      - name: fluxx-agent
+        image: fluxx/agent:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: FLUXX_NODE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: FLUXX_MESH_BIND
+          value: "0.0.0.0:7946"
+        - name: FLUXX_MESH_PEERS
+          value: "fluxx-agent-0.fluxx-agent:7946,fluxx-agent-1.fluxx-agent:7946,fluxx-agent-2.fluxx-agent:7946"
+        - name: RUST_LOG
+          value: "info"
+        ports:
+        - containerPort: 7946
+          name: mesh
+          protocol: UDP
+        - containerPort: 8080
+          name: http
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: config
+          mountPath: /etc/fluxx
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: fluxx-mesh-config
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fluxx-agent
+  namespace: fluxx
+  labels:
+    app: fluxx-agent
+spec:
+  selector:
+    app: fluxx-agent
+  ports:
+  - port: 7946
+    name: mesh
+    protocol: UDP
+  - port: 8080
+    name: http
+  clusterIP: None  # Headless service for StatefulSet
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fluxx-agent-external
+  namespace: fluxx
+  labels:
+    app: fluxx-agent
+spec:
+  selector:
+    app: fluxx-agent
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  type: LoadBalancer

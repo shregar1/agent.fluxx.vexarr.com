@@ -1,0 +1,43 @@
+# Multi-Region Mesh Configuration
+#
+# Deploy Fluxx Agent across multiple regions for global coverage.
+# Each region runs multiple nodes for redundancy.
+
+# This is the configuration for us-east-1 region, node 1
+node_id: us-east-1a
+bind: 0.0.0.0:7946
+
+# Peers include:
+# - Other nodes in same region
+# - Nodes in other regions (at least one per region)
+peers:
+  # Same region
+  - us-east-1b.internal:7946
+  - us-east-1c.internal:7946
+  # Other regions  
+  - us-west-2a.internal:7946
+  - eu-west-1a.internal:7946
+  - ap-southeast-1a.internal:7946
+
+# Gossip optimized for cross-region
+gossip:
+  # Slower gossip for WAN links
+  interval_ms: 500
+  # Longer timeout for cross-region
+  timeout_ms: 5000
+  fanout: 3
+
+# Federation for global queries
+federation:
+  enabled: true
+  timeout_secs: 60
+  max_concurrent: 20
+
+# Replication across regions
+replication:
+  # Keep 3 copies globally
+  factor: 3
+  # Must replicate to different regions
+  cross_region: true
+  # Async for performance
+  async_replication: true

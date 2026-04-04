@@ -1,0 +1,153 @@
+# Fluxx Agent Alert Configuration Example
+#
+# This is a complete example showing all available options.
+# Copy this file and customize for your environment.
+
+alerts:
+  # Enable/disable the entire alert system
+  enabled: true
+  
+  # Global settings
+  cooldown_seconds: 300        # 5 minutes between identical alerts
+  max_alerts_per_hour: 100     # Rate limiting
+
+  # Alert rules define when alerts are triggered
+  rules:
+    # Rule 1: High error rate
+    - name: high_error_rate
+      description: "HTTP 5xx error rate exceeds 5%"
+      condition: "error_rate > 0.05"
+      severity: critical
+      channels: [slack, pagerduty]
+      labels:
+        team: platform
+        service: api-gateway
+        runbook: "https://wiki.internal/runbooks/high-error-rate"
+      cooldown_seconds: 300  # 5 minute cooldown
+
+    # Rule 2: High latency
+    - name: high_latency
+      description: "P99 latency exceeds 500ms"
+      condition: "latency_p99 > 500"
+      severity: warning
+      channels: [slack]
+      labels:
+        team: platform
+        service: api-gateway
+      cooldown_seconds: 600  # 10 minute cooldown
+
+    # Rule 3: Disk space warning
+    - name: disk_space_warning
+      description: "Disk usage above 80%"
+      condition: "disk_percent > 80"
+      severity: warning
+      channels: [slack, email]
+      labels:
+        team: infrastructure
+      cooldown_seconds: 3600  # 1 hour cooldown
+
+    # Rule 4: Disk space critical
+    - name: disk_space_critical
+      description: "Disk usage above 90%"
+      condition: "disk_percent > 90"
+      severity: critical
+      channels: [slack, email, pagerduty]
+      labels:
+        team: infrastructure
+      cooldown_seconds: 600  # 10 minute cooldown
+
+    # Rule 5: High CPU usage
+    - name: high_cpu
+      description: "CPU usage above 85% for 5 minutes"
+      condition: "cpu_percent > 85"
+      severity: warning
+      channels: [slack]
+      labels:
+        team: infrastructure
+      cooldown_seconds: 300
+
+    # Rule 6: High memory usage
+    - name: high_memory
+      description: "Memory usage above 90%"
+      condition: "memory_percent > 90"
+      severity: warning
+      channels: [slack]
+      labels:
+        team: infrastructure
+      cooldown_seconds: 300
+
+    # Rule 7: Database connection failures
+    - name: db_connection_failures
+      description: "Database connection pool exhausted"
+      condition: "db_connections_failed > 10"
+      severity: critical
+      channels: [slack, pagerduty, email]
+      labels:
+        team: database
+        service: postgres
+      cooldown_seconds: 60  # 1 minute - this is serious
+
+    # Rule 8: SSL certificate expiry
+    - name: ssl_expiry_warning
+      description: "SSL certificate expires in less than 7 days"
+      condition: "ssl_days_remaining < 7"
+      severity: warning
+      channels: [email]
+      labels:
+        team: security
+      cooldown_seconds: 86400  # 1 day
+
+  # Notification channels
+  channels:
+    # Slack integration
+    slack:
+      type: slack
+      webhook_url: "${SLACK_WEBHOOK_URL}"
+      channel: "#alerts"           # Optional: override default channel
+      username: "Fluxx Agent"      # Bot username
+      icon_emoji: ":warning:"      # Bot icon
+
+    # Email notifications
+    email:
+      type: email
+      smtp_host: "smtp.gmail.com"
+      smtp_port: 587
+      username: "${EMAIL_USER}"
+      password: "${EMAIL_PASS}"
+      use_tls: true
+      from: "alerts@fluxx.dev"
+      to:
+        - "ops@company.com"
+        - "oncall@company.com"
+      cc:
+        - "manager@company.com"
+
+    # PagerDuty integration
+    pagerduty:
+      type: pagerduty
+      integration_key: "${PAGERDUTY_KEY}"
+      # Optional: custom API endpoint (default shown)
+      # api_url: "https://events.pagerduty.com/v2/enqueue"
+
+    # Generic webhook
+    webhook:
+      type: webhook
+      url: "https://api.company.com/alerts"
+      method: POST
+      headers:
+        Authorization: "Bearer ${ALERT_API_TOKEN}"
+        Content-Type: "application/json"
+        X-Custom-Header: "fluxx-agent"
+      timeout_seconds: 30
+      retry_count: 3
+
+    # Discord integration
+    discord:
+      type: discord
+      webhook_url: "${DISCORD_WEBHOOK_URL}"
+      username: "Fluxx Alerts"
+
+    # Microsoft Teams integration
+    teams:
+      type: teams
+      webhook_url: "${TEAMS_WEBHOOK_URL}"
