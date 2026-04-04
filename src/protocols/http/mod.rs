@@ -42,7 +42,7 @@ impl Capturer for HttpCapturer {
             .map_err(|e| Error::Capture(format!("Fetch body failed: {}", e)))?;
 
         let mut event = Event::new(uuid::Uuid::new_v4().to_string(), ProtocolType::Http);
-        event.payload = Some(body.to_vec());
+        event.payload = Some(String::from_utf8_lossy(&body).to_string());
         
         // Use structured, deduplicated metadata
         event.metadata.user_agent = Some("fluxx-agent/0.1.0".to_string());

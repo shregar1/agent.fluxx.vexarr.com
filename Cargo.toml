@@ -24,9 +24,17 @@ url = "2.5"
 quinn = "0.11"
 tonic = "0.11"
 prost = "0.12"
-aya = "0.1"
-aya-log = "0.1"
-aya-obj = "0.1"
 axum = { version = "0.7", features = ["ws"] }
 tower-http = { version = "0.5", features = ["cors"] }
 bytes = "1.6"
+rand = "0.8"
+regex = "1.10"
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+tower = { version = "0.4", features = ["util"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+aya = "0.12"
+aya-log = "0.2"
+aya-obj = "0.1"

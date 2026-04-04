@@ -59,3 +59,75 @@ impl Config {
         s.try_deserialize().context("Failed to deserialize configuration from path")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Test 71: Config default values
+    #[test]
+    fn test_config_default() {
+        let config = Config::default();
+        assert_eq!(config.agent_name, "fluxx-agent-01");
+        assert_eq!(config.log_level, "info");
+        assert_eq!(config.server.host, "127.0.0.1");
+        assert_eq!(config.server.port, 8080);
+    }
+
+    // Test 72: ServerConfig default
+    #[test]
+    fn test_server_config_default() {
+        let server: ServerConfig = Config::default().server;
+        assert_eq!(server.host, "127.0.0.1");
+        assert_eq!(server.port, 8080);
+    }
+
+    // Test 73: Config clone
+    #[test]
+    fn test_config_clone() {
+        let config = Config::default();
+        let cloned = config.clone();
+        assert_eq!(config.agent_name, cloned.agent_name);
+        assert_eq!(config.log_level, cloned.log_level);
+    }
+
+    // Test 74: Config serialization
+    #[test]
+    fn test_config_serialization() {
+        let config = Config::default();
+        let json = serde_json::to_string(&config).unwrap();
+        assert!(json.contains("fluxx-agent-01"));
+        assert!(json.contains("8080"));
+    }
+
+    // Test 75: ServerConfig serialization
+    #[test]
+    fn test_server_config_serialization() {
+        let server = ServerConfig { host: "0.0.0.0".to_string(), port: 3000 };
+        let json = serde_json::to_string(&server).unwrap();
+        assert!(json.contains("0.0.0.0"));
+        assert!(json.contains("3000"));
+    }
+
+    // Test 76: Config deserialization
+    #[test]
+    fn test_config_deserialization() {
+        let json = r#"{"agent_name":"test-agent","log_level":"debug","server":{"host":"0.0.0.0","port":3000}}"#;
+        let config: Config = serde_json::from_str(json).unwrap();
+        assert_eq!(config.agent_name, "test-agent");
+        assert_eq!(config.log_level, "debug");
+        assert_eq!(config.server.port, 3000);
+    }
+
+    // Test 77: Custom config values
+    #[test]
+    fn test_custom_config() {
+        let config = Config {
+            agent_name: "custom-agent".to_string(),
+            log_level: "debug".to_string(),
+            server: ServerConfig { host: "0.0.0.0".to_string(), port: 9090 },
+        };
+        assert_eq!(config.agent_name, "custom-agent");
+        assert_eq!(config.server.port, 9090);
+    }
+}

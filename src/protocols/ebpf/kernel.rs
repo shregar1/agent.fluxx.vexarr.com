@@ -1,3 +1,4 @@
+#![cfg(target_os = "linux")]
 use serde::{Deserialize, Serialize};
 
 /// EbpfEvent: Shared memory structure mapping the BPF kernel-side event.

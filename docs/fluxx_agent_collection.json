@@ -2,104 +2,218 @@
   "info": {
     "name": "Fluxx Edge Agent API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "High-performance REST & WebSocket API for architectural and Industrial (IoT/Factory) observability."
+    "description": "Unified high-performance API for industrial observability, AI diagnostics, and edge fleet management."
   },
   "item": [
     {
-      "name": "Industrial Telemetry (IoT/Factory)",
+      "name": "Authentication",
       "item": [
         {
-          "name": "List Recent Industrial Anomalies",
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiKey\": \"{{api_key}}\",\n  \"apiSecret\": \"{{api_secret}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "auth", "login"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success: Session Created",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"data\": {\n    \"token\": \"eyJh...\",\n    \"expires_at\": 1712217600\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Project & Fleet Management",
+      "item": [
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Smart Factory Alpha\",\n  \"description\": \"Industrial monitoring for Berlin Production Line.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/projects",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "projects"]
+            }
+          }
+        },
+        {
+          "name": "Setup Environment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project_id\": \"proj-123\",\n  \"name\": \"Production\",\n  \"type\": \"Edge\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/environments",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "environments"]
+            }
+          }
+        },
+        {
+          "name": "Register Service",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"env_id\": \"env-prod-1\",\n  \"name\": \"Robotic Arm Controller\",\n  \"metadata\": { \"type\": \"PLC\", \"ip\": \"192.168.1.50\" }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/services",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "services"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ingestion & Streaming",
+      "item": [
+        {
+          "name": "Telemetry Ingestion",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"id\": \"evt-101\",\n    \"protocol\": \"modbus\",\n    \"payload\": \"BASE64_DATA...\",\n    \"latency_us\": 450,\n    \"metadata\": { \"sensor_id\": \"temp-01\" }\n  }\n]"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/telemetry/ingest",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "telemetry", "ingest"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success: Batch Acknowledged",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"SUCCESS\",\n  \"transaction_urn\": \"urn:fluxx:tx:batch-01\",\n  \"processed\": 1\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "AI Intelligence",
+      "item": [
+        {
+          "name": "AI Health Insights",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/v1/anomalies?protocol=Modbus",
+              "raw": "{{base_url}}/v1/analytics/insights?service_id=plc-01",
               "host": ["{{base_url}}"],
-              "path": ["v1", "anomalies"],
+              "path": ["v1", "analytics", "insights"],
               "query": [
                 {
-                  "key": "protocol",
-                  "value": "Modbus"
+                  "key": "service_id",
+                  "value": "plc-01"
                 }
               ]
             }
           },
           "response": [
             {
-              "name": "Success: Actuator Latency Breach",
+              "name": "Success: AI Generated Insights",
               "status": "OK",
               "code": 200,
-              "body": "{\n  \"transactionUrn\": \"urn:fluxx:tx:1712218000000\",\n  \"status\": \"SUCCESS\",\n  \"responseMessage\": \"Industrial anomalies located.\",\n  \"responseKey\": \"OK\",\n  \"errors\": [],\n  \"timestamp\": \"2026-04-03T12:00:00+05:30\",\n  \"metadata\": { \"device_id\": \"plc-robot-1\" },\n  \"data\": [\n    {\n      \"protocol\": \"Modbus\",\n      \"level\": \"Critical\",\n      \"message\": \"Factory: PLC Actuator response breach (latency > 500ms).\"\n    }\n  ],\n  \"reference_urn\": \"\"\n}"
+              "body": "{\n  \"insights\": [\n    { \"level\": \"WARNING\", \"message\": \"Potential hardware fatigue detected via frequency drift.\" }\n  ]\n}"
             }
           ]
         },
         {
-          "name": "Get Sensor Trip Timeline",
+          "name": "Anomaly List",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/v1/sessions/sensor-trip-789",
+              "raw": "{{base_url}}/v1/anomalies?severity=high",
               "host": ["{{base_url}}"],
-              "path": ["v1", "sessions", "sensor-trip-789"]
+              "path": ["v1", "anomalies"],
+              "query": [
+                {
+                  "key": "severity",
+                  "value": "high"
+                }
+              ]
             }
-          },
-          "response": [
-            {
-              "name": "Success: Trip Sequence",
-              "status": "OK",
-              "code": 200,
-              "body": "{\n  \"transactionUrn\": \"urn:fluxx:tx:1712218100000\",\n  \"status\": \"SUCCESS\",\n  \"responseMessage\": \"IoT trip timeline retrieved.\",\n  \"responseKey\": \"OK\",\n  \"errors\": [],\n  \"timestamp\": \"2026-04-03T12:05:00+05:30\",\n  \"metadata\": { \"fleet\": \"EU-NORTH-1\" },\n  \"data\": {\n    \"id\": \"sensor-trip-789\",\n    \"history\": [\n      { \"event_id\": \"mqtt-1\", \"protocol\": \"Mqtt\", \"drift_factor\": 0.18 }\n    ]\n  },\n  \"reference_urn\": \"\"\n}"
+          }
+        },
+        {
+          "name": "Outlier Detection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1/outliers",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "outliers"]
             }
-          ]
+          }
         }
       ]
     },
     {
-      "name": "Standard Observability",
+      "name": "Reporting & Diagnostics",
       "item": [
         {
-          "name": "List All Sessions",
+          "name": "Report Error",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_id\": \"auth-svc\",\n  \"error_code\": \"500\",\n  \"message\": \"Null pointer in session handler\",\n  \"stack_trace\": \"...\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/errors/report",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "errors", "report"]
+            }
+          }
+        },
+        {
+          "name": "Agent Status",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/v1/sessions",
+              "raw": "{{base_url}}/v1/agent/status",
               "host": ["{{base_url}}"],
-              "path": ["v1", "sessions"]
+              "path": ["v1", "agent", "status"]
             }
-          },
-          "response": [
-            {
-              "name": "Success: Multiple Sessions",
-              "status": "OK",
-              "code": 200,
-              "body": "{\n  \"transactionUrn\": \"urn:fluxx:tx:1712217600000\",\n  \"status\": \"SUCCESS\",\n  \"responseMessage\": \"Sessions list retrieved successfully.\",\n  \"responseKey\": \"OK\",\n  \"errors\": [],\n  \"timestamp\": \"2026-04-03T12:00:00+05:30\",\n  \"metadata\": {},\n  \"data\": [\n    {\n      \"id\": \"sess-123\",\n      \"start_time\": 1712217500,\n      \"service_id\": \"auth-service\"\n    }\n  ],\n  \"reference_urn\": \"\"\n}"
-            }
-          ]
+          }
         }
       ]
-    },
-    {
-      "name": "WebSocket Stream",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "ws://{{host}}:3000/v1/stream?service_id=plc-robot-1",
-          "protocol": "ws",
-          "host": ["{{host}}"],
-          "port": "3000",
-          "path": ["v1", "stream"],
-          "query": [
-            {
-              "key": "service_id",
-              "value": "plc-robot-1"
-            }
-          ]
-        }
-      }
     }
   ],
   "variable": [
@@ -108,8 +222,12 @@
       "value": "http://localhost:3000"
     },
     {
-      "key": "host",
-      "value": "localhost"
+      "key": "api_key",
+      "value": "FLUX_ADMIN_KEY"
+    },
+    {
+      "key": "api_secret",
+      "value": "FLUX_ADMIN_SECRET"
     }
   ]
 }

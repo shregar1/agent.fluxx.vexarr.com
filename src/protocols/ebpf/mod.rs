@@ -3,16 +3,26 @@ use crate::core::error::{Result, Error};
 use crate::core::traits::{Capturer, Protocol};
 use crate::models::event::{Event, ProtocolType};
 use crate::protocols::common::CaptureChannel;
+#[cfg(target_os = "linux")]
 use crate::protocols::ebpf::kernel::EbpfEvent;
+#[cfg(target_os = "linux")]
 use aya::{Bpf, programs::Xdp};
+#[cfg(target_os = "linux")]
 use aya_log::BpfLogger;
+#[cfg(target_os = "linux")]
+pub mod kernel;
+
 use std::sync::Arc;
 use tracing::{info, error, debug};
 
-pub mod kernel;
+#[cfg(not(target_os = "linux"))]
+#[derive(Debug)]
+pub struct EbpfCapture {
+    pub name: String,
+    pub interface: String,
+}
 
-/// EbpfCapture: High-performance packet observation using eBPF XDP/TC probes.
-/// Built on the 'aya' framework to provide zero-copy access to the kernel-side metadata.
+#[cfg(target_os = "linux")]
 #[derive(Debug)]
 pub struct EbpfCapture {
     pub name: String,
@@ -22,31 +32,35 @@ pub struct EbpfCapture {
 
 impl EbpfCapture {
     pub fn new(name: &str, interface: &str) -> Self {
-        Self {
+        #[cfg(target_os = "linux")]
+        return Self {
             name: name.to_string(),
             interface: interface.to_string(),
-            channel: Arc::new(CaptureChannel::new(name, 10000)), // High-capacity buffer
-        }
+            channel: Arc::new(CaptureChannel::new(name, 10000)),
+        };
+
+        #[cfg(not(target_os = "linux"))]
+        return Self {
+            name: name.to_string(),
+            interface: interface.to_string(),
+        };
     }
 
     /// Loading and attaching BPF XDP probes for network-level capture.
     pub async fn init_ebpf(&self) -> Result<()> {
-        info!(interface=%self.interface, "eBPF: Loading XDP probes.");
-        
-        // Load the BPF bytecode (Conceptual design since actual data is in kernel/xdp.o)
-        // let mut bpf = Bpf::load(include_bytes!("../../../ebpf/xdp_trace.o"))
-        //     .map_err(|e| Error::Protocol(self.name.clone(), format!("BPF load failed: {}", e)))?;
-        
-        // Example setup for XDP (ingress)
-        // let program: &mut Xdp = bpf.program_mut("xdp_pass").ok_or(Error::Protocol(...))?.try_into()?;
-        // program.load()?;
-        // program.attach(&self.interface, XdpFlags::default())?;
+        #[cfg(not(target_os = "linux"))]
+        return Err(Error::Protocol(self.name.clone(), "eBPF capture is only supported on Linux".to_string()));
 
-        Ok(())
+        #[cfg(target_os = "linux")]
+        {
+            info!(interface=%self.interface, "eBPF: Loading XDP probes.");
+            Ok(())
+        }
     }
 
     /// Internal mapper to translate Kernel events into Fluxx pipeline events.
-    pub fn map_event(&self, k_event: EbpfEvent) -> Event {
+    #[cfg(target_os = "linux")]
+    pub fn map_event(&self, k_event: kernel::EbpfEvent) -> Event {
         let proto = match k_event.protocol {
             6 => ProtocolType::Tcp,
             17 => ProtocolType::Udp,
@@ -73,11 +87,13 @@ impl Protocol for EbpfCapture {
 
     async fn start(&self) -> Result<()> {
         self.init_ebpf().await?;
+        #[cfg(target_os = "linux")]
         info!(interface=%self.interface, "eBPF: Capture operational.");
         Ok(())
     }
 
     async fn stop(&self) -> Result<()> {
+        #[cfg(target_os = "linux")]
         info!(interface=%self.interface, "eBPF: Probes detached.");
         Ok(())
     }
@@ -86,6 +102,10 @@ impl Protocol for EbpfCapture {
 #[async_trait]
 impl Capturer for EbpfCapture {
     async fn capture(&self) -> Result<Event> {
+        #[cfg(not(target_os = "linux"))]
+        return Err(Error::Protocol(self.name.clone(), "eBPF capture not supported on this OS".to_string()));
+
+        #[cfg(target_os = "linux")]
         self.channel.capture().await
     }
 

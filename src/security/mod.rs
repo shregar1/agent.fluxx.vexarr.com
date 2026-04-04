@@ -37,10 +37,8 @@ impl SecurityProcessor {
 
         // 2. Redaction / Masking (PII protection)
         if let Some(payload) = &event.payload {
-            if let Ok(text) = String::from_utf8(payload.to_vec()) {
-                let sanitized = self.masker.apply(text);
-                event.payload = Some(sanitized.into());
-            }
+            let sanitized = self.masker.apply(payload.clone());
+            event.payload = Some(sanitized);
         }
 
         // 3. Encryption (In-pipeline payload protection)

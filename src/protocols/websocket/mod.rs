@@ -42,9 +42,9 @@ impl StreamHandler for WebSocketCapturer {
 
         while let Some(msg) = reader.next().await {
             match msg {
-                Ok(message) if message.is_data() => {
+                Ok(message) if message.is_binary() || message.is_text() => {
                     let mut event = Event::new(uuid::Uuid::new_v4().to_string(), ProtocolType::Ws);
-                    event.payload = Some(message.into_data().into());
+                    event.payload = Some(String::from_utf8_lossy(&message.into_data()).to_string());
                     event.metadata.source_ip = Some(peer.ip().to_string());
                     
                     if let Err(_) = tx.send(event).await {
@@ -99,6 +99,6 @@ mod tests {
     #[test]
     fn test_ws_capturer_init() {
         let ws = WebSocketCapturer::new("TestWS", "127.0.0.1:8080");
-        assert_eq!(ws.name(), "TestWS");
+        assert_eq!(ws.name, "TestWS");
     }
 }

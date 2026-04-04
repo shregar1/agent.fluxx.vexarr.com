@@ -39,17 +39,21 @@ impl Transporter for ManagedTransporter {
         let retry_strat = self.retry_strategy.clone();
         let network = self.network.clone();
         let event_id = event.id.clone();
+        let name = self.name().to_string();
         
+        let name_for_err = name.clone();
         Retry::spawn(retry_strat, move || {
             let network = network.clone();
             let data = data.clone();
+            let current_id = event_id.clone();
+            let current_name = name.clone();
             async move {
-                debug!(id=%event_id, trans=%name, "ManagedTransporter: Delivering bytes...");
+                debug!(id=%current_id, trans=%current_name, "ManagedTransporter: Delivering bytes...");
                 network.write(data).await
             }
         }).await
         .map_err(|e| {
-            error!(id=%event.id, transport=%name, error=%e, "ManagedTransporter: Persistent delivery failure.");
+            error!(id=%event.id, transport=%name_for_err, error=%e, "ManagedTransporter: Persistent delivery failure.");
             e
         })?;
 

@@ -5,4 +5,5 @@ pub mod websocket;
 pub mod quic;
 pub mod grpc;
 pub mod ebpf;
+pub mod modbus;
 pub mod server;

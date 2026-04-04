@@ -47,15 +47,15 @@ async fn list_sessions(State(state): State<Arc<ApiState>>) -> impl IntoResponse 
     StandardResponse::ok(sessions, "Sessions list retrieved successfully.")
 }
 
-async fn get_session(Path(id): Path<String>, State(state): State<Arc<ApiState>>) -> impl IntoResponse {
+async fn get_session(Path(id): Path<String>, State(state): State<Arc<ApiState>>) -> axum::response::Response {
     match state.session_manager.get_session(&id).await {
-        Some(session) => StandardResponse::ok(session, "Session detail retrieved."),
+        Some(session) => StandardResponse::ok(session, "Session detail retrieved.").into_response(),
         None => StandardResponse::error(
             serde_json::json!({}), 
             "Session not found.", 
             "NOT_FOUND", 
             vec!["The requested session might have been evicted.".to_string()]
-        ),
+        ).into_response(),
     }
 }
 

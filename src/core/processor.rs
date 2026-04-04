@@ -188,6 +188,56 @@ impl Processor for ProcessorChain {
     }
 }
 
+/// Masks sensitive information (PII) from event metadata and payloads.
+#[derive(Debug, Clone)]
+pub struct SecurityProcessor {
+    sensitive_keys: Vec<String>,
+    mask_placeholder: String,
+}
+
+impl SecurityProcessor {
+    pub fn new(keys: Vec<&str>) -> Self {
+        Self {
+            sensitive_keys: keys.into_iter().map(|s| s.to_string()).collect(),
+            mask_placeholder: "[MASKED]".to_string(),
+        }
+    }
+
+    pub fn with_placeholder(mut self, placeholder: &str) -> Self {
+        self.mask_placeholder = placeholder.to_string();
+        self
+    }
+}
+
+#[async_trait]
+impl Processor for SecurityProcessor {
+    async fn process(&self, mut event: Event) -> Result<Option<Event>> {
+        // 1. Mask metadata
+        for key in &self.sensitive_keys {
+            if event.metadata.extra.contains_key(key) {
+                event.metadata.add(key, &self.mask_placeholder);
+            }
+        }
+
+        // 2. Simple payload masking (if it's a string, we look for "key": "value" patterns)
+        if let Some(ref mut payload) = event.payload {
+            for key in &self.sensitive_keys {
+                let pattern = format!("\"{}\":", key);
+                if payload.contains(&pattern) {
+                    // This is a naive implementation; in production, use a JSON parser
+                    *payload = payload.replace(key, &format!("{}_masked", key));
+                }
+            }
+        }
+
+        Ok(Some(event))
+    }
+
+    fn name(&self) -> &str {
+        "SecurityProcessor"
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

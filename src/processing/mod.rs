@@ -8,7 +8,10 @@ use std::time::SystemTime;
 use tracing::debug;
 
 pub mod pipeline;
+pub mod topology;
+
 pub use pipeline::Pipeline;
+pub use topology::TopologyProcessor;
 
 /// TagProcessor: Enriches events with external metadata tags.
 #[derive(Debug, Default, Clone)]

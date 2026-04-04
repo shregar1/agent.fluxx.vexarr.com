@@ -85,3 +85,96 @@ impl Default for Agent {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Test 121: Agent new
+    #[test]
+    fn test_agent_new() {
+        let agent = Agent::new();
+        // Agent should be empty on creation
+        assert!(agent.capturers.is_empty());
+        assert!(agent.processors.is_empty());
+        assert!(agent.transporters.is_empty());
+        assert!(agent.protocols.is_empty());
+    }
+
+    // Test 122: Agent default
+    #[test]
+    fn test_agent_default() {
+        let agent: Agent = Default::default();
+        assert!(agent.capturers.is_empty());
+        assert!(agent.processors.is_empty());
+    }
+
+    // Test 123: Agent add_capturer
+    #[test]
+    fn test_agent_add_capturer() {
+        use crate::protocols::common::CaptureChannel;
+        let mut agent = Agent::new();
+        let capturer = Arc::new(CaptureChannel::new("test", 100));
+        agent.add_capturer(capturer);
+        assert_eq!(agent.capturers.len(), 1);
+    }
+
+    // Test 124: Agent add_processor
+    #[test]
+    fn test_agent_add_processor() {
+        use crate::processing::TopologyProcessor;
+        let mut agent = Agent::new();
+        let processor = Arc::new(TopologyProcessor::new("proj", "env", "svc"));
+        agent.add_processor(processor);
+        assert_eq!(agent.processors.len(), 1);
+    }
+
+    // Test 125: Agent add_transporter
+    #[test]
+    fn test_agent_add_transporter() {
+        use crate::transport::stdout::StdoutTransporter;
+        let mut agent = Agent::new();
+        let transporter = Arc::new(StdoutTransporter::new());
+        agent.add_transporter(transporter);
+        assert_eq!(agent.transporters.len(), 1);
+    }
+
+    // Test 126: Agent shutdown
+    #[test]
+    fn test_agent_shutdown() {
+        let agent = Agent::new();
+        agent.shutdown();
+        assert!(agent.lifecycle.token().is_cancelled());
+    }
+
+    // Test 127: Agent multiple capturers
+    #[test]
+    fn test_agent_multiple_capturers() {
+        use crate::protocols::common::CaptureChannel;
+        let mut agent = Agent::new();
+        agent.add_capturer(Arc::new(CaptureChannel::new("c1", 100)));
+        agent.add_capturer(Arc::new(CaptureChannel::new("c2", 100)));
+        agent.add_capturer(Arc::new(CaptureChannel::new("c3", 100)));
+        assert_eq!(agent.capturers.len(), 3);
+    }
+
+    // Test 128: Agent multiple processors
+    #[test]
+    fn test_agent_multiple_processors() {
+        use crate::processing::TopologyProcessor;
+        let mut agent = Agent::new();
+        agent.add_processor(Arc::new(TopologyProcessor::new("p1", "e1", "s1")));
+        agent.add_processor(Arc::new(TopologyProcessor::new("p2", "e2", "s2")));
+        assert_eq!(agent.processors.len(), 2);
+    }
+
+    // Test 129: Agent multiple transporters
+    #[test]
+    fn test_agent_multiple_transporters() {
+        use crate::transport::stdout::StdoutTransporter;
+        let mut agent = Agent::new();
+        agent.add_transporter(Arc::new(StdoutTransporter::new()));
+        agent.add_transporter(Arc::new(StdoutTransporter::new()));
+        assert_eq!(agent.transporters.len(), 2);
+    }
+}

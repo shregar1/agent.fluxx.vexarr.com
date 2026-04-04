@@ -38,7 +38,7 @@ impl QuicCapturer {
                                 Ok((_, mut rcv)) => {
                                     if let Ok(bytes) = rcv.read_to_end(1024 * 1024).await {
                                         let mut event = Event::new(uuid::Uuid::new_v4().to_string(), ProtocolType::Quic);
-                                        event.payload = Some(bytes.into());
+                                        event.payload = Some(String::from_utf8_lossy(&bytes).to_string());
                                         event.metadata.source_ip = Some(connection.remote_address().ip().to_string());
                                         let _ = tx.send(event).await;
                                     }

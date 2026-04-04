@@ -94,4 +94,19 @@ mod tests {
         assert!(json.contains("\"responseMessage\":"));
         assert!(json.contains("\"data\":100"));
     }
+
+    // Test 199: StandardResponse timestamp is set
+    #[test]
+    fn test_standard_response_timestamp() {
+        let resp = StandardResponse::ok("test", "message");
+        assert!(!resp.timestamp.is_empty());
+        assert!(resp.timestamp.contains('T') || resp.timestamp.contains('+') || resp.timestamp.contains('Z'));
+    }
+
+    // Test 200: StandardResponse metadata is empty object by default
+    #[test]
+    fn test_standard_response_default_metadata() {
+        let resp = StandardResponse::ok("test", "message");
+        assert_eq!(resp.metadata, serde_json::json!({}));
+    }
 }

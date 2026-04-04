@@ -36,6 +36,37 @@ pub enum Commands {
 
     /// Returns the current configuration summary
     Config,
+
+    /// Provisions and deploys the agent to a specified fleet or cloud provider
+    Deploy {
+        /// The cloud or infrastructure provider (aws, azure, gcp, local)
+        #[arg(short, long)]
+        provider: String,
+
+        /// The region for the provider (AWS specific)
+        #[arg(short, long)]
+        region: Option<String>,
+
+        /// The deployment environment (e.g. production, staging)
+        #[arg(short, long)]
+        env: Option<String>,
+
+        /// The IP/Host for a local self-hosted hub
+        #[arg(long)]
+        hub_ip: Option<String>,
+
+        /// The cluster URI for an Azure Data Explorer hub
+        #[arg(long)]
+        cluster_uri: Option<String>,
+
+        /// The project ID for a GCP deployment
+        #[arg(long)]
+        project: Option<String>,
+
+        /// The instance ID for a GCP deployment
+        #[arg(long)]
+        instance: Option<String>,
+    },
 }
 
 pub async fn run() -> anyhow::Result<()> {
@@ -49,7 +80,6 @@ pub async fn run() -> anyhow::Result<()> {
             dev.run().await?;
         }
         Commands::Start { config } => {
-            let mut service = AgentService::new();
             info!("CLI: Initializing Start flow...");
             let cfg = match config {
                 Some(path) => Config::load_from_path(&path).unwrap_or_default(),
@@ -58,14 +88,18 @@ pub async fn run() -> anyhow::Result<()> {
             service.run_agent(cfg).await?;
         }
         Commands::Inspect { target } => {
-            let service = AgentService::new();
             let res = service.inspect_target(&target);
             println!("{}", res);
         }
         Commands::Config => {
-            let service = AgentService::new();
             let cfg = Config::load().unwrap_or_default();
             let res = service.get_config_summary(&cfg);
+            println!("{}", res);
+        }
+        Commands::Deploy { 
+            provider, region, env, hub_ip, cluster_uri, project, instance 
+        } => {
+            let res = service.deploy_fleet(provider, region, env, hub_ip, cluster_uri, project, instance).await?;
             println!("{}", res);
         }
     }
@@ -101,6 +135,18 @@ mod tests {
         match cli.command {
             Commands::Config => {},
             _ => panic!("Expected Config command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_parsing_deploy() {
+        let cli = Cli::try_parse_from(&["fluxx", "deploy", "--provider", "aws", "--region", "us-west-2"]).unwrap();
+        match cli.command {
+            Commands::Deploy { provider, region, .. } => {
+                assert_eq!(provider, "aws");
+                assert_eq!(region, Some("us-west-2".to_string()));
+            },
+            _ => panic!("Expected Deploy command"),
         }
     }
 }
