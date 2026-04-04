@@ -225,8 +225,8 @@ impl KafkaIntegration {
                     if parts.len() >= 5 && parts[0] != "GROUP" {
                         if let Ok(lag) = parts[4].parse::<i64>() {
                             if lag > 10000 {
-                                let group = parts.get(0).unwrap_or(&"unknown");
-                                let topic = parts.get(1).unwrap_or(&"unknown");
+                                let group = parts.get(0).copied().unwrap_or("unknown");
+                                let topic = parts.get(1).copied().unwrap_or("unknown");
                                 events.push(
                                     Event::new(
                                         "High Consumer Lag",

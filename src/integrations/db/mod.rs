@@ -1,10 +1,16 @@
 //! Database Integrations
 
+pub mod cassandra;
+pub mod clickhouse;
+pub mod elasticsearch;
 pub mod mysql;
 pub mod postgres;
 pub mod redis;
 pub mod mongodb;
 
+pub use cassandra::CassandraIntegration;
+pub use clickhouse::ClickHouseIntegration;
+pub use elasticsearch::ElasticsearchIntegration;
 pub use mysql::MySqlIntegration;
 pub use postgres::PostgresIntegration;
 pub use redis::RedisIntegration;

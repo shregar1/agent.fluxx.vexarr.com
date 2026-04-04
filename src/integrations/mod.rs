@@ -70,11 +70,6 @@ pub use framework::{
     Event, EventSeverity,
 };
 
-// Re-export IntegrationManager and IntegrationStatus from this module
-pub use self::{
-    IntegrationManager, IntegrationManagerConfig, IntegrationStatus,
-};
-
 use std::collections::HashMap;
 use std::time::Duration;
 use tokio::time::interval;

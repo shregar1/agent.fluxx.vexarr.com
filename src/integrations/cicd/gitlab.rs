@@ -87,7 +87,7 @@ impl GitLabCiIntegration {
             format!(
                 "{}/api/v4/projects/{}/pipelines?per_page=100",
                 self.base_url,
-                urlencoding::encode(project_id)
+                project_id.replace("/", "%2F")
             )
         } else {
             format!("{}/api/v4/pipelines?per_page=100", self.base_url)
@@ -173,7 +173,7 @@ impl GitLabCiIntegration {
             format!(
                 "{}/api/v4/projects/{}/jobs?per_page=100",
                 self.base_url,
-                urlencoding::encode(project_id)
+                project_id.replace("/", "%2F")
             )
         } else {
             format!("{}/api/v4/jobs?per_page=100", self.base_url)
@@ -354,7 +354,7 @@ impl GitLabCiIntegration {
             format!(
                 "{}/api/v4/projects/{}/pipelines?status=failed&per_page=10",
                 self.base_url,
-                urlencoding::encode(project_id)
+                project_id.replace("/", "%2F")
             )
         } else {
             format!("{}/api/v4/pipelines?status=failed&per_page=10", self.base_url)
