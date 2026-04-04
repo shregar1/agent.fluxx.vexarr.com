@@ -2,11 +2,62 @@
   "info": {
     "name": "Fluxx Edge Agent API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "High-performance REST & WebSocket API for architectural observability and protocol telemetry."
+    "description": "High-performance REST & WebSocket API for architectural and Industrial (IoT/Factory) observability."
   },
   "item": [
     {
-      "name": "Sessions",
+      "name": "Industrial Telemetry (IoT/Factory)",
+      "item": [
+        {
+          "name": "List Recent Industrial Anomalies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1/anomalies?protocol=Modbus",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "anomalies"],
+              "query": [
+                {
+                  "key": "protocol",
+                  "value": "Modbus"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Success: Actuator Latency Breach",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"transactionUrn\": \"urn:fluxx:tx:1712218000000\",\n  \"status\": \"SUCCESS\",\n  \"responseMessage\": \"Industrial anomalies located.\",\n  \"responseKey\": \"OK\",\n  \"errors\": [],\n  \"timestamp\": \"2026-04-03T12:00:00+05:30\",\n  \"metadata\": { \"device_id\": \"plc-robot-1\" },\n  \"data\": [\n    {\n      \"protocol\": \"Modbus\",\n      \"level\": \"Critical\",\n      \"message\": \"Factory: PLC Actuator response breach (latency > 500ms).\"\n    }\n  ],\n  \"reference_urn\": \"\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Sensor Trip Timeline",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1/sessions/sensor-trip-789",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "sessions", "sensor-trip-789"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success: Trip Sequence",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"transactionUrn\": \"urn:fluxx:tx:1712218100000\",\n  \"status\": \"SUCCESS\",\n  \"responseMessage\": \"IoT trip timeline retrieved.\",\n  \"responseKey\": \"OK\",\n  \"errors\": [],\n  \"timestamp\": \"2026-04-03T12:05:00+05:30\",\n  \"metadata\": { \"fleet\": \"EU-NORTH-1\" },\n  \"data\": {\n    \"id\": \"sensor-trip-789\",\n    \"history\": [\n      { \"event_id\": \"mqtt-1\", \"protocol\": \"Mqtt\", \"drift_factor\": 0.18 }\n    ]\n  },\n  \"reference_urn\": \"\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Standard Observability",
       "item": [
         {
           "name": "List All Sessions",
@@ -27,63 +78,6 @@
               "body": "{\n  \"transactionUrn\": \"urn:fluxx:tx:1712217600000\",\n  \"status\": \"SUCCESS\",\n  \"responseMessage\": \"Sessions list retrieved successfully.\",\n  \"responseKey\": \"OK\",\n  \"errors\": [],\n  \"timestamp\": \"2026-04-03T12:00:00+05:30\",\n  \"metadata\": {},\n  \"data\": [\n    {\n      \"id\": \"sess-123\",\n      \"start_time\": 1712217500,\n      \"service_id\": \"auth-service\"\n    }\n  ],\n  \"reference_urn\": \"\"\n}"
             }
           ]
-        },
-        {
-          "name": "Get Session Detail",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/v1/sessions/:id",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "sessions", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "sess-123"
-                }
-              ]
-            }
-          },
-          "response": [
-            {
-              "name": "Success: Detail Found",
-              "status": "OK",
-              "code": 200,
-              "body": "{\n  \"transactionUrn\": \"urn:fluxx:tx:1712217650000\",\n  \"status\": \"SUCCESS\",\n  \"responseMessage\": \"Session detail retrieved.\",\n  \"responseKey\": \"OK\",\n  \"errors\": [],\n  \"timestamp\": \"2026-04-03T12:05:00+05:30\",\n  \"metadata\": {},\n  \"data\": {\n    \"id\": \"sess-123\",\n    \"history\": [\n      { \"event_id\": \"ev-1\", \"protocol\": \"HTTP\", \"latency_us\": 1500 }\n    ]\n  },\n  \"reference_urn\": \"\"\n}"
-            },
-            {
-              "name": "Error: Session Not Found",
-              "status": "Not Found",
-              "code": 404,
-              "body": "{\n  \"transactionUrn\": \"urn:fluxx:tx:1712217700000\",\n  \"status\": \"FAILED\",\n  \"responseMessage\": \"Session not found.\",\n  \"responseKey\": \"NOT_FOUND\",\n  \"errors\": [\"The requested session might have been evicted.\"],\n  \"timestamp\": \"2026-04-03T12:10:00+05:30\",\n  \"metadata\": {},\n  \"data\": {},\n  \"reference_urn\": \"\"\n}"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Anomalies",
-      "item": [
-        {
-          "name": "List Recent Anomalies",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/v1/anomalies",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "anomalies"]
-            }
-          },
-          "response": [
-            {
-              "name": "Success: No Anomalies",
-              "status": "OK",
-              "code": 200,
-              "body": "{\n  \"transactionUrn\": \"urn:fluxx:tx:1712217800000\",\n  \"status\": \"SUCCESS\",\n  \"responseMessage\": \"Anomalies search results.\",\n  \"responseKey\": \"OK\",\n  \"errors\": [],\n  \"timestamp\": \"2026-04-03T12:15:00+05:30\",\n  \"metadata\": {},\n  \"data\": [],\n  \"reference_urn\": \"\"\n}"
-            }
-          ]
         }
       ]
     },
@@ -93,7 +87,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "ws://{{host}}:3000/v1/stream?service_id=auth-service",
+          "raw": "ws://{{host}}:3000/v1/stream?service_id=plc-robot-1",
           "protocol": "ws",
           "host": ["{{host}}"],
           "port": "3000",
@@ -101,18 +95,11 @@
           "query": [
             {
               "key": "service_id",
-              "value": "auth-service"
+              "value": "plc-robot-1"
             }
           ]
-        },
-        "description": "Real-time WebSocket event and insight broadcast with hierarchical filtering."
-      },
-      "response": [
-        {
-          "name": "Example Event Message",
-          "body": "{\n  \"id\": \"ev-456\",\n  \"project_id\": \"fluxx-core\",\n  \"service_id\": \"auth-service\",\n  \"protocol\": \"Http\",\n  \"latency_us\": 2500,\n  \"timestamp_us\": 1712217900000\n}"
         }
-      ]
+      }
     }
   ],
   "variable": [

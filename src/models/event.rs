@@ -37,6 +37,8 @@ pub enum ProtocolType {
     Grpc,
     Quic,
     Ebpf,
+    Mqtt,
+    Modbus,
     Other,
 }
 

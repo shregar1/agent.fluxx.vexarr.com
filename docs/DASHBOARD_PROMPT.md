@@ -1,76 +1,74 @@
-# Fluxx: Comprehensive Frontend Generation Prompt
+# Fluxx: Industrial & Enterprise Dashboard Generation Prompt
 
-Use this prompt with a high-fidelity UI/UX generation AI (e.g., Claude 3.5, v0.dev, or specialized React/Tailwind designers) to build the complete Fluxx observability dashboard.
+Use this high-fidelity UI/UX generation prompt with a React/Tailwind designer (e.g., Claude 3.5 or v0.dev) to build the Fluxx Command Center for **Cloud-Native**, **Automobile**, **Factory Automation**, and **IoT** deployments.
 
 ---
 
-## 🏗️ UI/UX Generation Prompt: "The Fluxx Command Center"
+## 🏗️ UI/UX Generation Prompt: "The Industrial Edge Control"
 
-**Objective**: Build a high-performance, dark-mode observability dashboard for the Fluxx Edge Agent that visualizes complex network telemetry, protocol anomalies, and service topology.
+**Objective**: Build a high-performance, dark-mode observability dashboard for the Fluxx Edge Agent that visualizes complex network telemetry, industrial protocol signals (MQTT, Modbus, CAN-Bus), and cross-environment service topology.
 
 **Design Philosophy**:
 
 - **Monochrome-Plus**: Deep charcoal/black background (#050505) with vibrant neon accents:
   - `Electric Blue (#3b82f6)`: Active protocols and flow edges.
+  - `High-Vis Yellow (#facc15)`: IoT Sensor drift and telemetry warnings.
   - `Neon Green (#22c55e)`: Healthy delivery and successful capture.
-  - `Safety Orange (#f97316)`: Latency spikes and Warnings.
+  - `Industrial Orange (#f97316)`: Actuator latency and PLC warnings.
   - `Emergency Red (#ef4444)`: Reconnect storms and Critical anomalies.
-- **HUD (Heads-Up Display)**: Use monospace fonts (JetBrains Mono, Roboto Mono), dense data grids, and glassmorphism.
-- **Dynamic & Kinetic**: Micro-animations on protocol cards when traffic is captured. Edges in the flow graph should animate in the direction of the request flow.
+- **HUD (Heads-Up Display)**: Use monospace fonts (JetBrains Mono), dense data grids, and glassmorphism.
+- **Dynamic & Kinetic**: Micro-animations on protocol cards when traffic is captured. Edges in the flow graph should animate to show data flow between PLCs and Gateways.
 
 ---
 
 ### 1. Dashboard Layout & Components
 
-#### 🗺️ 1. Service Flow Graph (Topology Map)
+#### 🗺️ 1. Industrial Flow Graph (Device-to-Device)
 
 - **Visual**: A force-directed or circular graph using D3.js or Cytoscape.
-- **Nodes**: Services/Endpoints identified by IP (e.g., `10.0.0.1`, `api.github.com`).
-- **Edges**: Lines connecting nodes, weighted by traffic volume and color-coded by average latency (Green -> Orange -> Red).
-- **Interaction**: Clicking a node filters the global view to that service's logs and metrics.
+- **Nodes**: Services (API), PLCs (Factory), ECUs (Vehicle), and Sensors (IoT) identified by IP or Device ID.
+- **Edges**: Lines connecting nodes, weighted by traffic volume and signal health (Green -> Yellow -> Red).
 
-#### 📈 2. Latency & Performance Matrix
+#### 📉 2. Performance & Signal Matrix
 
-- **Categorical Histograms**: Horizontal bar charts showing the distribution of events in `Latency Buckets` (1ms, 5ms, 50ms, 500ms, >1s).
-- **Protocol Matrix**: A 2x3 grid of status cards for `HTTP`, `WebSocket`, `QUIC`, `gRPC`, `eBPF`, and `TCP/UDP`. Show real-time throughput (req/s) and sub-millisecond latencies.
+- **Protocol Matrix**: A multi-domain grid:
+  - **Standard**: HTTP, WebSocket, gRPC, QUIC.
+  - **Industrial**: **MQTT**, **Modbus**, **CAN-Bus**.
+- **Specialized Gauges**: Radial gauges for **Sensor Drift Factors** and **Actuator Command Latency**.
 
-#### 🧠 3. Intelligence & Anomaly Feed (Insight Manager & Explain Engine)
+#### 🧠 3. Intelligence & Anomaly Feed (Signal Insight & Explain Engine)
 
-- **Component**: A notification list displaying "Insights" and "Alerts".
-- **AI Sidebar**: Clicking an "Insight" opens a side panel with the **Explain Engine** (Summary, Root Cause, Recommendation).
-- **Visual**: High-contrast labels with severity indicators and timestamps.
+- **Component**: A notification list for "Insights" and "Alerts".
+- **Specialized Alerts**: "Sensor Drift Detected (IoT)", "PLC Response Breach (Factory)", "ECU Reset Event (Vehicle)".
+- **AI Sidebar**: Clicking an "Insight" opens the **Explain Engine** with Summary, Root Cause, and Recommendation.
 
-#### ⛓️ 4. Workspace Timeline & Session Explorer
+#### ⛓️ 4. Workspace & Session Explorer
 
-- **Hierarchy Control**: Dropdowns for **Project → Environment → Service** to filter all global data.
+- **Hierarchy Control**: Dropdowns for **Project → Environment → Service (Device)**.
 - **Visual**: A vertical Gantt-style or linear timeline.
-- **Logic**: Select a `session_id` to see the exact sequence of events (HTTP handshakes followed by WS messages) with their interleaved latency gaps.
+- **Logic**: Select a `session_id` to see the exact sequence of events (e.g., a Robot's Start-Trip to End-Cycle timeline).
 
-#### 📊 5. Environment Comparison Tool
+#### 📊 5. Environment & Fleet Comparison Tool
 
-- **Visual**: A 2-column or split-view comparison of two environments (Staging vs. Prod).
-- **Metrics**: Latency, Error Rate, and Throughput deltas.
-- **Visual Highlights**: Large delta percentages (e.g., "+40% Latency") highlighted in Red (Regressions) or Green (Improvements).
+- **Visual**: A 2-column comparison of two environments or two device fleets (Fleet A vs. Fleet B).
+- **Metrics**: Latency, Error Rate, and Signal Stability deltas.
 
 #### 🎮 6. CLI Controller & Command Builder
 
-- **Visual**: A split-screen terminal. Left side: Interactive CLI Command Builder (toggles for protocols, checkboxes for processors like Tagging/Masking, **DevMode Toggle**). Right side: Visual command block (`fluxx start --config ...`).
-- **Functionality**: "Copy to Clipboard" and "Direct Deploy" actions.
+- **Visual**: Interactive CLI Command Builder with toggles for Industrial protocols (MQTT/Modbus/CAN).
 
-#### 🌀 7. Traffic Replay & Chaos Simulator
+#### 🌀 7. Traffic & Signal Replay (Simulation)
 
 - **Visual**: A playback control bar (Play, Pause, Scrub).
-- **Sliders**: `Delay Mutation (ms)`, `Drop Rate (%)`, `Payload Redaction (Toggle)`.
-- **Logic**: Visually scrub through the historical `EventStore` and simulate a "Simulated Live" replay into the dashboard metrics.
+- **Logic**: Visually scrub through the historical `EventStore` and simulate a "Simulated Live" replay of industrial sensor streams.
 
 ---
 
 ### 2. Interaction Logic & Data Flow
 
-- **Real-Time Hydration**: Use a WebSocket or Server-Sent Events (SSE) stream to push `Event` and `Insight` JSON objects from the Fluxx agent.
-- **Query Filters**: Use `?project_id=...&environment_id=...` to filter the live WebSocket stream.
-- **Global Filter**: Selecting a protocol (e.g., `QUIC`) in the sidebar should globally highlight all related nodes in the Flow Graph and filter the Event Stream.
-- **Security Visibility**: Display a "Security Shield" icon on sanitized payloads that have been processed by the `SecurityProcessor`.
+- **Real-Time Hydration**: Use a WebSocket or Server-Sent Events (SSE) stream for live telemetry.
+- **Signal Filtering**: Use `?service_id=...&project_id=...` to filter the live stream.
+- **Security Visibility**: Display a "Security Shield" icon on sanitized industrial IDs that have been processed by the `SecurityProcessor`.
 
 ---
 

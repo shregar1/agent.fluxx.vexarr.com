@@ -6,6 +6,7 @@ use std::fmt::Debug;
 
 pub mod insights;
 pub mod protocol;
+pub mod industrial;
 
 /// Protocol Intelligence Interface: Performs stateless analysis of network events.
 /// Enforces modular detection of anomalies (surges, high latency, reconnects).

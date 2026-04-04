@@ -1,14 +1,14 @@
 {
   "info": {
-    "title": "Fluxx Edge Agent API",
+    "title": "Fluxx Edge Agent: Multi-Domain API Specification",
     "version": "1.0.0",
-    "description": "High-performance REST & WebSocket API for architectural observability telemetry."
+    "description": "High-performance REST & WebSocket API for Cloud-Native, Automobile, and Factory Automation telemetry."
   },
   "endpoints": {
     "sessions": {
       "path": "/v1/sessions",
       "method": "GET",
-      "description": "Lists all active monitored sessions.",
+      "description": "Lists all active monitored sessions (Requests, Trip cycles, PLC heartbeats).",
       "response": {
         "transactionUrn": "urn:fluxx:tx:1712217600000",
         "status": "SUCCESS",
@@ -19,61 +19,40 @@
         "metadata": {},
         "data": [
           {
-            "id": "sess-uuid-1",
-            "project_id": "proj-1",
-            "environment_id": "prod",
-            "service_id": "auth-api"
+            "id": "plc-robot-1-trip",
+            "project_id": "industrial-edge-1",
+            "environment_id": "shopfloor-prod",
+            "service_id": "actuator-v4"
           }
         ],
-        "reference_urn": "ref-123"
-      }
-    },
-    "session_detail": {
-      "path": "/v1/sessions/:id",
-      "method": "GET",
-      "description": "Retrieves the full historical event timeline for a session.",
-      "response": {
-        "transactionUrn": "urn:fluxx:tx:1712217650000",
-        "status": "SUCCESS",
-        "responseMessage": "Session detail retrieved.",
-        "responseKey": "OK",
-        "errors": [],
-        "timestamp": "2026-04-03T12:05:00+05:30",
-        "metadata": {},
-        "data": {
-          "id": "sess-uuid-1",
-          "history": [
-            {
-              "id": "ev-1",
-              "protocol": "Http",
-              "latency_us": 1500,
-              "project_id": "proj-1"
-            }
-          ]
-        },
-        "reference_urn": "ref-detail-1"
+        "reference_urn": "string"
       }
     },
     "anomalies": {
       "path": "/v1/anomalies",
       "method": "GET",
-      "description": "Queries recent protocol anomalies (Insights).",
+      "description": "Queries recent protocol and industrial anomalies (Sensor Drift, Reconnect Storms, ECU Resets).",
       "response": {
         "transactionUrn": "urn:fluxx:tx:1712217700000",
         "status": "SUCCESS",
-        "responseMessage": "Anomalies search completed.",
+        "responseMessage": "Industrial anomalies search completed.",
         "responseKey": "OK",
         "errors": [],
         "timestamp": "2026-04-03T12:10:00+05:30",
         "metadata": {},
         "data": [
           {
-            "protocol": "Ws",
+            "protocol": "Modbus",
             "level": "Critical",
-            "message": "WebSocket reconnect storm detected."
+            "message": "Factory: PLC Actuator response breach (latency > 500ms)."
+          },
+          {
+             "protocol": "Mqtt",
+             "level": "Warning",
+             "message": "IoT: Potential sensor drift detected in edge stream."
           }
         ],
-        "reference_urn": "ref-anom-1"
+        "reference_urn": "string"
       }
     },
     "live_stream": {
@@ -81,17 +60,16 @@
       "method": "WS",
       "description": "Real-time WebSocket event and insight broadcast.",
       "query_params": {
-        "project_id": "string",
-        "environment_id": "string",
-        "service_id": "string"
+        "service_id": "string (e.g. plc-robot-1)"
       },
       "response": {
-        "description": "Broadcasts high-fidelity JSON events or insights.",
+        "description": "Broadcasts high-fidelity JSON events, insights, or signal alerts.",
         "data_payload": {
-          "id": "ev-888",
-          "protocol": "Ebpf",
-          "latency_us": 400,
-          "project_id": "proj-1"
+          "id": "ev-industrial-001",
+          "protocol": "Mqtt",
+          "latency_us": 1200,
+          "drift_factor": 0.18,
+          "service_id": "temp-sensor-fleet-1"
         }
       }
     }
