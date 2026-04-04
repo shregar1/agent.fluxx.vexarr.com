@@ -8,6 +8,7 @@ pub mod security;
 pub mod graph;
 pub mod analysis;
 pub mod alerts;
+pub mod comparison;
 pub mod api;
 pub mod replay;
 pub mod sessions;

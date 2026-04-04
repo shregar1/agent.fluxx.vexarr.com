@@ -1,6 +1,6 @@
-use crate::api::ApiState;
+use crate::api::{ApiState, StandardResponse};
 use axum::{
-    extract::{ws::{WebSocket, WebSocketUpgrade, Message}, Path, State},
+    extract::{ws::{WebSocket, WebSocketUpgrade, Message}, Path, State, Query},
     response::IntoResponse,
     routing::get,
     Json, Router,
@@ -41,21 +41,27 @@ impl ApiServer {
     }
 }
 
-// REST Handlers
+// REST Handlers with standardized response wrapping
 async fn list_sessions(State(state): State<Arc<ApiState>>) -> impl IntoResponse {
-    Json(state.session_manager.list_sessions().await)
+    let sessions = state.session_manager.list_sessions().await;
+    StandardResponse::ok(sessions, "Sessions list retrieved successfully.")
 }
 
 async fn get_session(Path(id): Path<String>, State(state): State<Arc<ApiState>>) -> impl IntoResponse {
     match state.session_manager.get_session(&id).await {
-        Some(session) => Json(session).into_response(),
-        None => (axum::http::StatusCode::NOT_FOUND, "Session not found").into_response(),
+        Some(session) => StandardResponse::ok(session, "Session detail retrieved."),
+        None => StandardResponse::error(
+            serde_json::json!({}), 
+            "Session not found.", 
+            "NOT_FOUND", 
+            vec!["The requested session might have been evicted.".to_string()]
+        ),
     }
 }
 
 async fn list_anomalies() -> impl IntoResponse {
     // Note: Future feature to integrate AlertEngine history retrieval.
-    Json(Vec::<String>::new())
+    StandardResponse::ok(Vec::<String>::new(), "Anomalies search results.")
 }
 
 // WebSocket Streaming with dynamic hierarchy filtering
