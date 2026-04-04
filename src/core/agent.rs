@@ -1,7 +1,7 @@
 use crate::core::error::Result;
 use crate::core::traits::{Capturer, Processor, Transporter, Protocol};
-use crate::core::pipeline::Pipeline;
-use crate::core::lifecycle::Lifecycle;
+use crate::processing::Pipeline;
+use crate::core::runtime::Lifecycle;
 use std::sync::Arc;
 use tracing::{info, error, debug};
 
@@ -10,7 +10,7 @@ pub struct Agent {
     capturers: Vec<Arc<dyn Capturer>>,
     processors: Vec<Arc<dyn Processor>>,
     transporters: Vec<Arc<dyn Transporter>>,
-    protocols: Vec<Arc<dyn Protocol>>, // Lifecycle-managed protocols
+    protocols: Vec<Arc<dyn Protocol>>,
     lifecycle: Lifecycle,
 }
 
@@ -25,7 +25,6 @@ impl Agent {
         }
     }
 
-    /// Registers a specialized network protocol for management.
     pub fn add_protocol(&mut self, protocol: Arc<dyn Protocol>) {
         info!("Agent: Registering protocol '{}'", protocol.name());
         self.protocols.push(protocol);
@@ -43,11 +42,9 @@ impl Agent {
         self.transporters.push(transporter);
     }
 
-    /// Orchestrates the startup of the agent daemon.
     pub async fn start(&self) -> Result<()> {
         info!("Agent: Coordinating startup for {} protocols...", self.protocols.len());
 
-        // Lifecycle Orchestration: Common behavior for ALL protocols (Logs, Status tracking)
         for protocol in &self.protocols {
             info!("Agent: Protocol '{}' starting...", protocol.name());
             if let Err(e) = protocol.start().await {
@@ -57,7 +54,6 @@ impl Agent {
             debug!("Agent: Protocol '{}' is now active.", protocol.name());
         }
 
-        // Pipeline Orchestration: Data flow management
         let pipeline = Pipeline::new(
             self.capturers.clone(),
             self.processors.clone(),
@@ -65,11 +61,8 @@ impl Agent {
         );
 
         pipeline.run(self.lifecycle.token()).await?;
-
-        // Wait for shutdown trigger
         self.lifecycle.wait_for_shutdown().await;
 
-        // Lifecycle Orchestration: Common behavior for ALL protocols (Graceful cleanup)
         for protocol in &self.protocols {
             info!("Agent: Protocol '{}' stopping...", protocol.name());
             if let Err(e) = protocol.stop().await {

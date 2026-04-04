@@ -1,42 +1,37 @@
 use async_trait::async_trait;
 use crate::core::error::Result;
-use crate::core::event::Event;
+use crate::models::event::Event;
 use std::fmt::Debug;
+use std::sync::Arc;
 
 /// High-level trait for specialized network protocols.
-/// Each protocol implementation should focus purely on its unique logic.
 #[async_trait]
 pub trait Protocol: Send + Sync + Debug {
-    /// Unique identifier for the protocol
     fn name(&self) -> &str;
-
-    /// Specific protocol startup logic
     async fn start(&self) -> Result<()>;
-
-    /// Specific protocol shutdown logic
     async fn stop(&self) -> Result<()>;
 }
 
-/// The capture layer: Responsibility for data ingestion.
+/// The capture layer: Optimized for zero-copy data ingestion.
 #[async_trait]
 pub trait Capturer: Send + Sync + Debug {
-    /// Captures a new Fluxx event from the protocol source.
+    /// Captures a Fluxx event. Uses 'Bytes' inside Event for zero-copy.
     async fn capture(&self) -> Result<Event>;
     fn name(&self) -> &str;
 }
 
-/// The processing layer: Responsibility for data transformation.
+/// The processing layer: Sequential transformations and enrichments.
 #[async_trait]
-pub trait Processor: Send + Sync + Debug {
-    /// Transforms or enriches a Fluxx event.
+pub trait Processor: Send + Sync + std::fmt::Debug {
+    /// Transforms the event. Returns Some(Event) to continue or None to drop.
     async fn process(&self, event: Event) -> Result<Option<Event>>;
     fn name(&self) -> &str;
 }
 
-/// The transport layer: Responsibility for data delivery.
+/// The transport layer: Concurrent fan-out using reference sharing.
 #[async_trait]
 pub trait Transporter: Send + Sync + Debug {
-    /// Delivers the final Fluxx event to its destination.
-    async fn send(&self, event: Event) -> Result<()>;
+    /// Delivers the event. Takes Arc<Event> to support zero-copy fan-out across sinks.
+    async fn send(&self, event: Arc<Event>) -> Result<()>;
     fn name(&self) -> &str;
 }

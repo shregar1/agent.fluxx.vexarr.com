@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use crate::core::error::{Error, Result};
 use crate::core::traits::Capturer;
-use crate::core::event::{Event, ProtocolType};
+use crate::models::event::{Event, ProtocolType};
 use tracing::info;
 
 #[derive(Debug)]

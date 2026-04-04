@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use crate::core::error::Result;
-use crate::core::traits::{Event, Transporter};
+use crate::models::event::Event;
+use crate::core::traits::Transporter;
 use tracing::info;
 
 #[derive(Debug)]
@@ -8,19 +9,25 @@ pub struct StdoutTransporter;
 
 #[async_trait]
 impl Transporter for StdoutTransporter {
-    async fn send(&self, event: Event) -> Result<()> {
-        info!(">>> [{:?}] Event ID={}, Latency={}us", 
-            event.protocol, event.id, event.latency_us);
+    async fn send(&self, event: Arc<Event>) -> Result<()> {
+        info!(
+            protocol=?event.protocol, 
+            id=%event.id, 
+            latency=%event.latency_us,
+            "Stdout: Dispatching event."
+        );
         
-        if let Some(ref p) = event.payload {
+        if let Some(p) = event.payload.as_ref() {
             let payload_str = String::from_utf8_lossy(p);
-            info!("PAYLOAD ({} bytes): {}", p.len(), payload_str);
+            debug!(size=p.len(), "Payload preview: {}", payload_str);
         }
         
-        info!("METADATA: source={:?}, ua={:?}, extras={:?}", 
-            event.metadata.source_ip, 
-            event.metadata.user_agent,
-            event.metadata.extra);
+        debug!(
+            source=?event.metadata.source_ip, 
+            ua=?event.metadata.user_agent, 
+            extras=?event.metadata.extra,
+            "Metadata details."
+        );
         
         Ok(())
     }

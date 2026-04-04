@@ -49,4 +49,13 @@ impl Config {
 
         s.try_deserialize().context("Failed to deserialize configuration")
     }
+
+    pub fn load_from_path(path: &str) -> Result<Self> {
+        let s = config::Config::builder()
+            .add_source(config::File::with_name(path))
+            .build()
+            .map_err(|e| anyhow::anyhow!("Config build failed: {}", e))?;
+
+        s.try_deserialize().context("Failed to deserialize configuration from path")
+    }
 }

@@ -12,6 +12,7 @@ pub enum ProtocolType {
     Udp,
     Grpc,
     Quic,
+    Ebpf,
     Other,
 }
 

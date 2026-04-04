@@ -11,13 +11,25 @@ pub enum Error {
     #[error("Transport failed: {0}")]
     Transport(String),
 
-    #[error("Configuration error: {0}")]
+    #[error("Protocol logic error ('{0}'): {1}")]
+    Protocol(String, String),
+
+    #[error("Configuration fault: {0}")]
     Config(String),
 
-    #[error("Internal error: {0}")]
+    #[error("Batch processing error: {0}")]
+    Batch(String),
+
+    #[error("Internal I/O failure: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("Network runtime failure: {0}")]
+    Network(#[from] reqwest::Error),
+
+    #[error("Internal structural error: {0}")]
     Internal(String),
 
-    #[error("Unexpected error")]
+    #[error("Unexpected event loop error")]
     Unknown,
 }
 
