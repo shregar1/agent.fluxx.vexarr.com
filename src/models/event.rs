@@ -516,9 +516,10 @@ mod tests {
     // Test 225: Event serialization skips None payload
     #[test]
     fn test_event_serialization_skips_none_payload() {
-        let event = Event::new("no-payload".to_string(), ProtocolType::Http);
+        let event = Event::new("test-event".to_string(), ProtocolType::Http);
         let json = serde_json::to_string(&event).unwrap();
-        assert!(!json.contains("payload"));
+        // Check that "payload" field is not present (look for the key, not substring)
+        assert!(!json.contains("\"payload\":"));
     }
 
     // Test 226: Event with large payload

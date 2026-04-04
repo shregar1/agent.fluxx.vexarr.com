@@ -21,10 +21,27 @@ pub struct EnvDiff {
 
 impl EnvDiff {
     pub fn calculate(source: &MetricPoint, target: &MetricPoint, s_name: &str, t_name: &str) -> Self {
+        // Handle u64 to i64 conversion safely to avoid overflow
+        let latency_delta = if target.avg_latency_us >= source.avg_latency_us {
+            let diff = target.avg_latency_us - source.avg_latency_us;
+            if diff > i64::MAX as u64 {
+                i64::MAX
+            } else {
+                diff as i64
+            }
+        } else {
+            let diff = source.avg_latency_us - target.avg_latency_us;
+            if diff > i64::MAX as u64 {
+                i64::MIN
+            } else {
+                -(diff as i64)
+            }
+        };
+        
         Self {
             source_env: s_name.to_string(),
             target_env: t_name.to_string(),
-            latency_delta_us: (target.avg_latency_us as i64) - (source.avg_latency_us as i64),
+            latency_delta_us: latency_delta,
             error_rate_delta: target.error_rate - source.error_rate,
             throughput_delta: (target.throughput_rps as i64) - (source.throughput_rps as i64),
         }
@@ -266,7 +283,8 @@ mod tests {
         let source = MetricPoint { avg_latency_us: 0, error_rate: 0.0, throughput_rps: 0 };
         let target = MetricPoint { avg_latency_us: u64::MAX, error_rate: 1.0, throughput_rps: u64::MAX };
         let diff = EnvDiff::calculate(&source, &target, "a", "b");
-        assert_eq!(diff.latency_delta_us, u64::MAX as i64);
+        // When u64::MAX would overflow i64, we clamp to i64::MAX
+        assert_eq!(diff.latency_delta_us, i64::MAX);
         assert_eq!(diff.throughput_delta, u64::MAX as i64);
     }
 

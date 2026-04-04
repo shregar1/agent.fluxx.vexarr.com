@@ -462,8 +462,9 @@ mod tests {
     // Test 588: Result type from analysis
     #[test]
     fn test_analysis_result_type() {
-        fn check_result_type<T>() where T: From<std::io::Error> {}
-        check_result_type::<Result<String>>();
+        // Result<T> is std::result::Result<T, crate::core::error::Error>
+        // Verify it works with standard operations
+        let _: Result<String> = Ok("test".to_string());
     }
 
     // Test 589: AnalysisUtils with identical values
@@ -541,9 +542,11 @@ mod tests {
         use crate::analysis::protocol::HttpAnalyzer;
         use crate::analysis::industrial::SensorAnalyzer;
         
+        let http_analyzer = HttpAnalyzer::default();
+        let sensor_analyzer = SensorAnalyzer::default();
         let analyzers: Vec<(&dyn Analyzer, ProtocolType)> = vec![
-            (&HttpAnalyzer::default(), ProtocolType::Http),
-            (&SensorAnalyzer::default(), ProtocolType::Other),
+            (&http_analyzer, ProtocolType::Http),
+            (&sensor_analyzer, ProtocolType::Other),
         ];
         
         for (analyzer, expected) in analyzers {

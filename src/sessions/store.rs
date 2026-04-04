@@ -78,7 +78,7 @@ mod tests {
     #[test]
     fn test_session_store_new() {
         let store = InMemorySessionStore::new(3600);
-        let _ = store.sessions.read().unwrap();
+        let _unused = store.sessions.read().unwrap();
     }
 
     // Test 102: Insert new session

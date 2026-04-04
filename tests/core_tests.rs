@@ -77,12 +77,8 @@ fn test_core_error_from_io() {
     }
 }
 
-#[test]
-fn test_core_error_clone() {
-    let err = Error::Capture("test".to_string());
-    let cloned = err.clone();
-    assert_eq!(format!("{}", err), format!("{}", cloned));
-}
+// Note: Error does not implement Clone because std::io::Error and reqwest::Error don't
+// If Clone is needed in the future, consider wrapping those variants in Arc
 
 #[test]
 fn test_core_error_eq() {

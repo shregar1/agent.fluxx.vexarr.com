@@ -20,6 +20,9 @@ pub mod models;
 pub mod cli;
 pub mod utils;
 
+// High-performance optimizations module
+pub mod perf;
+
 // Re-exports
 pub use core::Agent;
 pub use core::traits::{Capturer, Processor, Transporter, Protocol};

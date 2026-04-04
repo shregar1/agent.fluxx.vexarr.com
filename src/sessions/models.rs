@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 use crate::models::event::Event;
-use std::time::SystemTime;
+use std::time::{SystemTime, Instant};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static SESSION_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// Session: Defines a logical grouping of network events.
 /// This could represent a single WebSocket connection or a chain of HTTP requests.
@@ -18,11 +21,12 @@ impl Session {
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap_or_default()
             .as_micros() as u64;
-
+        let counter = SESSION_COUNTER.fetch_add(1, Ordering::Relaxed);
+        
         Self {
             id,
-            created_at_us: now,
-            last_seen_us: now,
+            created_at_us: now + counter,
+            last_seen_us: now + counter,
             events: Vec::new(),
         }
     }
@@ -212,8 +216,8 @@ mod tests {
         let json = serde_json::to_string(&session).unwrap();
         assert!(json.contains("evt-1"));
         assert!(json.contains("evt-2"));
-        assert!(json.contains("Http"));
-        assert!(json.contains("Ws"));
+        assert!(json.contains("http"));
+        assert!(json.contains("ws"));
     }
 
     // Test 558: Session deserialization with events

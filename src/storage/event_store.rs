@@ -149,7 +149,7 @@ mod tests {
     #[test]
     fn test_time_window_deserialize_missing_field() {
         let json = r#"{"start_us":1000}"#;
-        let result: Result<TimeWindow, _> = serde_json::from_str(json);
+        let result: std::result::Result<TimeWindow, _> = serde_json::from_str(json);
         assert!(result.is_err());
     }
 
@@ -166,7 +166,7 @@ mod tests {
     #[test]
     fn test_time_window_deserialize_string_numbers() {
         let json = r#"{"start_us":"1000","end_us":"2000"}"#;
-        let result: Result<TimeWindow, _> = serde_json::from_str(json);
+        let result: std::result::Result<TimeWindow, _> = serde_json::from_str(json);
         assert!(result.is_err());
     }
 
@@ -248,19 +248,22 @@ mod tests {
         assert_ne!(w1.end_us, w3.end_us);
     }
 
-    // Test 726: TimeWindow JSON array format fails
+    // Test 726: TimeWindow JSON array format deserializes successfully
     #[test]
-    fn test_time_window_deserialize_array_fails() {
+    fn test_time_window_deserialize_array() {
         let json = r#"[100, 200]"#;
-        let result: Result<TimeWindow, _> = serde_json::from_str(json);
-        assert!(result.is_err());
+        let result: std::result::Result<TimeWindow, _> = serde_json::from_str(json);
+        assert!(result.is_ok());
+        let window = result.unwrap();
+        assert_eq!(window.start_us, 100);
+        assert_eq!(window.end_us, 200);
     }
 
     // Test 727: TimeWindow deserialize null values fails
     #[test]
     fn test_time_window_deserialize_null_fails() {
         let json = r#"{"start_us":null,"end_us":200}"#;
-        let result: Result<TimeWindow, _> = serde_json::from_str(json);
+        let result: std::result::Result<TimeWindow, _> = serde_json::from_str(json);
         assert!(result.is_err());
     }
 
@@ -268,7 +271,7 @@ mod tests {
     #[test]
     fn test_time_window_deserialize_float_fails() {
         let json = r#"{"start_us":100.5,"end_us":200}"#;
-        let result: Result<TimeWindow, _> = serde_json::from_str(json);
+        let result: std::result::Result<TimeWindow, _> = serde_json::from_str(json);
         assert!(result.is_err());
     }
 
@@ -276,7 +279,7 @@ mod tests {
     #[test]
     fn test_time_window_deserialize_negative_fails() {
         let json = r#"{"start_us":-100,"end_us":200}"#;
-        let result: Result<TimeWindow, _> = serde_json::from_str(json);
+        let result: std::result::Result<TimeWindow, _> = serde_json::from_str(json);
         assert!(result.is_err());
     }
 

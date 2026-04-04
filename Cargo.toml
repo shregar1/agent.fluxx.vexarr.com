@@ -4,6 +4,14 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+num_cpus = "1.16"
+simd-json = { version = "0.13", features = ["serde_impl", "runtime-detection"] }
+zstd = { version = "0.13", features = ["pkg-config"] }
+lz4 = "1.24"
+byteorder = "1.5"
+memmap2 = "0.9"
+crossbeam = "0.8"
+parking_lot = "0.12"
 async-trait = "0.1"
 thiserror = "1.0"
 uuid = { version = "1.0", features = ["v4"] }

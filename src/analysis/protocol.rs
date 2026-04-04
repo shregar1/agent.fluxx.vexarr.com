@@ -285,7 +285,7 @@ mod tests {
     fn test_http_analyzer_empty_payload() {
         let analyzer = HttpAnalyzer::default();
         let event = Event::new("evt-1".to_string(), ProtocolType::Http)
-            .with_payload("");
+            .with_payload("".to_string());
         let insights = analyzer.analyze(&event);
         assert!(insights.is_empty());
     }
@@ -854,7 +854,7 @@ mod tests {
     fn test_http_analyzer_1byte_payload() {
         let analyzer = HttpAnalyzer::default();
         let event = Event::new("evt-1".to_string(), ProtocolType::Http)
-            .with_payload("x");
+            .with_payload("x".to_string());
         let insights = analyzer.analyze(&event);
         assert!(insights.is_empty());
     }
