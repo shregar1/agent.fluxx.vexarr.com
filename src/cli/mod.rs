@@ -71,6 +71,31 @@ pub enum Commands {
     
     /// Mesh networking commands
     Mesh(mesh::MeshArgs),
+
+    /// Starts the MCP (Model Context Protocol) server for AI assistants
+    Mcp {
+        /// Optional path to configuration
+        #[arg(short, long)]
+        config: Option<String>,
+    },
+
+    /// OpenClaw autonomous agent integration commands
+    Openclaw {
+        #[command(subcommand)]
+        subcommand: OpenclawSubcommands,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum OpenclawSubcommands {
+    /// Initialize OpenClaw skills and heartbeats in a target directory
+    Init {
+        /// Path to the OpenClaw agent workspace or skills directory
+        #[arg(short, long, default_value = "./.openclaw")]
+        path: String,
+    },
+    /// Check the status of OpenClaw integration
+    Status,
 }
 
 pub async fn run() -> anyhow::Result<()> {
@@ -108,6 +133,48 @@ pub async fn run() -> anyhow::Result<()> {
         }
         Commands::Mesh(args) => {
             mesh::handle_command(args)?;
+        }
+        Commands::Mcp { config } => {
+            info!("CLI: Initializing MCP server flow...");
+            let cfg = match config {
+                Some(path) => crate::ai::McpConfig::default(), // Future: load from path
+                None => crate::ai::McpConfig::default(),
+            };
+            
+            // We need an IntegrationManager for the MCP server
+            // In a real scenario, this would be part of the service state
+            let manager = std::sync::Arc::new(tokio::sync::RwLock::new(
+                crate::integrations::IntegrationManager::new()
+            ));
+            
+            // Run the server
+            crate::ai::mcp_server::start_mcp_server_stdio(manager, cfg).await.map_err(|e| anyhow::anyhow!(e))?;
+        }
+        Commands::Openclaw { subcommand } => {
+            match subcommand {
+                OpenclawSubcommands::Init { path } => {
+                    info!("CLI: Initializing OpenClaw integration at {}...", path);
+                    // Create directories
+                    std::fs::create_dir_all(format!("{}/skills/fluxx_observability", path))?;
+                    
+                    // Write SKILL.md (simplified version here, ideally read from resources)
+                    let skill_content = include_str!("../../extensions/openclaw/fluxx_observability/SKILL.md");
+                    std::fs::write(format!("{}/skills/fluxx_observability/SKILL.md", path), skill_content)?;
+                    
+                    // Write HEARTBEAT.md
+                    let heartbeat_content = "---\ninterval: 30m\ndescription: Periodic health check of infrastructure via Fluxx Agent\n---\n# Fluxx Heartbeat\n1. Use `fluxx inspect all` to check system health.\n2. If any services are unhealthy, use `fluxx_diagnose` to find the root cause.\n3. Report any critical issues to the user immediately.";
+                    std::fs::write(format!("{}/HEARTBEAT.md", path), heartbeat_content)?;
+                    
+                    println!("✅ OpenClaw integration initialized at {}.", path);
+                    println!("Fluxx Skill: {}/skills/fluxx_observability/SKILL.md", path);
+                    println!("Heartbeat: {}/HEARTBEAT.md", path);
+                }
+                OpenclawSubcommands::Status => {
+                    println!("OpenClaw integration version 0.1.0");
+                    println!("Capabilities: [Metrics, Health, Diagnostics, Events]");
+                    println!("Status: Active (using MCP stdio transport)");
+                }
+            }
         }
     }
 

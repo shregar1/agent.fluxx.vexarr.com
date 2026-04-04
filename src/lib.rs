@@ -29,6 +29,9 @@ pub mod mesh;
 // AI-powered diagnostic and remediation
 pub mod diagnostic;
 
+// AI assistant integrations
+pub mod ai;
+
 // 500+ integrations framework
 pub mod integrations;
 

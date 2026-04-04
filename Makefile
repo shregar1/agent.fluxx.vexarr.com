@@ -9,6 +9,7 @@ help:
 	@echo "  make install-quick   - Quick install (skip Rust install, just build)"
 	@echo "  make build           - Build debug version"
 	@echo "  make build-release   - Build optimized release version"
+	@echo "  make build-dist      - Build distribution (smallest binary, ~3MB)"
 	@echo "  make test            - Run all tests"
 	@echo "  make test-fast       - Run tests in release mode (faster)"
 	@echo "  make run             - Run the agent (debug mode)"
@@ -40,6 +41,13 @@ build:
 build-release:
 	cargo build --release
 
+.PHONY: build-dist
+build-dist:
+	cargo build --profile dist
+	@echo ""
+	@echo "✅ Distribution binary built: target/dist/fluxx-agent"
+	@ls -lh target/dist/fluxx-agent | awk '{print "   Size: " $$5}'
+
 .PHONY: run
 run:
 	cargo run
@@ -47,6 +55,10 @@ run:
 .PHONY: run-release
 run-release:
 	cargo run --release
+
+.PHONY: run-dist
+run-dist:
+	cargo run --profile dist
 
 .PHONY: check
 check:

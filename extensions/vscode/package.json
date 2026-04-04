@@ -1,0 +1,104 @@
+{
+    "name": "fluxx-vscode",
+    "displayName": "Fluxx Agent",
+    "description": "Infrastructure observability in VS Code",
+    "version": "0.1.0",
+    "publisher": "fluxx",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other",
+        "Debuggers"
+    ],
+    "keywords": [
+        "observability",
+        "monitoring",
+        "infrastructure",
+        "devops"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "fluxx.showOverview",
+                "title": "Show Infrastructure Overview",
+                "category": "Fluxx"
+            },
+            {
+                "command": "fluxx.healthCheck",
+                "title": "Run Health Check",
+                "category": "Fluxx"
+            },
+            {
+                "command": "fluxx.showIntegrationDetails",
+                "title": "Show Integration Details",
+                "category": "Fluxx"
+            },
+            {
+                "command": "fluxx.refresh",
+                "title": "Refresh",
+                "icon": "$(refresh)",
+                "category": "Fluxx"
+            }
+        ],
+        "views": {
+            "explorer": [
+                {
+                    "id": "fluxx.integrations",
+                    "name": "Fluxx Integrations",
+                    "when": "fluxx.enabled"
+                }
+            ]
+        },
+        "menus": {
+            "view/title": [
+                {
+                    "command": "fluxx.refresh",
+                    "when": "view == fluxx.integrations",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "fluxx.healthCheck",
+                    "when": "view == fluxx.integrations && viewItem == integration",
+                    "group": "inline"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "Fluxx Agent",
+            "properties": {
+                "fluxx.apiUrl": {
+                    "type": "string",
+                    "default": "http://localhost:8080",
+                    "description": "URL of the Fluxx Agent API"
+                },
+                "fluxx.showStatusBar": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show status bar indicator"
+                },
+                "fluxx.refreshInterval": {
+                    "type": "number",
+                    "default": 30,
+                    "description": "Status bar refresh interval in seconds"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.x",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.x"
+    }
+}

@@ -24,6 +24,7 @@ Fluxx Agent is an observability platform that combines the performance of custom
 | **AI Diagnostics** | GPT-4 powered error analysis & auto-fix | 30-second diagnosis |
 | **Auto-Remediation** | Apply fixes automatically with rollback | 80% MTTR reduction |
 | **Smart Ticketing** | Auto-create Jira/GitHub/Linear issues | < 3 seconds |
+| **AI Assistant Integration** | Claude Desktop, VS Code, Cursor | Natural language |
 | **eBPF Integration** | Kernel-level visibility | Zero overhead |
 | **Cost Optimization** | Intelligent sampling & compression | 95% cost reduction vs Datadog |
 
@@ -134,8 +135,10 @@ Get AI-generated root cause analysis, suggested fixes, and code samples in secon
 - **Query federation**: Execute queries across entire cluster
 - **Data replication**: Configurable cross-region redundancy
 
-### 🤖 AI-Powered Diagnostics
+### 🤖 Agentic Observability (NEW)
 
+- **MCP Server**: Native **Model Context Protocol** support for Claude Desktop, Cursor, and Roo Code.
+- **OpenClaw Integration**: Proactive **Skills** and **Heartbeats** for autonomous agent monitoring.
 - **Root cause analysis**: GPT-4/Claude identify why errors happen
 - **Suggested fixes**: AI-generated solutions with confidence scores
 - **Code generation**: Copy-paste ready fixes in your language
@@ -177,7 +180,7 @@ brew install fluxx-agent
 ### Linux
 
 ```bash
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sL https://fluxx.dev/install.sh | bash
 ```
 
 ### Docker
@@ -200,12 +203,13 @@ cargo build --release
 
 ### Basic
 
-```bash
-# Start with default config
-fluxx-agent start
-
-# Start with custom config
-fluxx-agent start --config ./config.yaml
+```mermaid
+graph TD
+    A[Traffic/Probes] -->|eBPF/QUIC| B(Fluxx Agent)
+    B -->|Pipeline| C{Anomalies?}
+    C -->|Yes| D[AI Diagnosis]
+    C -->|No| E[Data Sink]
+    D -->|Insights| F[Alerting/Actions]
 ```
 
 ### Mesh Deployment
@@ -233,9 +237,13 @@ curl http://localhost:8080/query \
 wscat -c ws://localhost:8080/stream
 ```
 
+```bash
+fluxx start
+```
+
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -335,6 +343,7 @@ replication:
 - [Getting Started](docs/GETTING_STARTED.md)
 - [Mesh Documentation](docs/MESH.md)
 - [Diagnostic System](docs/DIAGNOSTIC.md)
+- [AI Assistant Integrations](docs/AI_INTEGRATIONS.md)
 - [API Reference](docs/API.md)
 - [Configuration](docs/CONFIG.md)
 - [Performance Tuning](docs/PERFORMANCE.md)
@@ -445,6 +454,7 @@ Built with:
 - [x] AI-powered diagnostics (GPT-4/Claude)
 - [x] Auto-remediation with rollback
 - [x] Smart ticketing (Jira/GitHub/Linear)
+- [x] AI assistant integrations (Claude Desktop, VS Code)
 - [ ] Auto-scaling (Kubernetes HPA)
 - [ ] Service mesh integration (Istio, Linkerd)
 - [ ] ML-powered anomaly detection
