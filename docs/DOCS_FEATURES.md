@@ -66,12 +66,42 @@ Visualizes service topology and request flow.
 
 A trait-based extension system allowing third-party modules to inject custom `Processors` and `Analyzers`.
 
+## 9. Workspace Topology & Hierarchy
+
+Professional organization for large-scale observability.
+
+- **Logical Flow**: Project -> Environment -> Service -> Logs.
+- **Dynamic Enrichment**: Every event is tagged with its organizational context.
+- **Hierarchical Filtering**: WebSocket logs filtered by Project/Env/Service IDs.
+
+## 10. Alerting System
+
+Context-aware breach notifications triggered by anomalies.
+
+- **`AlertEngine`**: Evaluates `Insights` against high-fidelity rules.
+- **Priority Scoring**: Categorizes alerts into Info, Warning, and Critical.
+
+## 11. Environment Comparison Engine
+
+Identifies performance regressions across deployment stages.
+
+- **Metric Aggregation**: Computes Latency, Error Rate, and Throughput deltas.
+- **Comparison Focus**: `Staging` vs. `Production` performance diffing.
+
+## 12. Explain Engine (AI Layer)
+
+Architectural interpretation of complex telemetry.
+
+- **Root Cause Analysis**: Explains why a specific latency spike or anomaly occurred.
+- **Actionable Recommendations**: Provides remediation steps for developers.
+
 ---
 
-## 9. CLI Interface
+## 13. CLI Interface
 
 Control the agent via the terminal:
 
+- `fluxx start`: Standard activation with configurable flags.
+- **`fluxx dev`**: Rapid-development mode with auto-discovery and terminal streaming.
 - `fluxx inspect <target>`: Real-time protocol diagnostics.
-- `fluxx start`: Activation with configurable flags (`--config`, `--enable-ebpf`).
 - `fluxx config`: Manage local deployment settings.

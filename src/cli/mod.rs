@@ -1,7 +1,10 @@
+pub mod dev;
+
 use clap::{Parser, Subcommand};
 use crate::config::Config;
 use crate::utils::init_logging;
-use crate::core::service::AgentService;
+use crate::core::AgentService;
+use crate::cli::dev::DevManager;
 use tracing::info;
 
 /// CLI interface: Parser and Entry Point for the Fluxx agent.
@@ -15,6 +18,9 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
+    /// Dev mode: Automates local service discovery and live telemetry streaming
+    Dev,
+    
     /// Initialises and runs the agent service
     Start {
         /// Optional path to any configuration file
@@ -38,7 +44,12 @@ pub async fn run() -> anyhow::Result<()> {
     let mut service = AgentService::new();
 
     match cli.command {
+        Commands::Dev => {
+            let mut dev = DevManager::new();
+            dev.run().await?;
+        }
         Commands::Start { config } => {
+            let mut service = AgentService::new();
             info!("CLI: Initializing Start flow...");
             let cfg = match config {
                 Some(path) => Config::load_from_path(&path).unwrap_or_default(),
@@ -47,10 +58,12 @@ pub async fn run() -> anyhow::Result<()> {
             service.run_agent(cfg).await?;
         }
         Commands::Inspect { target } => {
+            let service = AgentService::new();
             let res = service.inspect_target(&target);
             println!("{}", res);
         }
         Commands::Config => {
+            let service = AgentService::new();
             let cfg = Config::load().unwrap_or_default();
             let res = service.get_config_summary(&cfg);
             println!("{}", res);

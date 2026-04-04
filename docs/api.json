@@ -1,0 +1,99 @@
+{
+  "info": {
+    "title": "Fluxx Edge Agent API",
+    "version": "1.0.0",
+    "description": "High-performance REST & WebSocket API for architectural observability telemetry."
+  },
+  "endpoints": {
+    "sessions": {
+      "path": "/v1/sessions",
+      "method": "GET",
+      "description": "Lists all active monitored sessions.",
+      "response": {
+        "transactionUrn": "urn:fluxx:tx:1712217600000",
+        "status": "SUCCESS",
+        "responseMessage": "Sessions list retrieved successfully.",
+        "responseKey": "OK",
+        "errors": [],
+        "timestamp": "2026-04-03T12:00:00+05:30",
+        "metadata": {},
+        "data": [
+          {
+            "id": "sess-uuid-1",
+            "project_id": "proj-1",
+            "environment_id": "prod",
+            "service_id": "auth-api"
+          }
+        ],
+        "reference_urn": "ref-123"
+      }
+    },
+    "session_detail": {
+      "path": "/v1/sessions/:id",
+      "method": "GET",
+      "description": "Retrieves the full historical event timeline for a session.",
+      "response": {
+        "transactionUrn": "urn:fluxx:tx:1712217650000",
+        "status": "SUCCESS",
+        "responseMessage": "Session detail retrieved.",
+        "responseKey": "OK",
+        "errors": [],
+        "timestamp": "2026-04-03T12:05:00+05:30",
+        "metadata": {},
+        "data": {
+          "id": "sess-uuid-1",
+          "history": [
+            {
+              "id": "ev-1",
+              "protocol": "Http",
+              "latency_us": 1500,
+              "project_id": "proj-1"
+            }
+          ]
+        },
+        "reference_urn": "ref-detail-1"
+      }
+    },
+    "anomalies": {
+      "path": "/v1/anomalies",
+      "method": "GET",
+      "description": "Queries recent protocol anomalies (Insights).",
+      "response": {
+        "transactionUrn": "urn:fluxx:tx:1712217700000",
+        "status": "SUCCESS",
+        "responseMessage": "Anomalies search completed.",
+        "responseKey": "OK",
+        "errors": [],
+        "timestamp": "2026-04-03T12:10:00+05:30",
+        "metadata": {},
+        "data": [
+          {
+            "protocol": "Ws",
+            "level": "Critical",
+            "message": "WebSocket reconnect storm detected."
+          }
+        ],
+        "reference_urn": "ref-anom-1"
+      }
+    },
+    "live_stream": {
+      "path": "/v1/stream",
+      "method": "WS",
+      "description": "Real-time WebSocket event and insight broadcast.",
+      "query_params": {
+        "project_id": "string",
+        "environment_id": "string",
+        "service_id": "string"
+      },
+      "response": {
+        "description": "Broadcasts high-fidelity JSON events or insights.",
+        "data_payload": {
+          "id": "ev-888",
+          "protocol": "Ebpf",
+          "latency_us": 400,
+          "project_id": "proj-1"
+        }
+      }
+    }
+  }
+}
