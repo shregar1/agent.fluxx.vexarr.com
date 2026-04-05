@@ -183,25 +183,27 @@ Get AI-generated root cause analysis, suggested fixes, and code samples in secon
 
 ```bash
 brew tap fluxx/tap
-brew install fluxx
-```
-
-### Linux
+### macOS & Linux (One-line)
 
 ```bash
-# Using Makefile (recommended)
-make install
-
-# Or build from source manually
-make build-dist
-sudo cp target/dist/fluxx /usr/local/bin/
+curl -fsSL https://fluxx.dev/install.sh | bash
 ```
 
-### Windows
+### Windows (PowerShell)
 
 ```powershell
-# Using PowerShell (run as Administrator)
-irm https://fluxx.dev/install.ps1 | iex
+iwr -useb https://fluxx.dev/install.ps1 | iex
+```
+
+### From Source
+
+```bash
+# Using Makefile
+make install
+
+# Or build manually
+cargo build --profile dist
+sudo cp target/dist/fluxx /usr/local/bin/
 ```
 
 ### Docker
