@@ -5,7 +5,7 @@ use axum::{
     http::{HeaderMap, StatusCode, header},
     middleware::{self, Next},
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
 use std::sync::Arc;
@@ -90,6 +90,7 @@ impl ApiServer {
             .route("/v1/sessions", get(list_sessions))
             .route("/v1/sessions/:id", get(get_session))
             .route("/v1/anomalies", get(list_anomalies))
+            .route("/v1/events", post(ingest_event))
             .route("/v1/stream", get(stream_ws))
             .layer(middleware::from_fn(security_headers_middleware))
             .layer(middleware::from_fn(auth_middleware))
@@ -124,6 +125,21 @@ async fn get_session(Path(id): Path<String>, State(state): State<Arc<ApiState>>)
 async fn list_anomalies() -> impl IntoResponse {
     // Note: Future feature to integrate AlertEngine history retrieval.
     StandardResponse::ok(Vec::<String>::new(), "Anomalies search results.")
+}
+
+async fn ingest_event(
+    State(state): State<Arc<ApiState>>,
+    Json(event): Json<Event>,
+) -> impl IntoResponse {
+    let event_arc = Arc::new(event);
+    
+    // Broadcast for real-time visualization
+    let _ = state.event_bus.send(event_arc.clone());
+    
+    // Persist for historical search
+    let _ = state.event_store.store_event(event_arc).await;
+
+    StandardResponse::ok(serde_json::json!({}), "Event ingested successfully.")
 }
 
 // WebSocket Streaming with dynamic hierarchy filtering

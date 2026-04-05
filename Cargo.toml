@@ -53,6 +53,7 @@ chrono = { version = "0.4", features = ["serde"] }
 serde_yaml = "0.9"
 whoami = "1.5"
 base64 = "0.22"
+sysinfo = "0.30"
 
 [dev-dependencies]
 tower = { version = "0.4", features = ["util"] }

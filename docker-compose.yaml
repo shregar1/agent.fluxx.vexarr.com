@@ -1,56 +1,20 @@
 version: '3.8'
 
 services:
-  fluxx-node-1:
+  fluxx-agent:
     build: .
-    image: fluxx-agent:dev
-    container_name: fluxx-node-1
+    image: fluxx-agent:latest
+    container_name: fluxx-agent
     environment:
-      - FLUXX_NODE_ID=node-1
-      - FLUXX_MESH_BIND=0.0.0.0:7946
-      - FLUXX_MESH_PEERS=fluxx-node-2:7946,fluxx-node-3:7946
+      - FLUXX_NODE_ID=standalone-node
       - RUST_LOG=info
     ports:
-      - "3001:3000"
+      - "3000:3000"
       - "7946:7946"
     volumes:
-      - ./data/node-1:/data
+      - ./data/agent:/data
     networks:
-      - fluxx-mesh
-
-  fluxx-node-2:
-    build: .
-    image: fluxx-agent:dev
-    container_name: fluxx-node-2
-    environment:
-      - FLUXX_NODE_ID=node-2
-      - FLUXX_MESH_BIND=0.0.0.0:7946
-      - FLUXX_MESH_PEERS=fluxx-node-1:7946,fluxx-node-3:7946
-      - RUST_LOG=info
-    ports:
-      - "3002:3000"
-      - "7947:7946"
-    volumes:
-      - ./data/node-2:/data
-    networks:
-      - fluxx-mesh
-
-  fluxx-node-3:
-    build: .
-    image: fluxx-agent:dev
-    container_name: fluxx-node-3
-    environment:
-      - FLUXX_NODE_ID=node-3
-      - FLUXX_MESH_BIND=0.0.0.0:7946
-      - FLUXX_MESH_PEERS=fluxx-node-1:7946,fluxx-node-2:7946
-      - RUST_LOG=info
-    ports:
-      - "3003:3000"
-      - "7948:7946"
-    volumes:
-      - ./data/node-3:/data
-    networks:
-      - fluxx-mesh
+      - fluxx-network
 
   prometheus:
     image: prom/prometheus:latest
@@ -60,19 +24,19 @@ services:
     ports:
       - "9090:9090"
     networks:
-      - fluxx-mesh
+      - fluxx-network
 
   grafana:
     image: grafana/grafana:latest
     container_name: fluxx-grafana
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
     networks:
-      - fluxx-mesh
+      - fluxx-network
 
 networks:
-  fluxx-mesh:
+  fluxx-network:
     driver: bridge

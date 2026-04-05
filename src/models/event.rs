@@ -38,7 +38,31 @@ pub enum ProtocolType {
     Ebpf,
     Mqtt,
     Modbus,
+    System,
     Other,
+}
+
+/// Criticality levels for operational health monitoring.
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum EventSeverity {
+    Info,
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+impl std::fmt::Display for EventSeverity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EventSeverity::Info => write!(f, "info"),
+            EventSeverity::Low => write!(f, "low"),
+            EventSeverity::Medium => write!(f, "medium"),
+            EventSeverity::High => write!(f, "high"),
+            EventSeverity::Critical => write!(f, "critical"),
+        }
+    }
 }
 
 /// The centralized, high-performance event definition for Fluxx.
@@ -53,6 +77,7 @@ pub struct Event {
     pub timestamp_us: u64,
     pub protocol: ProtocolType,
     pub latency_us: u64,
+    pub severity: EventSeverity,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payload: Option<String>, // Optimized for high-fidelity serialization
     pub metadata: Metadata,
@@ -72,6 +97,7 @@ impl Event {
                 .as_micros() as u64,
             protocol,
             latency_us: 0,
+            severity: EventSeverity::Info,
             payload: None,
             metadata: Metadata::new(),
         }
@@ -218,10 +244,11 @@ mod tests {
     // Test 16: Event deserialization
     #[test]
     fn test_event_deserialization() {
-        let json = r#"{"id":"test-16","protocol":"http","timestamp_us":12345,"latency_us":0,"metadata":{"source_ip":null,"destination_ip":null,"request_id":null,"user_agent":null}}"#;
+        let json = r#"{"id":"test-16","protocol":"http","timestamp_us":12345,"latency_us":0,"severity":"info","metadata":{"source_ip":null,"destination_ip":null,"request_id":null,"user_agent":null}}"#;
         let event: Event = serde_json::from_str(json).unwrap();
         assert_eq!(event.id, "test-16");
         assert_eq!(event.protocol, ProtocolType::Http);
+        assert_eq!(event.severity, EventSeverity::Info);
     }
 
     // Test 17: Metadata new
@@ -501,7 +528,7 @@ mod tests {
     // Test 224: Event deserialization with all fields
     #[test]
     fn test_event_deserialization_all_fields() {
-        let json = r#"{"id":"full","session_id":"sess","project_id":"proj","environment_id":"env","service_id":"svc","timestamp_us":12345,"protocol":"http","latency_us":1000,"payload":"data","metadata":{}}"#;
+        let json = r#"{"id":"full","session_id":"sess","project_id":"proj","environment_id":"env","service_id":"svc","timestamp_us":12345,"protocol":"http","latency_us":1000,"severity":"critical","payload":"data","metadata":{}}"#;
         let event: Event = serde_json::from_str(json).unwrap();
         assert_eq!(event.id, "full");
         assert_eq!(event.session_id, Some("sess".to_string()));
@@ -510,6 +537,7 @@ mod tests {
         assert_eq!(event.service_id, Some("svc".to_string()));
         assert_eq!(event.timestamp_us, 12345);
         assert_eq!(event.latency_us, 1000);
+        assert_eq!(event.severity, EventSeverity::Critical);
         assert_eq!(event.payload, Some("data".to_string()));
     }
 

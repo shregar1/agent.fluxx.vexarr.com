@@ -77,18 +77,16 @@ impl AgentService {
         let api_server = ApiServer::new(api_state, "0.0.0.0:3000");
 
         // 2. Configure Ingestion (Capture Layer)
-        self.agent.add_capturer(Arc::new(HttpCapturer::new("https://api.github.com/zen", "GithubHealth")));
-        self.agent.add_capturer(Arc::new(WebSocketCapturer::new("WsInbound", "0.0.0.0:8080")));
-        self.agent.add_capturer(Arc::new(QuicCapturer::new("QuicFabric", "0.0.0.0:4433")));
-        self.agent.add_capturer(Arc::new(GrpcCapturer::new("GrpcTrace", "0.0.0.0:50051")));
-        
         #[cfg(target_os = "linux")]
         self.agent.add_capturer(Arc::new(EbpfCapture::new("Eth0Capture", "eth0")));
 
         #[cfg(not(target_os = "linux"))]
         self.agent.add_capturer(Arc::new(PcapCapture::new("En0Capture", "en0")));
 
-        // 3. Configure Pipeline (In-Memory Processing)
+        // 3. Register System Resource Monitoring (CPU/RAM/Load)
+        self.agent.add_capturer(Arc::new(crate::protocols::system::SystemCapturer::new("HostHealth", 10)));
+
+        // 4. Configure Pipeline (In-Memory Processing)
         self.agent.add_processor(Arc::new(StorageProcessor::new(event_store)));
         self.agent.add_processor(Arc::new(SessionProcessor::new(session_store)));
         self.agent.add_processor(Arc::new(LatencyProcessor::new()));
@@ -101,7 +99,7 @@ impl AgentService {
         // 4. Configure Transport Sinks
         self.agent.add_transporter(Arc::new(StdoutTransporter));
         
-        let upstream_url = format!("http://{}:{}/events", config.server.host, config.server.port);
+        let upstream_url = format!("http://{}:{}/v1/events", config.server.host, config.server.port);
         let http_net = Arc::new(HttpTransport::new(&upstream_url));
         let managed_http = Arc::new(ManagedTransporter::new(http_net));
         self.agent.add_transporter(managed_http.clone());
