@@ -5,6 +5,7 @@ use crate::protocols::websocket::WebSocketCapturer;
 use crate::protocols::quic::QuicCapturer;
 use crate::protocols::grpc::GrpcCapturer;
 use crate::protocols::ebpf::EbpfCapture;
+use crate::protocols::pcap::PcapCapture;
 use crate::processing::{TagProcessor, LatencyProcessor, LatencyBucketProcessor, FilterProcessor};
 use crate::sessions::{SessionProcessor, InMemorySessionStore, SessionManager};
 use crate::storage::{StorageProcessor, InMemoryEventStore};
@@ -80,7 +81,12 @@ impl AgentService {
         self.agent.add_capturer(Arc::new(WebSocketCapturer::new("WsInbound", "0.0.0.0:8080")));
         self.agent.add_capturer(Arc::new(QuicCapturer::new("QuicFabric", "0.0.0.0:4433")));
         self.agent.add_capturer(Arc::new(GrpcCapturer::new("GrpcTrace", "0.0.0.0:50051")));
+        
+        #[cfg(target_os = "linux")]
         self.agent.add_capturer(Arc::new(EbpfCapture::new("Eth0Capture", "eth0")));
+
+        #[cfg(not(target_os = "linux"))]
+        self.agent.add_capturer(Arc::new(PcapCapture::new("En0Capture", "en0")));
 
         // 3. Configure Pipeline (In-Memory Processing)
         self.agent.add_processor(Arc::new(StorageProcessor::new(event_store)));

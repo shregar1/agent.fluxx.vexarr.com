@@ -12,7 +12,7 @@ rust-version = "1.70"
 
 # Explicit binary configuration - only includes src/main.rs, not tests
 [[bin]]
-name = "fluxx-agent"
+name = "fluxx"
 path = "src/main.rs"
 
 [dependencies]
@@ -61,6 +61,9 @@ tower = { version = "0.4", features = ["util"] }
 aya = "0.12"
 aya-log = "0.2"
 aya-obj = "0.1"
+
+[target.'cfg(not(target_os = "linux"))'.dependencies]
+pcap = "2.0"
 
 # Release profile optimized for binary size
 [profile.release]

@@ -257,17 +257,17 @@ replication:
 
 ```bash
 # Using configuration file
-FLUXX_MESH_CONFIG=/etc/fluxx/mesh.yaml ./fluxx-agent
+FLUXX_MESH_CONFIG=/etc/fluxx/mesh.yaml ./fluxx
 
 # Using environment variables
 FLUXX_NODE_ID=node-1 \
 FLUXX_MESH_BIND=0.0.0.0:7946 \
 FLUXX_MESH_PEERS=peer1:7946,peer2:7946 \
-./fluxx-agent
+./fluxx
 
 # Using CLI generation
-fluxx-agent mesh config --nodes 3 --format yaml --output mesh.yaml
-fluxx-agent mesh docker --nodes 3 --output docker-compose.yaml
+fluxx mesh config --nodes 3 --format yaml --output mesh.yaml
+fluxx mesh docker --nodes 3 --output docker-compose.yaml
 ```
 
 ### Monitoring
@@ -316,7 +316,7 @@ peers:
 
 2. **Start the node:**
 ```bash
-./fluxx-agent
+./fluxx
 ```
 
 3. **Verify join:**
@@ -358,7 +358,7 @@ cp /etc/fluxx/mesh.yaml backup/
 tar xzf backup-20240101.tar.gz -C /
 
 # Start with same node_id
-FLUXX_NODE_ID=restored-node ./fluxx-agent
+FLUXX_NODE_ID=restored-node ./fluxx
 ```
 
 ---
@@ -416,7 +416,7 @@ let results = mesh.query("SELECT * FROM events").await?;
 **Debug:**
 ```bash
 # Enable debug logging
-RUST_LOG=debug ./fluxx-agent
+RUST_LOG=debug ./fluxx
 
 # Test connectivity
 nc -u -v peer-address 7946
@@ -562,7 +562,7 @@ mesh:
 
 1. **Prepare configuration:**
 ```bash
-fluxx-agent mesh config --nodes 3 --output mesh.yaml
+fluxx mesh config --nodes 3 --output mesh.yaml
 ```
 
 2. **Update first node:**
@@ -571,7 +571,7 @@ fluxx-agent mesh config --nodes 3 --output mesh.yaml
 kill -TERM <pid>
 
 # Start with mesh config
-FLUXX_MESH_CONFIG=mesh.yaml ./fluxx-agent
+FLUXX_MESH_CONFIG=mesh.yaml ./fluxx
 ```
 
 3. **Add additional nodes:**

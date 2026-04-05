@@ -172,12 +172,13 @@ mod tests {
 
     #[test]
     fn test_mmap_log() {
-        let temp_path = "/tmp/test_mmap_log.bin";
+        let mut temp_path = std::env::temp_dir();
+        temp_path.push("test_mmap_log.bin");
         
         // Clean up
-        let _ = std::fs::remove_file(temp_path);
+        let _ = std::fs::remove_file(&temp_path);
         
-        let mut log = MmapLog::open(temp_path, 1).unwrap();
+        let mut log = MmapLog::open(&temp_path, 1).unwrap();
         
         let data = b"Hello, memory-mapped world!";
         let offset = log.append(data).unwrap();
@@ -194,10 +195,11 @@ mod tests {
 
     #[test]
     fn test_mmap_performance() {
-        let temp_path = "/tmp/test_mmap_perf.bin";
-        let _ = std::fs::remove_file(temp_path);
+        let mut temp_path = std::env::temp_dir();
+        temp_path.push("test_mmap_perf.bin");
+        let _ = std::fs::remove_file(&temp_path);
         
-        let mut log = MmapLog::open(temp_path, 100).unwrap();
+        let mut log = MmapLog::open(&temp_path, 100).unwrap();
         
         let data = vec![0u8; 1024]; // 1KB chunks
         let count = 10_000;
@@ -215,6 +217,6 @@ mod tests {
         println!("Throughput: {:.0} MB/s", mb_written / seconds);
         
         // Cleanup
-        let _ = std::fs::remove_file(temp_path);
+        let _ = std::fs::remove_file(&temp_path);
     }
 }

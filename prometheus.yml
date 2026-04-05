@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: 'fluxx-mesh'
+    static_configs:
+      - targets: ['fluxx-node-1:3000', 'fluxx-node-2:3000', 'fluxx-node-3:3000']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: 'fluxx-node-(.*):3000'
+        replacement: 'node-${1}'

@@ -115,7 +115,7 @@ std::fs::write(format!("{}/HEARTBEAT.md", path), heartbeat_content)?;
 
 **Attack Scenario:**
 ```bash
-fluxx-agent openclaw init --path "../../../etc/cron.d"
+fluxx openclaw init --path "../../../etc/cron.d"
 # Creates files in system directories
 ```
 

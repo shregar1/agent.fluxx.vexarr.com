@@ -187,7 +187,7 @@ cargo test nlp_query
 
 1. Check Claude Desktop logs: `~/Library/Logs/Claude/mcp*.log`
 2. Verify fluxx-agent is in PATH: `which fluxx-agent`
-3. Test MCP manually: `fluxx-agent mcp`
+3. Test MCP manually: `fluxx mcp`
 
 ### VS Code Extension Not Working
 

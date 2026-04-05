@@ -58,23 +58,23 @@ The Fluxx Agent CLI features a beautiful, informative banner that displays user 
 ## Commands with Full Banner
 
 Commands that display the full banner:
-- `fluxx-agent start`
-- `fluxx-agent dev`
+- `fluxx start`
+- `fluxx dev`
 
 ## Commands with Compact Banner
 
 Commands that display the compact banner:
-- `fluxx-agent config`
-- `fluxx-agent mesh <subcommand>`
-- `fluxx-agent mcp`
+- `fluxx config`
+- `fluxx mesh <subcommand>`
+- `fluxx mcp`
 
 ## Commands Without Banner
 
 Commands that don't display a banner (for scripting):
-- `fluxx-agent --help`
+- `fluxx --help`
 - `fluxx-agent --version`
-- `fluxx-agent inspect <target>`
-- `fluxx-agent deploy ...`
+- `fluxx inspect <target>`
+- `fluxx deploy ...`
 
 ## Customization
 
@@ -92,7 +92,7 @@ The banner uses ANSI color codes that work in most modern terminals:
 To disable colored output, set the `NO_COLOR` environment variable:
 
 ```bash
-NO_COLOR=1 fluxx-agent start
+NO_COLOR=1 fluxx start
 ```
 
 ### Terminal Width

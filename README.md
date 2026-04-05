@@ -1,12 +1,16 @@
-# Fluxx Agent
+# Fluxx
 
 **High-performance, distributed observability for the modern infrastructure.**
+
+One command. One binary. Complete observability.
 
 [![Build Status](https://github.com/fluxx/agent/workflows/CI/badge.svg)](https://github.com/fluxx/agent/actions)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Crates.io](https://img.shields.io/crates/v/fluxx-agent.svg)](https://crates.io/crates/fluxx-agent)
 
-[Documentation](https://fluxx.dev/docs) | [Quick Start](#quick-start) | [Installation](#installation) | [Blog](blogs/)
+[Documentation](https://fluxx.dev/docs) | [Quick Start](#quick-start) | [Installation](docs/INSTALL.md) | [Blog](blogs/)
+
+[![Install](https://img.shields.io/badge/install-%20%20-blue)](https://fluxx.dev/install.sh)
 
 ---
 
@@ -33,14 +37,14 @@ Fluxx Agent is an observability platform that combines the performance of custom
 
 ## Quick Start
 
-### Single Node (30 seconds)
+To start using Fluxx, follow the [Quick Start Guide](docs/QUICKSTART.md).
 
 ```bash
-# Install
-curl -sSL https://fluxx.dev/install.sh | bash
+# Analyze a specific protocol
+fluxx inspect http --port 8080
 
 # Start
-fluxx-agent start
+fluxx start
 
 # Query
 curl http://localhost:8080/query -d "SELECT * FROM events LIMIT 10"
@@ -52,7 +56,7 @@ curl http://localhost:8080/query -d "SELECT * FROM events LIMIT 10"
 ```bash
 FLUXX_NODE_ID=node-1 \
 FLUXX_MESH_BIND=0.0.0.0:7946 \
-fluxx-agent
+fluxx
 ```
 
 **Node 2:**
@@ -60,7 +64,7 @@ fluxx-agent
 FLUXX_NODE_ID=node-2 \
 FLUXX_MESH_BIND=0.0.0.0:7946 \
 FLUXX_MESH_PEERS=node-1:7946 \
-fluxx-agent
+fluxx
 ```
 
 Done. You have a distributed observability mesh.
@@ -72,7 +76,7 @@ Done. You have a distributed observability mesh.
 export OPENAI_API_KEY="sk-..."
 
 # Start with diagnostics enabled
-fluxx-agent start --enable-diagnostics
+fluxx start --enable-diagnostics
 
 # Submit an error for AI analysis
 curl http://localhost:8080/diagnose \
@@ -100,7 +104,11 @@ Get AI-generated root cause analysis, suggested fixes, and code samples in secon
 │  Fluxx Agent    ████████████████████  218M evt/sec │
 │  Datadog Agent  ████████               50M evt/sec │
 │  Prometheus     ██████                 30M evt/sec │
-│  Elastic Agent  ████                   20M evt/sec │
+│                                                     │
+│  | Feature | Splunk | Fluxx Agent |
+│  |---------|---------|-------------|
+│  | Cost | $2,200,000 | $24,000 |
+│  | Latency | >1s | <1ms |
 │                                                     │
 └─────────────────────────────────────────────────────┘
 ```
@@ -175,13 +183,25 @@ Get AI-generated root cause analysis, suggested fixes, and code samples in secon
 
 ```bash
 brew tap fluxx/tap
-brew install fluxx-agent
+brew install fluxx
 ```
 
 ### Linux
 
 ```bash
-curl -sL https://fluxx.dev/install.sh | bash
+# Using Makefile (recommended)
+make install
+
+# Or build from source manually
+make build-dist
+sudo cp target/dist/fluxx /usr/local/bin/
+```
+
+### Windows
+
+```powershell
+# Using PowerShell (run as Administrator)
+irm https://fluxx.dev/install.ps1 | iex
 ```
 
 ### Docker
@@ -195,7 +215,10 @@ docker run -p 8080:8080 fluxx/agent:latest
 ```bash
 git clone https://github.com/fluxx/agent.git
 cd agent
-cargo build --release
+make build-dist
+
+# Binary will be at: target/dist/fluxx
+sudo cp target/dist/fluxx /usr/local/bin/
 ```
 
 ---
@@ -217,13 +240,13 @@ graph TD
 
 ```bash
 # Generate configuration
-fluxx-agent mesh config --nodes 3 --output mesh.yaml
+fluxx mesh config --nodes 3 --output mesh.yaml
 
 # Generate Docker Compose
-fluxx-agent mesh docker --nodes 3 --output docker-compose.yaml
+fluxx mesh docker --nodes 3 --output docker-compose.yaml
 
 # Generate Kubernetes manifests
-fluxx-agent mesh k8s --replicas 3 --output k8s.yaml
+fluxx mesh k8s --replicas 3 --output k8s.yaml
 ```
 
 ### Querying
@@ -238,8 +261,10 @@ curl http://localhost:8080/query \
 wscat -c ws://localhost:8080/stream
 ```
 
+Check the status of your services:
+
 ```bash
-fluxx start
+fluxx mesh status
 ```
 
 ---
@@ -252,8 +277,9 @@ fluxx start
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌───────────┐   ┌───────────┐   ┌───────────┐            │
-│  │  Capture  │   │  Process  │   │  Analyze  │            │
-│  │           │   │           │   │           │            │
+│  | Feature | Fluxx | Prometheus | Datadog/NewRelic |
+|---------|-------|------------|-----------------|
+| Latency | <1ms | ~10-100ms | >1s (Cloud) |
 │  │ • eBPF    │   │ • SIMD    │   │ • SQL     │            │
 │  │ • Syslog  │   │ • Filter  │   │ • ML      │            │
 │  │ • HTTP    │   │ • Enrich  │   │ • Graph   │            │
@@ -341,11 +367,14 @@ replication:
 
 ## Documentation
 
+- [Installation Guide](docs/INSTALL.md)
 - [Getting Started](docs/GETTING_STARTED.md)
+- [Architecture](docs/ARCHITECTURE.md)
 - [Mesh Documentation](docs/MESH.md)
 - [Diagnostic System](docs/DIAGNOSTIC.md)
 - [AI Assistant Integrations](docs/AI_INTEGRATIONS.md)
 - [CLI Banner](docs/CLI_BANNER.md)
+- [Build Profiles](docs/BUILD_PROFILES.md)
 - [API Reference](docs/API.md)
 - [Configuration](docs/CONFIG.md)
 - [Performance Tuning](docs/PERFORMANCE.md)
@@ -357,6 +386,14 @@ replication:
 
 Our blog covers technical deep-dives, deployment guides, and community stories:
 
+### Latest
+- [Getting Started with Fluxx](blogs/20-getting-started-with-fluxx.md) - From zero to observability in 5 minutes
+- [Performance Deep Dive](blogs/21-performance-deep-dive.md) - How Fluxx achieves 218M events/sec
+- [AI-Powered Observability](blogs/22-ai-powered-observability.md) - Let GPT-4 handle your incidents
+- [Security Best Practices](blogs/23-security-best-practices.md) - Securing your observability pipeline
+- [Real-World Use Cases](blogs/24-real-world-use-cases.md) - 5 production success stories
+
+### Series
 1. [The Manifesto: Observability is a Right](blogs/11-the-manifesto.md)
 2. [Zero-Code Distributed Observability](blogs/12-mesh-deployment-zero-code.md)
 3. [Gossip Protocols in Production](blogs/13-gossip-protocol-distributed-systems.md)
@@ -398,6 +435,15 @@ For 1,000 servers ingesting 10 TB/day:
 | Splunk | $2,200,000 |
 | Fluxx Agent | $24,000 |
 
+### SDK Support
+
+| Language | Status | Repo |
+|----------|--------|------|
+| Rust | GA | [sdk-rust](https://github.com/fluxx/sdk-rust) |
+| Go | GA | [sdk-go](https://github.com/fluxx/sdk-go) |
+| Python | Beta | [sdk-python](https://github.com/fluxx/sdk-python) |
+| Java | Beta | [sdk-java](https://github.com/fluxx/sdk-java) |
+
 ---
 
 ## Community
@@ -427,7 +473,7 @@ cargo build
 cargo test
 
 # Run
-./target/debug/fluxx-agent start
+./target/debug/fluxx start
 ```
 
 ---

@@ -1,0 +1,8 @@
+{
+  "agent_name": "fluxx-dev-agent",
+  "log_level": "debug",
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8080
+  }
+}

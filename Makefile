@@ -23,9 +23,12 @@ help:
 	@echo ""
 
 .PHONY: install
-install:
-	@echo "Starting full installation..."
-	@./install.sh
+install: build-dist
+	@echo "Installing Fluxx binary to /usr/local/bin..."
+	@sudo cp target/dist/fluxx /usr/local/bin/
+	@sudo chmod +x /usr/local/bin/fluxx
+	@echo "✅ Fluxx installed successfully!"
+	@fluxx --version
 
 .PHONY: install-quick
 install-quick: build-release test-fast
@@ -45,8 +48,8 @@ build-release:
 build-dist:
 	cargo build --profile dist
 	@echo ""
-	@echo "✅ Distribution binary built: target/dist/fluxx-agent"
-	@ls -lh target/dist/fluxx-agent | awk '{print "   Size: " $$5}'
+	@echo "✅ Distribution binary built: target/dist/fluxx"
+	@ls -lh target/dist/fluxx | awk '{print "   Size: " $$5}'
 
 .PHONY: run
 run:
