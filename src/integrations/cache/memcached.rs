@@ -6,6 +6,26 @@ use super::super::framework::*;
 use async_trait::async_trait;
 use std::collections::HashMap;
 
+/// Validate hostname/IP to prevent command injection
+/// Only allows alphanumeric, dots, dashes, and colons (for IPv6)
+fn is_valid_host(host: &str) -> bool {
+    if host.is_empty() || host.len() > 253 {
+        return false;
+    }
+    
+    // Check for shell metacharacters
+    let forbidden_chars = [';', '|', '&', '$', '`', '(', ')', '{', '}', '<', '>', 
+                          '\n', '\r', '\t', ' ', '\'', '"', '\\'];
+    if host.chars().any(|c| forbidden_chars.contains(&c)) {
+        return false;
+    }
+    
+    // Must be valid characters only
+    host.chars().all(|c| {
+        c.is_alphanumeric() || c == '.' || c == '-' || c == ':' || c == '_'
+    })
+}
+
 /// Memcached integration
 pub struct MemcachedIntegration {
     config: IntegrationConfig,
@@ -45,28 +65,50 @@ impl MemcachedIntegration {
         .is_ok_and(|r| r.is_ok())
     }
 
-    /// Execute stats command via telnet/netcat
+    /// Execute stats command via direct TCP connection (secure, no shell injection)
     async fn get_stats(&self) -> Result<HashMap<String, String>, IntegrationError> {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        
         let mut stats = HashMap::new();
 
-        // Try to get stats using nc (netcat)
-        let output = tokio::process::Command::new("sh")
-            .arg("-c")
-            .arg(format!(
-                "echo 'stats' | nc -q 1 {} {} 2>/dev/null || echo ''",
-                self.host, self.port
-            ))
-            .output()
-            .await
-            .map_err(|e| IntegrationError::Connection(e.to_string()))?;
-
-        if !output.status.success() {
-            return Ok(stats);
+        // Validate host - only allow valid hostnames/IPs (no shell metacharacters)
+        if !is_valid_host(&self.host) {
+            return Err(IntegrationError::Config(
+                format!("Invalid host: {}", self.host)
+            ));
         }
 
-        let stdout = String::from_utf8_lossy(&output.stdout);
+        // Connect directly via TCP (no shell command)
+        let addr = format!("{}:{}", self.host, self.port);
+        let timeout = tokio::time::Duration::from_secs(5);
         
-        for line in stdout.lines() {
+        let stream = tokio::time::timeout(
+            timeout,
+            tokio::net::TcpStream::connect(&addr)
+        )
+        .await
+        .map_err(|_| IntegrationError::Connection("Connection timeout".to_string()))?
+        .map_err(|e| IntegrationError::Connection(format!("Failed to connect: {}", e)))?;
+        
+        // Send "stats" command directly
+        let (mut reader, mut writer) = stream.into_split();
+        writer.write_all(b"stats\r\nquit\r\n").await
+            .map_err(|e| IntegrationError::Connection(format!("Write failed: {}", e)))?;
+        drop(writer); // Close write half
+        
+        // Read response
+        let mut buffer = Vec::new();
+        tokio::time::timeout(
+            timeout,
+            reader.read_to_end(&mut buffer)
+        )
+        .await
+        .map_err(|_| IntegrationError::Connection("Read timeout".to_string()))?
+        .map_err(|e| IntegrationError::Connection(format!("Read failed: {}", e)))?;
+        
+        let response = String::from_utf8_lossy(&buffer);
+        
+        for line in response.lines() {
             // Parse lines like: STAT <name> <value>
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 3 && parts[0] == "STAT" {

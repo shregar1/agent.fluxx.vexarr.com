@@ -25,6 +25,7 @@ Fluxx Agent is an observability platform that combines the performance of custom
 | **Auto-Remediation** | Apply fixes automatically with rollback | 80% MTTR reduction |
 | **Smart Ticketing** | Auto-create Jira/GitHub/Linear issues | < 3 seconds |
 | **AI Assistant Integration** | Claude Desktop, VS Code, Cursor | Natural language |
+| **Beautiful CLI** | ASCII art, user info, live stats | Interactive experience |
 | **eBPF Integration** | Kernel-level visibility | Zero overhead |
 | **Cost Optimization** | Intelligent sampling & compression | 95% cost reduction vs Datadog |
 
@@ -344,6 +345,7 @@ replication:
 - [Mesh Documentation](docs/MESH.md)
 - [Diagnostic System](docs/DIAGNOSTIC.md)
 - [AI Assistant Integrations](docs/AI_INTEGRATIONS.md)
+- [CLI Banner](docs/CLI_BANNER.md)
 - [API Reference](docs/API.md)
 - [Configuration](docs/CONFIG.md)
 - [Performance Tuning](docs/PERFORMANCE.md)

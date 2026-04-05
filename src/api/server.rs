@@ -1,13 +1,60 @@
 use crate::api::{ApiState, StandardResponse};
 use axum::{
+    body::Body,
     extract::{ws::{WebSocket, WebSocketUpgrade, Message}, Path, State, Query},
-    response::IntoResponse,
+    http::{HeaderMap, StatusCode, header},
+    middleware::{self, Next},
+    response::{IntoResponse, Response},
     routing::get,
     Json, Router,
 };
 use std::sync::Arc;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{CorsLayer, AllowOrigin};
 use tracing::{info, error};
+
+/// Security middleware: API Key authentication
+async fn auth_middleware(
+    headers: HeaderMap,
+    request: axum::extract::Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    // In production, this should validate against a secure key store
+    // For now, we require the X-API-Key header to be present
+    let api_key = headers.get("X-API-Key")
+        .and_then(|v| v.to_str().ok());
+    
+    // Check if API key is provided and valid (simple validation for now)
+    // In production, compare against hashed keys from environment
+    let valid_key = std::env::var("FLUXX_API_KEY").ok();
+    
+    match (api_key, valid_key) {
+        (Some(key), Some(valid)) if key == valid => {},
+        _ if std::env::var("FLUXX_DISABLE_AUTH").is_ok() => {}, // Allow bypass in dev
+        _ => {
+            error!("Unauthorized API access attempt");
+            return Err(StatusCode::UNAUTHORIZED);
+        }
+    }
+    
+    Ok(next.run(request).await)
+}
+
+/// Security middleware: Add security headers
+async fn security_headers_middleware(
+    request: axum::extract::Request,
+    next: Next,
+) -> impl IntoResponse {
+    let mut response = next.run(request).await;
+    
+    // Add security headers
+    let headers = response.headers_mut();
+    headers.insert("X-Content-Type-Options", header::HeaderValue::from_static("nosniff"));
+    headers.insert("X-Frame-Options", header::HeaderValue::from_static("DENY"));
+    headers.insert("X-XSS-Protection", header::HeaderValue::from_static("1; mode=block"));
+    headers.insert("Referrer-Policy", header::HeaderValue::from_static("strict-origin-when-cross-origin"));
+    
+    response
+}
 
 /// ApiServer: High-performance Axum-based web server for Fluxx UI.
 /// Provides a unified REST/WebSocket interface for telemetry observation.
@@ -26,15 +73,30 @@ impl ApiServer {
 
     /// Primary entry point for activating the API management layer.
     pub async fn start(&self) -> anyhow::Result<()> {
+        // Configure CORS - restrict to specific origins in production
+        let cors = if let Ok(allowed_origin) = std::env::var("FLUXX_CORS_ORIGIN") {
+            CorsLayer::new()
+                .allow_origin(AllowOrigin::exact(allowed_origin.parse()?))
+                .allow_methods([axum::http::Method::GET])
+                .allow_headers([axum::http::header::AUTHORIZATION, axum::http::header::CONTENT_TYPE])
+        } else {
+            // Default: restrictive CORS (no cross-origin requests)
+            CorsLayer::new()
+                .allow_origin(AllowOrigin::exact(format!("http://{}", self.addr).parse()?))
+                .allow_methods([axum::http::Method::GET])
+        };
+
         let app = Router::new()
             .route("/v1/sessions", get(list_sessions))
             .route("/v1/sessions/:id", get(get_session))
             .route("/v1/anomalies", get(list_anomalies))
             .route("/v1/stream", get(stream_ws))
-            .layer(CorsLayer::permissive())
+            .layer(middleware::from_fn(security_headers_middleware))
+            .layer(middleware::from_fn(auth_middleware))
+            .layer(cors)
             .with_state(self.state.clone());
 
-        info!("API: Binding Fluxx UI layer to {}", self.addr);
+        info!("API: Binding Fluxx UI layer to {} (auth required)", self.addr);
         let listener = tokio::net::TcpListener::bind(&self.addr).await?;
         axum::serve(listener, app).await?;
         Ok(())

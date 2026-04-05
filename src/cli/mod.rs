@@ -1,11 +1,51 @@
 pub mod dev;
 pub mod mesh;
+pub mod banner;
+
+use std::path::{Path, PathBuf};
+
+/// Validate and sanitize a user-provided path to prevent path traversal attacks
+fn sanitize_path(base_dir: &str, user_path: &str) -> Result<PathBuf, String> {
+    // Check for path traversal attempts
+    if user_path.contains("..") || user_path.contains("~") {
+        return Err("Path contains forbidden characters".to_string());
+    }
+    
+    // Normalize the base directory
+    let base = Path::new(base_dir)
+        .canonicalize()
+        .map_err(|_| "Invalid base directory".to_string())?;
+    
+    // Join with user path
+    let target = base.join(user_path);
+    
+    // Verify the target is within the base directory
+    let canonical_target = target
+        .canonicalize()
+        .or_else(|_| {
+            // Path doesn't exist yet, check parent
+            if let Some(parent) = target.parent() {
+                let canonical_parent = parent.canonicalize()?;
+                Ok(canonical_parent.join(target.file_name().unwrap_or_default()))
+            } else {
+                Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid path"))
+            }
+        })
+        .map_err(|_| "Failed to canonicalize path".to_string())?;
+    
+    if !canonical_target.starts_with(&base) {
+        return Err("Path traversal detected: target outside base directory".to_string());
+    }
+    
+    Ok(canonical_target)
+}
 
 use clap::{Parser, Subcommand};
 use crate::config::Config;
 use crate::utils::init_logging;
 use crate::core::AgentService;
 use crate::cli::dev::DevManager;
+use crate::cli::banner::{print_banner, print_compact_banner, SystemInfo, print_welcome, print_shutdown};
 use tracing::info;
 
 /// CLI interface: Parser and Entry Point for the Fluxx agent.
@@ -105,22 +145,38 @@ pub async fn run() -> anyhow::Result<()> {
 
     match cli.command {
         Commands::Dev => {
+            // Show full banner for dev mode
+            let info = SystemInfo::new();
+            print_banner(&info);
+            
             let mut dev = DevManager::new();
             dev.run().await?;
+            
+            print_shutdown();
         }
         Commands::Start { config } => {
+            // Show full banner for start command
+            let info = SystemInfo::with_stats(45, 0); // Placeholder stats
+            print_banner(&info);
+            
             info!("CLI: Initializing Start flow...");
             let cfg = match config {
                 Some(path) => Config::load_from_path(&path).unwrap_or_default(),
                 None => Config::load().unwrap_or_default(),
             };
             service.run_agent(cfg).await?;
+            
+            print_shutdown();
         }
         Commands::Inspect { target } => {
             let res = service.inspect_target(&target);
             println!("{}", res);
         }
         Commands::Config => {
+            // Show compact banner for config command
+            let info = SystemInfo::new();
+            print_compact_banner(&info);
+            
             let cfg = Config::load().unwrap_or_default();
             let res = service.get_config_summary(&cfg);
             println!("{}", res);
@@ -132,9 +188,17 @@ pub async fn run() -> anyhow::Result<()> {
             println!("{}", res);
         }
         Commands::Mesh(args) => {
+            // Show compact banner for mesh commands
+            let info = SystemInfo::new();
+            print_compact_banner(&info);
+            
             mesh::handle_command(args)?;
         }
         Commands::Mcp { config } => {
+            // Show compact banner for MCP server
+            let info = SystemInfo::with_stats(45, 0);
+            print_compact_banner(&info);
+            
             info!("CLI: Initializing MCP server flow...");
             let cfg = match config {
                 Some(path) => crate::ai::McpConfig::default(), // Future: load from path
@@ -154,20 +218,30 @@ pub async fn run() -> anyhow::Result<()> {
             match subcommand {
                 OpenclawSubcommands::Init { path } => {
                     info!("CLI: Initializing OpenClaw integration at {}...", path);
+                    
+                    // Sanitize the path to prevent directory traversal
+                    let base_dir = std::env::current_dir()
+                        .map_err(|e| anyhow::anyhow!("Cannot get current directory: {}", e))?;
+                    let safe_path = sanitize_path(
+                        base_dir.to_str().unwrap_or("."),
+                        &path
+                    ).map_err(|e| anyhow::anyhow!("Invalid path: {}", e))?;
+                    
                     // Create directories
-                    std::fs::create_dir_all(format!("{}/skills/fluxx_observability", path))?;
+                    let skills_dir = safe_path.join("skills/fluxx_observability");
+                    std::fs::create_dir_all(&skills_dir)?;
                     
                     // Write SKILL.md (simplified version here, ideally read from resources)
                     let skill_content = include_str!("../../extensions/openclaw/fluxx_observability/SKILL.md");
-                    std::fs::write(format!("{}/skills/fluxx_observability/SKILL.md", path), skill_content)?;
+                    std::fs::write(skills_dir.join("SKILL.md"), skill_content)?;
                     
                     // Write HEARTBEAT.md
                     let heartbeat_content = "---\ninterval: 30m\ndescription: Periodic health check of infrastructure via Fluxx Agent\n---\n# Fluxx Heartbeat\n1. Use `fluxx inspect all` to check system health.\n2. If any services are unhealthy, use `fluxx_diagnose` to find the root cause.\n3. Report any critical issues to the user immediately.";
-                    std::fs::write(format!("{}/HEARTBEAT.md", path), heartbeat_content)?;
+                    std::fs::write(safe_path.join("HEARTBEAT.md"), heartbeat_content)?;
                     
-                    println!("✅ OpenClaw integration initialized at {}.", path);
-                    println!("Fluxx Skill: {}/skills/fluxx_observability/SKILL.md", path);
-                    println!("Heartbeat: {}/HEARTBEAT.md", path);
+                    println!("✅ OpenClaw integration initialized at {}.", safe_path.display());
+                    println!("Fluxx Skill: {}/SKILL.md", skills_dir.display());
+                    println!("Heartbeat: {}/HEARTBEAT.md", safe_path.display());
                 }
                 OpenclawSubcommands::Status => {
                     println!("OpenClaw integration version 0.1.0");
