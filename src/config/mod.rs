@@ -7,6 +7,99 @@ pub struct Config {
     pub agent_name: String,
     pub log_level: String,
     pub server: ServerConfig,
+    #[serde(default)]
+    pub monitoring: MonitoringConfig,
+    #[serde(default)]
+    pub otlp: OtlpConfig,
+    #[serde(default)]
+    pub logs: LogConfig,
+    #[serde(default)]
+    pub statsd: StatsdConfig,
+    #[serde(default)]
+    pub metric_alerts: MetricAlertConfig,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MetricAlertConfig {
+    pub enabled: bool,
+    pub check_interval_secs: u64,
+    pub lookback_secs: u64,
+}
+
+impl Default for MetricAlertConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            check_interval_secs: 30,
+            lookback_secs: 300,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct OtlpConfig {
+    pub enabled: bool,
+    pub grpc_port: u16,
+    pub http_enabled: bool,
+}
+
+impl Default for OtlpConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            grpc_port: 4317,
+            http_enabled: true,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LogConfig {
+    pub enabled: bool,
+    pub max_entries: usize,
+    pub retention_secs: u64,
+}
+
+impl Default for LogConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            max_entries: 1_000_000,
+            retention_secs: 86400,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct StatsdConfig {
+    pub enabled: bool,
+    pub bind_address: String,
+    pub flush_interval_secs: u64,
+}
+
+impl Default for StatsdConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            bind_address: "0.0.0.0:8125".to_string(),
+            flush_interval_secs: 10,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MonitoringConfig {
+    pub enable_system: bool,
+    pub enable_pcap: bool,
+}
+
+impl Default for MonitoringConfig {
+    fn default() -> Self {
+        Self {
+            enable_system: false, // Disabled by default as requested
+            enable_pcap: false,   // Disabled by default as requested
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -22,8 +115,13 @@ impl Default for Config {
             log_level: "info".into(),
             server: ServerConfig {
                 host: "127.0.0.1".into(),
-                port: 8080,
+                port: 3000,
             },
+            monitoring: MonitoringConfig::default(),
+            otlp: OtlpConfig::default(),
+            logs: LogConfig::default(),
+            statsd: StatsdConfig::default(),
+            metric_alerts: MetricAlertConfig::default(),
         }
     }
 }
@@ -126,6 +224,11 @@ mod tests {
             agent_name: "custom-agent".to_string(),
             log_level: "debug".to_string(),
             server: ServerConfig { host: "0.0.0.0".to_string(), port: 9090 },
+            monitoring: MonitoringConfig::default(),
+            otlp: OtlpConfig::default(),
+            logs: LogConfig::default(),
+            statsd: StatsdConfig::default(),
+            metric_alerts: MetricAlertConfig::default(),
         };
         assert_eq!(config.agent_name, "custom-agent");
         assert_eq!(config.server.port, 9090);

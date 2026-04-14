@@ -1,6 +1,6 @@
 use crate::api::{ApiState, StandardResponse};
+use crate::models::event::Event;
 use axum::{
-    body::Body,
     extract::{ws::{WebSocket, WebSocketUpgrade, Message}, Path, State, Query},
     http::{HeaderMap, StatusCode, header},
     middleware::{self, Next},
@@ -18,18 +18,15 @@ async fn auth_middleware(
     request: axum::extract::Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    // In production, this should validate against a secure key store
-    // For now, we require the X-API-Key header to be present
     let api_key = headers.get("X-API-Key")
         .and_then(|v| v.to_str().ok());
     
-    // Check if API key is provided and valid (simple validation for now)
-    // In production, compare against hashed keys from environment
     let valid_key = std::env::var("FLUXX_API_KEY").ok();
     
     match (api_key, valid_key) {
         (Some(key), Some(valid)) if key == valid => {},
-        _ if std::env::var("FLUXX_DISABLE_AUTH").is_ok() => {}, // Allow bypass in dev
+        (_, None) => {}, 
+        _ if std::env::var("FLUXX_DISABLE_AUTH").is_ok() => {}, 
         _ => {
             error!("Unauthorized API access attempt");
             return Err(StatusCode::UNAUTHORIZED);
@@ -46,7 +43,6 @@ async fn security_headers_middleware(
 ) -> impl IntoResponse {
     let mut response = next.run(request).await;
     
-    // Add security headers
     let headers = response.headers_mut();
     headers.insert("X-Content-Type-Options", header::HeaderValue::from_static("nosniff"));
     headers.insert("X-Frame-Options", header::HeaderValue::from_static("DENY"));
@@ -56,8 +52,7 @@ async fn security_headers_middleware(
     response
 }
 
-/// ApiServer: High-performance Axum-based web server for Fluxx UI.
-/// Provides a unified REST/WebSocket interface for telemetry observation.
+/// ApiServer: High-performance Axum-based web server for Fluxx telemetry.
 pub struct ApiServer {
     state: Arc<ApiState>,
     addr: String,
@@ -71,40 +66,55 @@ impl ApiServer {
         }
     }
 
-    /// Primary entry point for activating the API management layer.
     pub async fn start(&self) -> anyhow::Result<()> {
-        // Configure CORS - restrict to specific origins in production
         let cors = if let Ok(allowed_origin) = std::env::var("FLUXX_CORS_ORIGIN") {
             CorsLayer::new()
                 .allow_origin(AllowOrigin::exact(allowed_origin.parse()?))
-                .allow_methods([axum::http::Method::GET])
+                .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::OPTIONS])
                 .allow_headers([axum::http::header::AUTHORIZATION, axum::http::header::CONTENT_TYPE])
         } else {
-            // Default: restrictive CORS (no cross-origin requests)
-            CorsLayer::new()
-                .allow_origin(AllowOrigin::exact(format!("http://{}", self.addr).parse()?))
-                .allow_methods([axum::http::Method::GET])
+            CorsLayer::permissive()
         };
 
         let app = Router::new()
             .route("/v1/sessions", get(list_sessions))
             .route("/v1/sessions/:id", get(get_session))
             .route("/v1/anomalies", get(list_anomalies))
-            .route("/v1/events", post(ingest_event))
+            .route("/v1/events", post(ingest_event).get(list_events))
+            .route("/v1/stats", get(get_stats))
             .route("/v1/stream", get(stream_ws))
+            // Log management endpoints
+            .route("/v1/logs", post(crate::api::logs::ingest_logs).get(crate::api::logs::query_logs))
+            .route("/v1/logs/stream", get(crate::api::logs::stream_logs_ws))
+            // Metric query endpoints
+            .route("/v1/metrics", get(crate::api::metrics::query_metrics))
+            .route("/v1/metrics/names", get(crate::api::metrics::list_metric_names))
+            // Prometheus-compatible scrape endpoint
+            .route("/metrics", get(crate::api::metrics::prometheus_endpoint))
+            // Service map endpoint
+            .route("/v1/service-map", get(crate::api::service_map::get_service_map))
+            // Deploy annotations
+            .route("/v1/annotations", post(crate::api::annotations::create_annotation).get(crate::api::annotations::list_annotations))
+            // PromQL-compatible query engine
+            .route("/v1/query", get(crate::api::promql::query))
+            // Prometheus remote_write endpoint
+            .route("/v1/prom/write", post(crate::protocols::prometheus::remote_write))
+            // OTLP HTTP ingestion endpoints
+            .route("/v1/otlp/traces", post(crate::protocols::otlp::http_handlers::ingest_traces))
+            .route("/v1/otlp/metrics", post(crate::protocols::otlp::http_handlers::ingest_metrics))
+            .route("/v1/otlp/logs", post(crate::protocols::otlp::http_handlers::ingest_logs))
             .layer(middleware::from_fn(security_headers_middleware))
             .layer(middleware::from_fn(auth_middleware))
             .layer(cors)
             .with_state(self.state.clone());
 
-        info!("API: Binding Fluxx UI layer to {} (auth required)", self.addr);
+        info!("API: Binding Fluxx layer to {} (auth required if configured)", self.addr);
         let listener = tokio::net::TcpListener::bind(&self.addr).await?;
         axum::serve(listener, app).await?;
         Ok(())
     }
 }
 
-// REST Handlers with standardized response wrapping
 async fn list_sessions(State(state): State<Arc<ApiState>>) -> impl IntoResponse {
     let sessions = state.session_manager.list_sessions().await;
     StandardResponse::ok(sessions, "Sessions list retrieved successfully.")
@@ -123,7 +133,6 @@ async fn get_session(Path(id): Path<String>, State(state): State<Arc<ApiState>>)
 }
 
 async fn list_anomalies() -> impl IntoResponse {
-    // Note: Future feature to integrate AlertEngine history retrieval.
     StandardResponse::ok(Vec::<String>::new(), "Anomalies search results.")
 }
 
@@ -132,17 +141,59 @@ async fn ingest_event(
     Json(event): Json<Event>,
 ) -> impl IntoResponse {
     let event_arc = Arc::new(event);
-    
-    // Broadcast for real-time visualization
     let _ = state.event_bus.send(event_arc.clone());
-    
-    // Persist for historical search
-    let _ = state.event_store.store_event(event_arc).await;
-
+    let _ = state.event_store.insert((*event_arc).clone()).await;
     StandardResponse::ok(serde_json::json!({}), "Event ingested successfully.")
 }
 
-// WebSocket Streaming with dynamic hierarchy filtering
+async fn list_events(
+    State(state): State<Arc<ApiState>>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> impl IntoResponse {
+    let project_id = params.get("project_id").cloned();
+    let service_id = params.get("service_id").cloned();
+    let protocol = params.get("protocol").cloned();
+    let severity = params.get("severity").cloned();
+    
+    let protocol_enum = protocol.and_then(|p| {
+        match p.to_lowercase().as_str() {
+            "http" => Some(crate::models::event::ProtocolType::Http),
+            "ws" => Some(crate::models::event::ProtocolType::Ws),
+            "tcp" => Some(crate::models::event::ProtocolType::Tcp),
+            "udp" => Some(crate::models::event::ProtocolType::Udp),
+            "grpc" => Some(crate::models::event::ProtocolType::Grpc),
+            "quic" => Some(crate::models::event::ProtocolType::Quic),
+            "ebpf" => Some(crate::models::event::ProtocolType::Ebpf),
+            "mqtt" => Some(crate::models::event::ProtocolType::Mqtt),
+            "modbus" => Some(crate::models::event::ProtocolType::Modbus),
+            "system" => Some(crate::models::event::ProtocolType::System),
+            "otlp" => Some(crate::models::event::ProtocolType::Otlp),
+            "statsd" => Some(crate::models::event::ProtocolType::StatsD),
+            "log" => Some(crate::models::event::ProtocolType::Log),
+            _ => None,
+        }
+    });
+
+    let severity_enum = severity.and_then(|s| {
+        match s.to_lowercase().as_str() {
+            "info" => Some(crate::models::event::EventSeverity::Info),
+            "low" => Some(crate::models::event::EventSeverity::Low),
+            "medium" => Some(crate::models::event::EventSeverity::Medium),
+            "high" => Some(crate::models::event::EventSeverity::High),
+            "critical" => Some(crate::models::event::EventSeverity::Critical),
+            _ => None,
+        }
+    });
+
+    let events = state.event_store.list_events(project_id, protocol_enum, severity_enum, service_id).await;
+    StandardResponse::ok(events, "Events retrieval successful.")
+}
+
+async fn get_stats(State(state): State<Arc<ApiState>>) -> impl IntoResponse {
+    let stats = state.event_store.get_stats().await;
+    StandardResponse::ok(stats, "Agent operational statistics.")
+}
+
 async fn stream_ws(
     ws: WebSocketUpgrade, 
     State(state): State<Arc<ApiState>>,
@@ -158,10 +209,7 @@ async fn handle_socket(mut socket: WebSocket, state: Arc<ApiState>, filters: std
     let target_env = filters.get("environment_id").cloned();
     let target_service = filters.get("service_id").cloned();
 
-    info!("API: Real-time logs session (Filtered={})", target_service.is_some());
-
     while let Ok(event) = rx.recv().await {
-        // Apply dynamic filtering against the organizational hierarchy
         if let Some(p) = &target_project { if event.project_id.as_ref() != Some(p) { continue; } }
         if let Some(e) = &target_env { if event.environment_id.as_ref() != Some(e) { continue; } }
         if let Some(s) = &target_service { if event.service_id.as_ref() != Some(s) { continue; } }

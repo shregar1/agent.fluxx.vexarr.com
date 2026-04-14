@@ -163,7 +163,11 @@ fn protocol_to_u8(protocol: ProtocolType) -> u8 {
         ProtocolType::Ebpf => 6,
         ProtocolType::Mqtt => 7,
         ProtocolType::Modbus => 8,
-        ProtocolType::Other => 9,
+        ProtocolType::System => 9,
+        ProtocolType::Otlp => 11,
+        ProtocolType::StatsD => 12,
+        ProtocolType::Log => 13,
+        ProtocolType::Other => 10,
     }
 }
 
@@ -179,7 +183,11 @@ fn u8_to_protocol(byte: u8) -> Result<ProtocolType, std::io::Error> {
         6 => Ok(ProtocolType::Ebpf),
         7 => Ok(ProtocolType::Mqtt),
         8 => Ok(ProtocolType::Modbus),
-        9 => Ok(ProtocolType::Other),
+        9 => Ok(ProtocolType::System),
+        10 => Ok(ProtocolType::Other),
+        11 => Ok(ProtocolType::Otlp),
+        12 => Ok(ProtocolType::StatsD),
+        13 => Ok(ProtocolType::Log),
         _ => Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
             "Unknown protocol type",

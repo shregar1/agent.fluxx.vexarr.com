@@ -42,8 +42,8 @@ futures-util = "0.3"
 tokio-retry = "0.3"
 url = "2.5"
 quinn = "0.11"
-tonic = "0.11"
-prost = "0.12"
+tonic = "0.12"
+prost = "0.13"
 axum = { version = "0.7", features = ["ws"] }
 tower-http = { version = "0.5", features = ["cors"] }
 bytes = "1.6"
@@ -54,6 +54,12 @@ serde_yaml = "0.9"
 whoami = "1.5"
 base64 = "0.22"
 sysinfo = "0.30"
+opentelemetry-proto = { version = "0.7", features = ["gen-tonic-messages", "with-serde"] }
+prost-types = "0.13"
+rust-embed = "8"
+mime_guess = "2"
+snap = "1"
+tempfile = "3"
 
 [dev-dependencies]
 tower = { version = "0.4", features = ["util"] }

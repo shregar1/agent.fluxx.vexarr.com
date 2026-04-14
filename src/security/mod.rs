@@ -3,10 +3,11 @@ use crate::core::traits::Processor;
 use crate::core::error::Result;
 use crate::security::masking::MaskingEngine;
 use async_trait::async_trait;
-use tracing::{debug, warn};
+use tracing::debug;
 use std::sync::Arc;
 
 pub mod masking;
+pub mod rbac;
 
 /// SecurityProcessor: A high-performance middleware component that enforces 
 /// PII masking, payload encryption, and local-only data privacy.

@@ -1,21 +1,17 @@
 use crate::core::Agent;
 use crate::config::Config;
-use crate::protocols::http::HttpCapturer;
-use crate::protocols::websocket::WebSocketCapturer;
-use crate::protocols::quic::QuicCapturer;
-use crate::protocols::grpc::GrpcCapturer;
-use crate::protocols::ebpf::EbpfCapture;
 use crate::protocols::pcap::PcapCapture;
-use crate::processing::{TagProcessor, LatencyProcessor, LatencyBucketProcessor, FilterProcessor};
+use crate::processing::{TagProcessor, LatencyProcessor, LatencyBucketProcessor};
 use crate::sessions::{SessionProcessor, InMemorySessionStore, SessionManager};
-use crate::storage::{StorageProcessor, InMemoryEventStore};
-use crate::replay::ReplayEngine;
+use crate::storage::{StorageProcessor, InMemoryEventStore, InMemoryMetricStore, InMemoryLogStore};
 use crate::transport::{StdoutTransporter, HttpTransport, ManagedTransporter};
 use crate::api::{ApiServer, ApiState};
 use crate::models::event::Event;
+use crate::models::metric::Metric;
+use crate::models::log_entry::LogEntry;
 use std::sync::Arc;
 use std::collections::HashMap;
-use tracing::{info, error, debug};
+use tracing::{info, error};
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 
@@ -62,32 +58,56 @@ impl AgentService {
 
     pub async fn run_agent(&mut self, config: Config) -> anyhow::Result<()> {
         info!("Runtime: Configuring Fluxx agent '{}'", config.agent_name);
-        
-        let session_store = Arc::new(InMemorySessionStore::new(600)); 
+
+        let session_store = Arc::new(InMemorySessionStore::new(600));
         let event_store = Arc::new(InMemoryEventStore::new());
         let session_manager = Arc::new(SessionManager::new(session_store.clone()));
+
+        // Initialize metric and log stores
+        let metric_store: Arc<dyn crate::storage::MetricStore> = Arc::new(InMemoryMetricStore::new());
+        let log_store: Arc<dyn crate::storage::LogStore> = Arc::new(InMemoryLogStore::new(
+            config.logs.max_entries,
+        ));
+        let (metric_tx, _) = broadcast::channel::<Arc<Metric>>(1024);
+        let (log_tx, _) = broadcast::channel::<Arc<LogEntry>>(1024);
+
+        // Initialize annotation store and error tracker
+        let annotation_store = crate::api::annotations::AnnotationStore::new();
+        let error_tracker = Arc::new(crate::analysis::error_tracking::ErrorTracker::new());
 
         // 1. Configure UI API API Stack
         let api_state = Arc::new(ApiState {
             session_manager,
             event_store: event_store.clone(),
             event_bus: self.event_bus.clone(),
+            metric_store: metric_store.clone(),
+            metric_bus: metric_tx.clone(),
+            log_store: log_store.clone(),
+            log_bus: log_tx.clone(),
+            annotation_store,
+            error_tracker: error_tracker.clone(),
         });
 
         let api_server = ApiServer::new(api_state, "0.0.0.0:3000");
 
         // 2. Configure Ingestion (Capture Layer)
-        #[cfg(target_os = "linux")]
-        self.agent.add_capturer(Arc::new(EbpfCapture::new("Eth0Capture", "eth0")));
+        // Register Protocols & Capturers based on config
+        if config.monitoring.enable_system {
+            let system_cap = Arc::new(crate::protocols::system::SystemCapturer::new("HostHealth", 10));
+            self.agent.add_capturer(system_cap);
+        }
 
-        #[cfg(not(target_os = "linux"))]
-        self.agent.add_capturer(Arc::new(PcapCapture::new("En0Capture", "en0")));
+        if config.monitoring.enable_pcap {
+            let pcap_cap = Arc::new(PcapCapture::new("En0Capture", "en0"));
+            self.agent.add_capturer(pcap_cap.clone());
+            self.agent.add_protocol(pcap_cap);
+        }
 
         // 3. Register System Resource Monitoring (CPU/RAM/Load)
         self.agent.add_capturer(Arc::new(crate::protocols::system::SystemCapturer::new("HostHealth", 10)));
 
         // 4. Configure Pipeline (In-Memory Processing)
-        self.agent.add_processor(Arc::new(StorageProcessor::new(event_store)));
+        self.agent.add_processor(Arc::new(StorageProcessor::new(event_store.clone())));
         self.agent.add_processor(Arc::new(SessionProcessor::new(session_store)));
         self.agent.add_processor(Arc::new(LatencyProcessor::new()));
         self.agent.add_processor(Arc::new(LatencyBucketProcessor::default_buckets()));
@@ -106,13 +126,123 @@ impl AgentService {
         self.agent.add_protocol(managed_http);
 
         // 5. Fire up the high-performance UI API server
+        let api_port = config.server.port;
         tokio::spawn(async move {
             if let Err(e) = api_server.start().await {
                 error!("Runtime: API Server failure: {}", e);
             }
         });
 
-        // 6. Launch Orchestration
+        // 5b. Start embedded dashboard on a random port
+        match crate::api::dashboard::start_dashboard_server(api_port).await {
+            Ok(dash_port) => {
+                info!("Runtime: Dashboard available at http://localhost:{}", dash_port);
+                println!("\n  \x1b[1;36m→ Dashboard:\x1b[0m http://localhost:{}\n", dash_port);
+            }
+            Err(e) => {
+                error!("Runtime: Dashboard server failed to start: {}", e);
+            }
+        }
+
+        // 6. Start OTLP gRPC server if enabled
+        if config.otlp.enabled {
+            let otlp_port = config.otlp.grpc_port;
+            let otlp_event_store = event_store.clone();
+            let otlp_event_bus = self.event_bus.clone();
+            let otlp_metric_store = metric_store.clone();
+            let otlp_metric_bus = metric_tx.clone();
+            let otlp_log_store = log_store.clone();
+            let otlp_log_bus = log_tx.clone();
+
+            tokio::spawn(async move {
+                if let Err(e) = crate::protocols::otlp::grpc_server::start_otlp_grpc_server(
+                    otlp_port,
+                    otlp_event_store,
+                    otlp_event_bus,
+                    otlp_metric_store,
+                    otlp_metric_bus,
+                    otlp_log_store,
+                    otlp_log_bus,
+                ).await {
+                    error!("Runtime: OTLP gRPC server failure: {}", e);
+                }
+            });
+            info!("Runtime: OTLP gRPC server enabled on port {}", otlp_port);
+        }
+
+        // 7. Start StatsD UDP receiver if enabled
+        if config.statsd.enabled {
+            let statsd_aggregator = Arc::new(
+                crate::protocols::statsd::aggregator::MetricAggregator::new(
+                    config.statsd.flush_interval_secs,
+                    metric_store.clone(),
+                    metric_tx.clone(),
+                ),
+            );
+
+            // Spawn the flush loop
+            let flush_agg = statsd_aggregator.clone();
+            tokio::spawn(async move {
+                flush_agg.run_flush_loop().await;
+            });
+
+            // Spawn the UDP receiver
+            let receiver = crate::protocols::statsd::receiver::StatsdReceiver::new(
+                &config.statsd.bind_address,
+                statsd_aggregator,
+            );
+            tokio::spawn(async move {
+                if let Err(e) = receiver.run().await {
+                    error!("Runtime: StatsD receiver failure: {}", e);
+                }
+            });
+            info!("Runtime: StatsD receiver enabled on {}", config.statsd.bind_address);
+        }
+
+        // 8. Start metric alert evaluator if enabled
+        if config.metric_alerts.enabled {
+            let alert_config = crate::alerts::config::AlertConfig::default();
+            let alert_manager = Arc::new(
+                crate::alerts::manager::AlertManager::new(alert_config).await.unwrap()
+            );
+
+            // Default rules: high CPU and high error rate
+            let default_rules = vec![
+                crate::alerts::rules::templates::high_cpu(80.0, vec![]),
+                crate::alerts::rules::templates::high_error_rate(0.05, vec![]),
+                crate::alerts::rules::templates::high_latency(500.0, vec![]),
+                crate::alerts::rules::templates::high_memory(90.0, vec![]),
+            ];
+
+            let evaluator = Arc::new(
+                crate::alerts::metric_evaluator::MetricAlertEvaluator::new(
+                    metric_store.clone(),
+                    alert_manager,
+                    default_rules,
+                    config.metric_alerts.check_interval_secs,
+                    config.metric_alerts.lookback_secs,
+                ),
+            );
+
+            tokio::spawn(async move {
+                evaluator.run().await;
+            });
+            info!("Runtime: Metric alert evaluator enabled (interval={}s)", config.metric_alerts.check_interval_secs);
+        }
+
+        // 9. Start anomaly detector
+        {
+            let anomaly_store = metric_store.clone();
+            let anomaly_detector = Arc::new(
+                crate::analysis::anomaly::AnomalyDetector::new(anomaly_store, 60)
+            );
+            tokio::spawn(async move {
+                anomaly_detector.run().await;
+            });
+            info!("Runtime: Anomaly detector enabled (60s interval)");
+        }
+
+        // 10. Launch Orchestration
         info!("Runtime: Starting core agent...");
         let agent_ref = Arc::new(std::mem::replace(&mut self.agent, Agent::new()));
         

@@ -58,6 +58,7 @@
 pub mod channels;
 pub mod config;
 pub mod manager;
+pub mod metric_evaluator;
 pub mod models;
 pub mod rules;
 

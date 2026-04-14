@@ -13,9 +13,9 @@
 //! ```
 
 use fluxx_agent::diagnostic::{
-    DiagnosticEngine, DiagnosticRequest,
-    models::ErrorContext,
-    config::{DiagnosticConfig, AiConfig},
+    DiagnosticEngine,
+    models::{DiagnosticRequest, ErrorContext},
+    config::{DiagnosticConfig, AiConfig, from_env},
 };
 
 #[tokio::main]
@@ -36,7 +36,7 @@ async fn main() -> anyhow::Result<()> {
             temperature: 0.3,
             ..Default::default()
         },
-        ..DiagnosticConfig::from_env()
+        ..from_env()
     };
 
     // Check if API key is set

@@ -9,3 +9,8 @@ pub mod modbus;
 pub mod pcap;
 pub mod server;
 pub mod system;
+
+// Telemetry ingestion protocols
+pub mod otlp;
+pub mod statsd;
+pub mod prometheus;

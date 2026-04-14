@@ -5,11 +5,13 @@ use std::fmt::Debug;
 use std::sync::Arc;
 
 /// High-level trait for specialized network protocols.
+/// Provides identity, lifecycle, and data stream definition.
 #[async_trait]
-pub trait Protocol: Send + Sync + Debug {
+pub trait Protocol: Send + Sync + std::fmt::Debug {
     fn name(&self) -> &str;
-    async fn start(&self) -> Result<()>;
-    async fn stop(&self) -> Result<()>;
+    fn protocol_type(&self) -> crate::models::event::ProtocolType;
+    async fn start(&self) -> Result<()> { Ok(()) }
+    async fn stop(&self) -> Result<()> { Ok(()) }
 }
 
 /// The capture layer: Optimized for zero-copy data ingestion.

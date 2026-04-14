@@ -39,6 +39,9 @@ pub enum ProtocolType {
     Mqtt,
     Modbus,
     System,
+    Otlp,
+    StatsD,
+    Log,
     Other,
 }
 

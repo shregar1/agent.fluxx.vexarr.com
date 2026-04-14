@@ -32,6 +32,9 @@ pub mod diagnostic;
 // AI assistant integrations
 pub mod ai;
 
+// Synthetic monitoring (HTTP checks, API tests, SSL)
+pub mod synthetic;
+
 // 500+ integrations framework
 pub mod integrations;
 

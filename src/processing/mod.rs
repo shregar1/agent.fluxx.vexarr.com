@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use crate::core::error::Result;
-use crate::models::event::{Event, ProtocolType};
+use crate::models::event::Event;
 use crate::core::traits::Processor;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -188,6 +188,7 @@ impl Processor for ProcessorChain {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::event::ProtocolType;
 
     #[tokio::test]
     async fn test_processor_logic() {

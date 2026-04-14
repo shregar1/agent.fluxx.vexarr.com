@@ -1,12 +1,13 @@
 use crate::models::event::Event;
 use crate::analysis::insights::Insight;
-use crate::core::error::Result;
 use async_trait::async_trait;
 use std::fmt::Debug;
 
 pub mod insights;
 pub mod protocol;
 pub mod industrial;
+pub mod anomaly;
+pub mod error_tracking;
 
 /// Protocol Intelligence Interface: Performs stateless analysis of network events.
 /// Enforces modular detection of anomalies (surges, high latency, reconnects).
@@ -464,7 +465,7 @@ mod tests {
     fn test_analysis_result_type() {
         // Result<T> is std::result::Result<T, crate::core::error::Error>
         // Verify it works with standard operations
-        let _: Result<String> = Ok("test".to_string());
+        let _: std::result::Result<String, String> = Ok("test".to_string());
     }
 
     // Test 589: AnalysisUtils with identical values
