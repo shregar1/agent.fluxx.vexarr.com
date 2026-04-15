@@ -8,6 +8,8 @@ pub mod annotations;
 pub mod promql;
 pub mod cluster;
 pub mod traces;
+pub mod recording_rules;
+pub mod slo;
 
 use crate::sessions::SessionManager;
 use crate::storage::event_store::EventStore;
@@ -17,6 +19,7 @@ use crate::models::event::Event;
 use crate::models::metric::Metric;
 use crate::models::log_entry::LogEntry;
 use crate::api::annotations::AnnotationStore;
+use crate::api::slo::SloStore;
 use crate::analysis::error_tracking::ErrorTracker;
 use std::sync::Arc;
 use tokio::sync::broadcast;
@@ -31,6 +34,7 @@ pub struct ApiState {
     pub log_bus: broadcast::Sender<Arc<LogEntry>>,
     pub annotation_store: AnnotationStore,
     pub error_tracker: Arc<ErrorTracker>,
+    pub slo_store: SloStore,
 }
 
 pub use server::ApiServer;

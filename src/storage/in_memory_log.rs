@@ -102,10 +102,23 @@ impl LogStore for InMemoryLogStore {
                     }
                 }
 
-                // Substring search on message
+                // Search on message: regex if starts with /, otherwise substring
                 if let Some(ref q) = params.q {
-                    if !entry.message.to_lowercase().contains(&q.to_lowercase()) {
-                        continue;
+                    if q.starts_with('/') && q.ends_with('/') && q.len() > 2 {
+                        // Regex mode: /pattern/
+                        let pattern = &q[1..q.len()-1];
+                        if let Ok(re) = regex::Regex::new(pattern) {
+                            if !re.is_match(&entry.message) {
+                                continue;
+                            }
+                        } else {
+                            continue; // Invalid regex, skip
+                        }
+                    } else {
+                        // Substring mode (default)
+                        if !entry.message.to_lowercase().contains(&q.to_lowercase()) {
+                            continue;
+                        }
                     }
                 }
 

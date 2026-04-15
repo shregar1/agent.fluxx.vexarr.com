@@ -111,9 +111,10 @@ impl AgentService {
         let (metric_tx, _) = broadcast::channel::<Arc<Metric>>(1024);
         let (log_tx, _) = broadcast::channel::<Arc<LogEntry>>(1024);
 
-        // Initialize annotation store and error tracker
+        // Initialize annotation store, error tracker, SLO store
         let annotation_store = crate::api::annotations::AnnotationStore::new();
         let error_tracker = Arc::new(crate::analysis::error_tracking::ErrorTracker::new());
+        let slo_store = crate::api::slo::SloStore::new();
 
         // 1. Configure UI API API Stack
         let api_state = Arc::new(ApiState {
@@ -126,6 +127,7 @@ impl AgentService {
             log_bus: log_tx.clone(),
             annotation_store,
             error_tracker: error_tracker.clone(),
+            slo_store,
         });
 
         let api_server = ApiServer::new(api_state, "0.0.0.0:3000");

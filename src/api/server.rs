@@ -100,6 +100,9 @@ impl ApiServer {
             // Trace detail API
             .route("/v1/traces", get(crate::api::traces::list_traces))
             .route("/v1/traces/:trace_id", get(crate::api::traces::get_trace))
+            // SLO endpoints
+            .route("/v1/slos", post(crate::api::slo::create_slo).get(crate::api::slo::list_slos))
+            .route("/v1/slos/:id", get(crate::api::slo::get_slo))
             // Cluster status
             .route("/v1/cluster", get(crate::api::cluster::cluster_status))
             .route("/v1/cluster/topology", get(crate::api::cluster::cluster_topology))
