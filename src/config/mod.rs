@@ -58,6 +58,53 @@ pub struct LogConfig {
     pub enabled: bool,
     pub max_entries: usize,
     pub retention_secs: u64,
+    /// Log store backend: "memory", "file", "wal"
+    #[serde(default = "default_log_backend")]
+    pub backend: String,
+    /// File backend config (used when backend = "file")
+    #[serde(default)]
+    pub file: LogFileConfig,
+    /// WAL backend config (used when backend = "wal")
+    #[serde(default)]
+    pub wal: LogWalConfig,
+}
+
+fn default_log_backend() -> String { "memory".to_string() }
+
+/// File log store configuration.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LogFileConfig {
+    pub directory: String,
+    pub max_file_bytes: u64,
+    pub max_files: usize,
+    pub prefix: String,
+}
+
+impl Default for LogFileConfig {
+    fn default() -> Self {
+        Self {
+            directory: "/var/lib/fluxx/logs".to_string(),
+            max_file_bytes: 100 * 1024 * 1024,
+            max_files: 10,
+            prefix: "fluxx-logs".to_string(),
+        }
+    }
+}
+
+/// WAL log store configuration.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LogWalConfig {
+    pub wal_dir: String,
+    pub compress: bool,
+}
+
+impl Default for LogWalConfig {
+    fn default() -> Self {
+        Self {
+            wal_dir: "/var/lib/fluxx/log-wal".to_string(),
+            compress: false,
+        }
+    }
 }
 
 impl Default for LogConfig {
@@ -66,6 +113,9 @@ impl Default for LogConfig {
             enabled: true,
             max_entries: 1_000_000,
             retention_secs: 86400,
+            backend: "memory".to_string(),
+            file: LogFileConfig::default(),
+            wal: LogWalConfig::default(),
         }
     }
 }

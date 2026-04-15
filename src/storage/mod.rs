@@ -5,6 +5,8 @@ pub mod metric_store;
 pub mod in_memory_metric;
 pub mod log_store;
 pub mod in_memory_log;
+pub mod file_log;
+pub mod wal_log;
 
 pub use event_store::{EventStore, TimeWindow};
 pub use in_memory::InMemoryEventStore;

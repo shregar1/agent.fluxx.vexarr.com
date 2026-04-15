@@ -63,11 +63,51 @@ impl AgentService {
         let event_store = Arc::new(InMemoryEventStore::new());
         let session_manager = Arc::new(SessionManager::new(session_store.clone()));
 
-        // Initialize metric and log stores
+        // Initialize metric store
         let metric_store: Arc<dyn crate::storage::MetricStore> = Arc::new(InMemoryMetricStore::new());
-        let log_store: Arc<dyn crate::storage::LogStore> = Arc::new(InMemoryLogStore::new(
-            config.logs.max_entries,
-        ));
+
+        // Initialize log store based on configured backend
+        let log_store: Arc<dyn crate::storage::LogStore> = match config.logs.backend.as_str() {
+            "file" => {
+                let file_config = crate::storage::file_log::FileLogConfig {
+                    directory: config.logs.file.directory.clone(),
+                    max_file_bytes: config.logs.file.max_file_bytes,
+                    max_files: config.logs.file.max_files,
+                    prefix: config.logs.file.prefix.clone(),
+                };
+                match crate::storage::file_log::FileLogStore::new(file_config) {
+                    Ok(store) => {
+                        info!("Runtime: Log store backend = file ({})", config.logs.file.directory);
+                        Arc::new(store)
+                    }
+                    Err(e) => {
+                        error!("Runtime: File log store failed, falling back to memory: {}", e);
+                        Arc::new(InMemoryLogStore::new(config.logs.max_entries))
+                    }
+                }
+            }
+            "wal" => {
+                let wal_config = crate::storage::wal_log::WalLogConfig {
+                    wal_dir: config.logs.wal.wal_dir.clone(),
+                    max_entries: config.logs.max_entries,
+                    compress: config.logs.wal.compress,
+                };
+                match crate::storage::wal_log::WalLogStore::open(wal_config) {
+                    Ok(store) => {
+                        info!("Runtime: Log store backend = wal ({})", config.logs.wal.wal_dir);
+                        Arc::new(store)
+                    }
+                    Err(e) => {
+                        error!("Runtime: WAL log store failed, falling back to memory: {}", e);
+                        Arc::new(InMemoryLogStore::new(config.logs.max_entries))
+                    }
+                }
+            }
+            _ => {
+                info!("Runtime: Log store backend = memory (max_entries={})", config.logs.max_entries);
+                Arc::new(InMemoryLogStore::new(config.logs.max_entries))
+            }
+        };
         let (metric_tx, _) = broadcast::channel::<Arc<Metric>>(1024);
         let (log_tx, _) = broadcast::channel::<Arc<LogEntry>>(1024);
 
