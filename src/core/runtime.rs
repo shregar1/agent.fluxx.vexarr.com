@@ -153,6 +153,7 @@ impl AgentService {
             let otlp_metric_bus = metric_tx.clone();
             let otlp_log_store = log_store.clone();
             let otlp_log_bus = log_tx.clone();
+            let otlp_error_tracker = error_tracker.clone();
 
             tokio::spawn(async move {
                 if let Err(e) = crate::protocols::otlp::grpc_server::start_otlp_grpc_server(
@@ -163,6 +164,7 @@ impl AgentService {
                     otlp_metric_bus,
                     otlp_log_store,
                     otlp_log_bus,
+                    Some(otlp_error_tracker),
                 ).await {
                     error!("Runtime: OTLP gRPC server failure: {}", e);
                 }

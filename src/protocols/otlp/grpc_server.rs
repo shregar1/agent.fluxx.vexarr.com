@@ -1,9 +1,10 @@
-use crate::models::event::Event;
+use crate::models::event::{Event, EventSeverity};
 use crate::models::metric::Metric;
 use crate::models::log_entry::LogEntry;
 use crate::storage::event_store::EventStore;
 use crate::storage::metric_store::MetricStore;
 use crate::storage::log_store::LogStore;
+use crate::analysis::error_tracking::ErrorTracker;
 use crate::protocols::otlp::convert;
 use std::sync::Arc;
 use tokio::sync::broadcast;
@@ -27,11 +28,17 @@ use opentelemetry_proto::tonic::collector::logs::v1::{
 pub struct OtlpTraceService {
     event_store: Arc<dyn EventStore>,
     event_bus: broadcast::Sender<Arc<Event>>,
+    error_tracker: Option<Arc<ErrorTracker>>,
 }
 
 impl OtlpTraceService {
     pub fn new(event_store: Arc<dyn EventStore>, event_bus: broadcast::Sender<Arc<Event>>) -> Self {
-        Self { event_store, event_bus }
+        Self { event_store, event_bus, error_tracker: None }
+    }
+
+    pub fn with_error_tracker(mut self, tracker: Arc<ErrorTracker>) -> Self {
+        self.error_tracker = Some(tracker);
+        self
     }
 }
 
@@ -46,6 +53,15 @@ impl TraceService for OtlpTraceService {
         let count = events.len();
 
         for event in events {
+            // Auto-track span errors
+            if let Some(ref tracker) = self.error_tracker {
+                if matches!(event.severity, EventSeverity::High | EventSeverity::Critical) {
+                    let span_name = event.metadata.extra.get("span_name").cloned().unwrap_or_default();
+                    let service = event.service_id.clone().unwrap_or_else(|| "unknown".to_string());
+                    tracker.track("SpanError", &span_name, &service, None);
+                }
+            }
+
             let event_arc = Arc::new(event.clone());
             let _ = self.event_bus.send(event_arc);
             if let Err(e) = self.event_store.insert(event).await {
@@ -142,10 +158,14 @@ pub async fn start_otlp_grpc_server(
     metric_bus: broadcast::Sender<Arc<Metric>>,
     log_store: Arc<dyn LogStore>,
     log_bus: broadcast::Sender<Arc<LogEntry>>,
+    error_tracker: Option<Arc<ErrorTracker>>,
 ) -> anyhow::Result<()> {
     let addr = format!("0.0.0.0:{}", port).parse()?;
 
-    let trace_svc = OtlpTraceService::new(event_store, event_bus);
+    let mut trace_svc = OtlpTraceService::new(event_store, event_bus);
+    if let Some(tracker) = error_tracker {
+        trace_svc = trace_svc.with_error_tracker(tracker);
+    }
     let metrics_svc = OtlpMetricsService::new(metric_store, metric_bus);
     let logs_svc = OtlpLogsService::new(log_store, log_bus);
 

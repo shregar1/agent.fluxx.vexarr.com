@@ -97,6 +97,9 @@ impl ApiServer {
             .route("/v1/annotations", post(crate::api::annotations::create_annotation).get(crate::api::annotations::list_annotations))
             // PromQL-compatible query engine
             .route("/v1/query", get(crate::api::promql::query))
+            // Trace detail API
+            .route("/v1/traces", get(crate::api::traces::list_traces))
+            .route("/v1/traces/:trace_id", get(crate::api::traces::get_trace))
             // Cluster status
             .route("/v1/cluster", get(crate::api::cluster::cluster_status))
             .route("/v1/cluster/topology", get(crate::api::cluster::cluster_topology))

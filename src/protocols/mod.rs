@@ -14,3 +14,4 @@ pub mod system;
 pub mod otlp;
 pub mod statsd;
 pub mod prometheus;
+pub mod tracecontext;
