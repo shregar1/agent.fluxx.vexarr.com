@@ -103,6 +103,26 @@ impl ApiServer {
             // SLO endpoints
             .route("/v1/slos", post(crate::api::slo::create_slo).get(crate::api::slo::list_slos))
             .route("/v1/slos/:id", get(crate::api::slo::get_slo))
+            // Incidents
+            .route("/v1/incidents", post(crate::api::incidents::create_incident).get(crate::api::incidents::list_incidents))
+            .route("/v1/incidents/:id", get(crate::api::incidents::get_incident))
+            .route("/v1/incidents/:id/status", post(crate::api::incidents::update_incident_status))
+            // Notebooks
+            .route("/v1/notebooks", post(crate::api::notebooks::create_notebook).get(crate::api::notebooks::list_notebooks))
+            .route("/v1/notebooks/:id", get(crate::api::notebooks::get_notebook))
+            // Workflows
+            .route("/v1/workflows", post(crate::api::workflows::create_workflow).get(crate::api::workflows::list_workflows))
+            .route("/v1/workflows/:id", get(crate::api::workflows::get_workflow))
+            // Database Monitoring
+            .route("/v1/dbm/queries", post(crate::api::dbm::ingest_slow_query).get(crate::api::dbm::list_slow_queries))
+            .route("/v1/dbm/stats", get(crate::api::dbm::get_query_stats))
+            // CI/CD Visibility
+            .route("/v1/ci/pipelines", post(crate::api::ci::record_pipeline).get(crate::api::ci::list_pipelines))
+            .route("/v1/ci/dora", get(crate::api::ci::get_dora_metrics))
+            // Network Performance Monitoring
+            .route("/v1/network/flows", post(crate::api::npm::record_flow).get(crate::api::npm::list_flows))
+            .route("/v1/network/dns", post(crate::api::npm::record_dns))
+            .route("/v1/network/summary", get(crate::api::npm::network_summary))
             // Cluster status
             .route("/v1/cluster", get(crate::api::cluster::cluster_status))
             .route("/v1/cluster/topology", get(crate::api::cluster::cluster_topology))

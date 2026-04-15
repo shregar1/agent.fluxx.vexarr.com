@@ -10,6 +10,12 @@ pub mod cluster;
 pub mod traces;
 pub mod recording_rules;
 pub mod slo;
+pub mod incidents;
+pub mod notebooks;
+pub mod workflows;
+pub mod dbm;
+pub mod ci;
+pub mod npm;
 
 use crate::sessions::SessionManager;
 use crate::storage::event_store::EventStore;
@@ -20,7 +26,14 @@ use crate::models::metric::Metric;
 use crate::models::log_entry::LogEntry;
 use crate::api::annotations::AnnotationStore;
 use crate::api::slo::SloStore;
+use crate::api::incidents::IncidentStore;
+use crate::api::notebooks::NotebookStore;
+use crate::api::workflows::WorkflowStore;
+use crate::api::dbm::DbmStore;
+use crate::api::ci::CiStore;
+use crate::api::npm::NpmStore;
 use crate::analysis::error_tracking::ErrorTracker;
+use crate::security::audit::AuditLog;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 
@@ -35,6 +48,13 @@ pub struct ApiState {
     pub annotation_store: AnnotationStore,
     pub error_tracker: Arc<ErrorTracker>,
     pub slo_store: SloStore,
+    pub incident_store: IncidentStore,
+    pub notebook_store: NotebookStore,
+    pub workflow_store: WorkflowStore,
+    pub dbm_store: DbmStore,
+    pub ci_store: CiStore,
+    pub npm_store: NpmStore,
+    pub audit_log: Arc<AuditLog>,
 }
 
 pub use server::ApiServer;
