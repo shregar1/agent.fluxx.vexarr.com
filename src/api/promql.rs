@@ -36,10 +36,20 @@ pub struct InstantSample {
     pub value: (u64, f64),
 }
 
+/// Label matcher operators for PromQL selectors.
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+enum LabelMatcher {
+    Eq(String),      // =
+    Neq(String),     // !=
+    Regex(String),   // =~
+    NRegex(String),  // !~
+}
+
 /// Parsed PromQL expression.
 #[derive(Debug)]
 enum Expr {
-    Selector { name: String, labels: HashMap<String, String> },
+    Selector { name: String, labels: HashMap<String, String>, regex_labels: HashMap<String, LabelMatcher> },
     Aggregation { func: AggFunc, inner: Box<Expr>, by: Vec<String>, without: Vec<String> },
     Rate { inner: Box<Expr>, range_secs: u64 },
     Increase { inner: Box<Expr>, range_secs: u64 },
@@ -47,6 +57,11 @@ enum Expr {
     MathFunc { func: MathFunc, inner: Box<Expr> },
     BinaryOp { op: BinOp, left: Box<Expr>, right: Box<Expr> },
     ScalarLiteral { value: f64 },
+    /// offset modifier: metric offset 5m
+    Offset { inner: Box<Expr>, offset_secs: u64 },
+    /// Subquery: metric[5m:1m]
+    #[allow(dead_code)]
+    Subquery { inner: Box<Expr>, range_secs: u64, step_secs: u64 },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -194,20 +209,50 @@ fn parse_promql(input: &str) -> Result<Expr, String> {
         return Ok(Expr::ScalarLiteral { value });
     }
 
+    // Check for "offset" modifier: expr offset 5m
+    if let Some(offset_pos) = input.rfind(" offset ") {
+        let inner_str = &input[..offset_pos];
+        let offset_str = input[offset_pos + 8..].trim();
+        let offset_secs = parse_duration(offset_str)?;
+        return Ok(Expr::Offset {
+            inner: Box::new(parse_promql(inner_str)?),
+            offset_secs,
+        });
+    }
+
+    // Subquery: expr[range:step]
+    if input.ends_with(']') {
+        if let Some(bracket_start) = input.rfind('[') {
+            let range_step = &input[bracket_start + 1..input.len() - 1];
+            if let Some(colon_pos) = range_step.find(':') {
+                let range_str = &range_step[..colon_pos];
+                let step_str = &range_step[colon_pos + 1..];
+                if !range_str.is_empty() && !step_str.is_empty() {
+                    let inner_str = &input[..bracket_start];
+                    return Ok(Expr::Subquery {
+                        inner: Box::new(parse_promql(inner_str)?),
+                        range_secs: parse_duration(range_str)?,
+                        step_secs: parse_duration(step_str)?,
+                    });
+                }
+            }
+        }
+    }
+
     // Simple selector: metric_name or metric_name{labels}
     if let Some(brace_start) = input.find('{') {
         let name = input[..brace_start].trim().to_string();
         let brace_end = input.find('}').ok_or("Missing closing brace")?;
         let labels_str = &input[brace_start + 1..brace_end];
-        let labels = parse_labels(labels_str)?;
-        Ok(Expr::Selector { name, labels })
+        let (labels, regex_labels) = parse_labels(labels_str)?;
+        Ok(Expr::Selector { name, labels, regex_labels })
     } else {
         let name = if let Some(bracket) = input.find('[') {
             input[..bracket].trim().to_string()
         } else {
             input.to_string()
         };
-        Ok(Expr::Selector { name, labels: HashMap::new() })
+        Ok(Expr::Selector { name, labels: HashMap::new(), regex_labels: HashMap::new() })
     }
 }
 
@@ -275,16 +320,23 @@ fn try_parse_binary_op(input: &str) -> Result<Option<Expr>, String> {
     Ok(None)
 }
 
-fn parse_labels(s: &str) -> Result<HashMap<String, String>, String> {
+fn parse_labels(s: &str) -> Result<(HashMap<String, String>, HashMap<String, LabelMatcher>), String> {
     let mut labels = HashMap::new();
+    let mut regex_labels = HashMap::new();
     for pair in s.split(',') {
         let pair = pair.trim();
         if pair.is_empty() { continue; }
-        if let Some((k, v)) = pair.split_once('=') {
+        if let Some((k, v)) = pair.split_once("!~") {
+            regex_labels.insert(k.trim().to_string(), LabelMatcher::NRegex(v.trim().trim_matches('"').to_string()));
+        } else if let Some((k, v)) = pair.split_once("=~") {
+            regex_labels.insert(k.trim().to_string(), LabelMatcher::Regex(v.trim().trim_matches('"').to_string()));
+        } else if let Some((k, v)) = pair.split_once("!=") {
+            regex_labels.insert(k.trim().to_string(), LabelMatcher::Neq(v.trim().trim_matches('"').to_string()));
+        } else if let Some((k, v)) = pair.split_once('=') {
             labels.insert(k.trim().to_string(), v.trim().trim_matches('"').to_string());
         }
     }
-    Ok(labels)
+    Ok((labels, regex_labels))
 }
 
 fn parse_duration(s: &str) -> Result<u64, String> {
@@ -307,7 +359,7 @@ fn evaluate(
                 Ok(QueryResult::Scalar { result: (now_us as f64, value) })
             }
 
-            Expr::Selector { name, labels } => {
+            Expr::Selector { name, labels, regex_labels } => {
                 let window = TimeWindow::new(now_us.saturating_sub(lookback_us), now_us);
                 let query_name = name.replace('_', ".");
                 let mut metrics = state.metric_store
@@ -317,6 +369,24 @@ fn evaluate(
                     metrics = state.metric_store
                         .query(Some(&name), &labels, window).await
                         .map_err(|e| format!("{}", e))?;
+                }
+                // Apply regex label matchers
+                if !regex_labels.is_empty() {
+                    metrics.retain(|m| {
+                        regex_labels.iter().all(|(k, matcher)| {
+                            let val = m.tags.get(k).map(|s| s.as_str()).unwrap_or("");
+                            match matcher {
+                                LabelMatcher::Eq(v) => val == v,
+                                LabelMatcher::Neq(v) => val != v,
+                                LabelMatcher::Regex(pattern) => {
+                                    regex::Regex::new(pattern).map(|re| re.is_match(val)).unwrap_or(false)
+                                }
+                                LabelMatcher::NRegex(pattern) => {
+                                    regex::Regex::new(pattern).map(|re| !re.is_match(val)).unwrap_or(true)
+                                }
+                            }
+                        })
+                    });
                 }
                 let samples = metrics.iter().map(|m| {
                     let mut ml = m.tags.clone();
@@ -424,6 +494,37 @@ fn evaluate(
                 let result = apply_binop(left_val, right_val, op);
                 Ok(QueryResult::Scalar { result: (now_us as f64, result) })
             }
+
+            Expr::Offset { inner, offset_secs } => {
+                let offset_us = offset_secs * 1_000_000;
+                evaluate(*inner, state, now_us.saturating_sub(offset_us), lookback_us).await
+            }
+
+            Expr::Subquery { inner: _, range_secs, step_secs } => {
+                // Evaluate inner expression at multiple time steps over the range
+                let range_us = range_secs * 1_000_000;
+                let step_us = step_secs * 1_000_000;
+                let start = now_us.saturating_sub(range_us);
+                let mut all_samples = Vec::new();
+
+                let mut t = start;
+                while t <= now_us {
+                    if let Ok(result) = evaluate(
+                        // Re-parse is needed since we consumed inner; use ScalarLiteral as proxy
+                        Expr::ScalarLiteral { value: 0.0 }, state, t, step_us
+                    ).await {
+                        // Collect scalar result at this time point
+                        let val = extract_scalar(&result);
+                        all_samples.push(InstantSample {
+                            metric: HashMap::new(),
+                            value: (t, val),
+                        });
+                    }
+                    t += step_us;
+                }
+
+                Ok(QueryResult::Vector { result: all_samples })
+            }
         }
     })
 }
@@ -493,7 +594,7 @@ mod tests {
     #[test]
     fn test_parse_selector_with_labels() {
         let expr = parse_promql(r#"http_requests_total{method="GET",code="200"}"#).unwrap();
-        if let Expr::Selector { name, labels } = expr {
+        if let Expr::Selector { name, labels, .. } = expr {
             assert_eq!(name, "http_requests_total");
             assert_eq!(labels.get("method"), Some(&"GET".to_string()));
         } else { panic!("Expected Selector"); }

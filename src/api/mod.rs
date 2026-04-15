@@ -6,6 +6,7 @@ pub mod service_map;
 pub mod dashboard;
 pub mod annotations;
 pub mod promql;
+pub mod cluster;
 
 use crate::sessions::SessionManager;
 use crate::storage::event_store::EventStore;

@@ -97,6 +97,9 @@ impl ApiServer {
             .route("/v1/annotations", post(crate::api::annotations::create_annotation).get(crate::api::annotations::list_annotations))
             // PromQL-compatible query engine
             .route("/v1/query", get(crate::api::promql::query))
+            // Cluster status
+            .route("/v1/cluster", get(crate::api::cluster::cluster_status))
+            .route("/v1/cluster/topology", get(crate::api::cluster::cluster_topology))
             // Prometheus remote_write endpoint
             .route("/v1/prom/write", post(crate::protocols::prometheus::remote_write))
             // OTLP HTTP ingestion endpoints

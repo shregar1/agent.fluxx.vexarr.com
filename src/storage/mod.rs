@@ -15,5 +15,7 @@ pub use log_store::{LogStore, LogQuery};
 pub use in_memory_log::InMemoryLogStore;
 pub mod tiered;
 pub mod wal;
+pub mod cold;
 pub use tiered::{TieredEventStore, TieredStorageConfig};
 pub use wal::WalEventStore;
+pub use cold::{ColdStorageConfig, LocalColdBackend, S3ColdBackend};

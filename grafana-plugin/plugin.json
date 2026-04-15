@@ -1,0 +1,32 @@
+{
+  "type": "datasource",
+  "name": "Fluxx",
+  "id": "fluxx-datasource",
+  "info": {
+    "description": "Fluxx observability platform data source for Grafana",
+    "author": { "name": "Fluxx Team", "url": "https://fluxx.dev" },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "version": "1.0.0",
+    "updated": "2026-04-15"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.0.0",
+    "plugins": []
+  },
+  "metrics": true,
+  "annotations": true,
+  "alerting": true,
+  "queryOptions": {
+    "maxDataPoints": true,
+    "minInterval": true
+  },
+  "routes": [
+    {
+      "path": "api",
+      "url": "{{ .JsonData.url }}"
+    }
+  ]
+}

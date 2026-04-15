@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 pub mod masking;
 pub mod rbac;
+pub mod sso;
 
 /// SecurityProcessor: A high-performance middleware component that enforces 
 /// PII masking, payload encryption, and local-only data privacy.
