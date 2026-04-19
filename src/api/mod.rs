@@ -24,6 +24,9 @@ pub mod correlate;
 pub mod changes;
 pub mod pipelines;
 pub mod quotas;
+pub mod ai_rca;
+pub mod nl_dashboard;
+pub mod predictive;
 
 use crate::sessions::SessionManager;
 use crate::storage::event_store::EventStore;

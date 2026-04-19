@@ -138,6 +138,14 @@ impl ApiServer {
             .route("/v1/profiling", post(crate::api::profiling::ingest_profile).get(crate::api::profiling::list_profiles))
             .route("/v1/profiling/raw", post(crate::api::profiling::ingest_raw_profile))
             .route("/v1/profiling/:id", get(crate::api::profiling::get_profile))
+            // AI Root Cause Analysis
+            .route("/v1/rca", get(crate::api::ai_rca::analyze_root_cause).post(crate::api::ai_rca::trigger_rca))
+            // Natural Language Dashboard Builder
+            .route("/v1/nl/query", get(crate::api::nl_dashboard::nl_to_promql))
+            .route("/v1/nl/panel", post(crate::api::nl_dashboard::create_panel_from_nl))
+            // Predictive Alerting
+            .route("/v1/predict", get(crate::api::predictive::predict_metric))
+            .route("/v1/predict/alerts", get(crate::api::predictive::predicted_alerts))
             // Correlation Engine
             .route("/v1/correlate", get(crate::api::correlate::correlate))
             // Change Intelligence
