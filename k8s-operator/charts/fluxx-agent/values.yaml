@@ -1,0 +1,116 @@
+# Fluxx Agent Helm Chart Values
+# Override these in your values.yaml or via --set
+
+# Agent configuration
+agent:
+  # Agent name (auto-generated from hostname if empty)
+  name: ""
+  # Log level: trace, debug, info, warn, error
+  logLevel: info
+
+# Deployment mode: "daemonset" (per-node) or "deployment" (centralized)
+mode: daemonset
+
+# Replica count (only for deployment mode)
+replicaCount: 1
+
+image:
+  repository: fluxx/agent
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# API server
+api:
+  port: 3000
+  service:
+    type: ClusterIP
+    port: 3000
+
+# OTLP ingestion
+otlp:
+  enabled: true
+  grpcPort: 4317
+  service:
+    type: ClusterIP
+    port: 4317
+
+# StatsD receiver
+statsd:
+  enabled: false
+  port: 8125
+
+# Dashboard
+dashboard:
+  enabled: true
+  # Dashboard is embedded in the binary, served on random port
+  # Set ingress to expose externally
+  ingress:
+    enabled: false
+    className: nginx
+    host: dashboard.fluxx.local
+    tls: false
+
+# Storage
+storage:
+  # Log store backend: memory, file, wal
+  logBackend: memory
+  # Max events in memory
+  maxEntries: 1000000
+  # Persistent volume for WAL/file backends
+  persistence:
+    enabled: false
+    size: 10Gi
+    storageClass: ""
+
+# Metric alerts
+metricAlerts:
+  enabled: true
+  checkIntervalSecs: 30
+  lookbackSecs: 300
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations (for running on all nodes including masters)
+tolerations:
+  - operator: Exists
+
+# Affinity
+affinity: {}
+
+# Service account
+serviceAccount:
+  create: true
+  name: fluxx-agent
+
+# RBAC
+rbac:
+  create: true
+
+# Pod security context
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+
+# Container security context
+securityContext:
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+# Extra environment variables
+extraEnv: []
+
+# Extra volume mounts
+extraVolumeMounts: []
+
+# Extra volumes
+extraVolumes: []

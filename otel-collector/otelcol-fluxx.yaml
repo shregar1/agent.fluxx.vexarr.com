@@ -1,0 +1,167 @@
+# Fluxx OpenTelemetry Collector Distribution
+#
+# Pre-configured OTel Collector that routes all telemetry to Fluxx.
+# Drop-in replacement: swap your existing OTel Collector config for this one.
+#
+# Usage:
+#   otelcol --config otelcol-fluxx.yaml
+#
+# Or with Docker:
+#   docker run -v $(pwd)/otelcol-fluxx.yaml:/etc/otelcol/config.yaml \
+#     otel/opentelemetry-collector-contrib:latest
+
+receivers:
+  # OTLP receiver (gRPC + HTTP) — accepts traces, metrics, logs
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Prometheus receiver — scrapes Prometheus targets
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'otel-collector'
+          scrape_interval: 15s
+          static_configs:
+            - targets: ['localhost:8888']
+
+  # Host metrics receiver — CPU, memory, disk, network
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+      memory:
+      disk:
+      filesystem:
+      network:
+      load:
+      processes:
+
+  # Docker stats receiver
+  # docker_stats:
+  #   endpoint: unix:///var/run/docker.sock
+  #   collection_interval: 30s
+
+  # Kubernetes cluster receiver (when running in K8s)
+  # k8s_cluster:
+  #   collection_interval: 30s
+
+  # Filelog receiver for container logs
+  # filelog:
+  #   include: [/var/log/containers/*.log]
+  #   operators:
+  #     - type: json_parser
+
+processors:
+  # Batch processor — groups telemetry for efficient export
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Memory limiter — prevents OOM
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  # Resource detection — auto-adds host/cloud/k8s attributes
+  resourcedetection:
+    detectors: [env, system]
+    timeout: 5s
+
+  # Attributes processor — add Fluxx-specific metadata
+  attributes:
+    actions:
+      - key: fluxx.collector.version
+        value: "1.0.0"
+        action: upsert
+      - key: deployment.environment
+        from_attribute: DEPLOYMENT_ENV
+        action: upsert
+
+  # Filter processor — drop noisy telemetry
+  # filter:
+  #   metrics:
+  #     exclude:
+  #       match_type: strict
+  #       metric_names:
+  #         - system.cpu.time  # Too granular
+
+exporters:
+  # Fluxx OTLP exporter — sends traces, metrics, logs to Fluxx agent
+  otlp/fluxx:
+    endpoint: ${FLUXX_ENDPOINT:-localhost:4317}
+    tls:
+      insecure: true
+    headers:
+      X-API-Key: ${FLUXX_API_KEY:-}
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      num_consumers: 4
+      queue_size: 1000
+
+  # Fluxx Prometheus remote_write — for Prometheus metrics
+  prometheusremotewrite/fluxx:
+    endpoint: ${FLUXX_HTTP_ENDPOINT:-http://localhost:3000}/v1/prom/write
+    tls:
+      insecure: true
+    headers:
+      X-API-Key: ${FLUXX_API_KEY:-}
+
+  # Debug exporter (for troubleshooting)
+  # debug:
+  #   verbosity: detailed
+
+  # Logging exporter (stdout)
+  logging:
+    loglevel: warn
+
+extensions:
+  # Health check
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  # Performance profiler
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  # zPages for debugging
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [health_check, pprof, zpages]
+
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, attributes, batch]
+      exporters: [otlp/fluxx]
+
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp, prometheus, hostmetrics]
+      processors: [memory_limiter, resourcedetection, attributes, batch]
+      exporters: [otlp/fluxx, prometheusremotewrite/fluxx]
+
+    # Logs pipeline
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, attributes, batch]
+      exporters: [otlp/fluxx]
+
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888

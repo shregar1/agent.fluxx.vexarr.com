@@ -132,6 +132,8 @@ impl ApiServer {
             .route("/v1/cspm/findings", post(crate::api::cspm::report_finding).get(crate::api::cspm::list_findings))
             .route("/v1/cspm/compliance", get(crate::api::cspm::get_compliance))
             .route("/v1/cspm/rules", get(crate::api::cspm::list_security_rules))
+            // Cost Analytics
+            .route("/v1/cost", get(crate::api::cost::cost_analysis))
             // Continuous Profiling
             .route("/v1/profiling", post(crate::api::profiling::ingest_profile).get(crate::api::profiling::list_profiles))
             .route("/v1/profiling/raw", post(crate::api::profiling::ingest_raw_profile))

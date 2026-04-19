@@ -19,6 +19,7 @@ pub mod npm;
 pub mod rum;
 pub mod cspm;
 pub mod profiling;
+pub mod cost;
 
 use crate::sessions::SessionManager;
 use crate::storage::event_store::EventStore;

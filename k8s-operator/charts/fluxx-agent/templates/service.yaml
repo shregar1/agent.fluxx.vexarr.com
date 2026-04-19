@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fluxx-agent.fullname" . }}
+  labels:
+    {{- include "fluxx-agent.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.api.service.type }}
+  ports:
+    - port: {{ .Values.api.service.port }}
+      targetPort: api
+      protocol: TCP
+      name: api
+    {{- if .Values.otlp.enabled }}
+    - port: {{ .Values.otlp.service.port }}
+      targetPort: otlp-grpc
+      protocol: TCP
+      name: otlp-grpc
+    {{- end }}
+  selector:
+    {{- include "fluxx-agent.selectorLabels" . | nindent 4 }}

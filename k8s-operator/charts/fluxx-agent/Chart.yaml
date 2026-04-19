@@ -1,0 +1,19 @@
+apiVersion: v2
+name: fluxx-agent
+description: Fluxx Observability Agent — single binary, full-stack monitoring
+type: application
+version: 1.0.0
+appVersion: "0.1.0"
+keywords:
+  - observability
+  - monitoring
+  - tracing
+  - metrics
+  - logs
+  - apm
+home: https://fluxx.dev
+sources:
+  - https://github.com/fluxx/agent
+maintainers:
+  - name: Fluxx Team
+    email: team@fluxx.dev

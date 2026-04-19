@@ -1,0 +1,90 @@
+{{- if eq .Values.mode "daemonset" }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "fluxx-agent.fullname" . }}
+  labels:
+    {{- include "fluxx-agent.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "fluxx-agent.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "fluxx-agent.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "fluxx-agent.serviceAccountName" . }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: fluxx-agent
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["fluxx", "start"]
+          ports:
+            - name: api
+              containerPort: {{ .Values.api.port }}
+              protocol: TCP
+            {{- if .Values.otlp.enabled }}
+            - name: otlp-grpc
+              containerPort: {{ .Values.otlp.grpcPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.statsd.enabled }}
+            - name: statsd
+              containerPort: {{ .Values.statsd.port }}
+              protocol: UDP
+            {{- end }}
+          env:
+            - name: FLUXX_NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: APP_LOG_LEVEL
+              value: {{ .Values.agent.logLevel }}
+            - name: FLUXX_DISABLE_AUTH
+              value: "true"
+            {{- range .Values.extraEnv }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /v1/stats
+              port: api
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /v1/stats
+              port: api
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- if .Values.storage.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/fluxx
+          {{- end }}
+          {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- if .Values.storage.persistence.enabled }}
+      volumes:
+        - name: data
+          hostPath:
+            path: /var/lib/fluxx
+            type: DirectoryOrCreate
+      {{- end }}
+      {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
