@@ -125,6 +125,9 @@ impl AgentService {
         let rum_store = crate::api::rum::RumStore::new();
         let cspm_store = crate::api::cspm::CspmStore::new();
         let profiling_store = crate::api::profiling::ProfilingStore::new();
+        let change_store = crate::api::changes::ChangeStore::new();
+        let pipeline_store = crate::api::pipelines::PipelineStore::new();
+        let quota_manager = crate::api::quotas::QuotaManager::new();
 
         // 1. Configure UI API API Stack
         let api_state = Arc::new(ApiState {
@@ -148,6 +151,9 @@ impl AgentService {
             rum_store,
             cspm_store,
             profiling_store,
+            change_store,
+            pipeline_store,
+            quota_manager,
         });
 
         let api_server = ApiServer::new(api_state, "0.0.0.0:3000");

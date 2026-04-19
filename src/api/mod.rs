@@ -20,6 +20,10 @@ pub mod rum;
 pub mod cspm;
 pub mod profiling;
 pub mod cost;
+pub mod correlate;
+pub mod changes;
+pub mod pipelines;
+pub mod quotas;
 
 use crate::sessions::SessionManager;
 use crate::storage::event_store::EventStore;
@@ -39,6 +43,9 @@ use crate::api::npm::NpmStore;
 use crate::analysis::error_tracking::ErrorTracker;
 use crate::security::audit::AuditLog;
 use crate::api::rum::RumStore;
+use crate::api::changes::ChangeStore;
+use crate::api::pipelines::PipelineStore;
+use crate::api::quotas::QuotaManager;
 use crate::api::cspm::CspmStore;
 use crate::api::profiling::ProfilingStore;
 use std::sync::Arc;
@@ -65,6 +72,9 @@ pub struct ApiState {
     pub rum_store: RumStore,
     pub cspm_store: CspmStore,
     pub profiling_store: ProfilingStore,
+    pub change_store: ChangeStore,
+    pub pipeline_store: PipelineStore,
+    pub quota_manager: QuotaManager,
 }
 
 pub use server::ApiServer;

@@ -138,6 +138,17 @@ impl ApiServer {
             .route("/v1/profiling", post(crate::api::profiling::ingest_profile).get(crate::api::profiling::list_profiles))
             .route("/v1/profiling/raw", post(crate::api::profiling::ingest_raw_profile))
             .route("/v1/profiling/:id", get(crate::api::profiling::get_profile))
+            // Correlation Engine
+            .route("/v1/correlate", get(crate::api::correlate::correlate))
+            // Change Intelligence
+            .route("/v1/changes", post(crate::api::changes::record_change).get(crate::api::changes::list_changes))
+            .route("/v1/changes/regressions", get(crate::api::changes::detect_regressions))
+            // Data Pipelines
+            .route("/v1/pipelines", post(crate::api::pipelines::create_pipeline).get(crate::api::pipelines::list_pipelines))
+            .route("/v1/pipelines/:id", get(crate::api::pipelines::get_pipeline).delete(crate::api::pipelines::delete_pipeline))
+            // Quotas & Rate Limiting
+            .route("/v1/quotas", post(crate::api::quotas::set_quota).get(crate::api::quotas::list_quotas))
+            .route("/v1/quotas/:project_id/usage", get(crate::api::quotas::get_usage))
             // Cluster status
             .route("/v1/cluster", get(crate::api::cluster::cluster_status))
             .route("/v1/cluster/topology", get(crate::api::cluster::cluster_topology))
