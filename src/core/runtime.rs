@@ -122,6 +122,9 @@ impl AgentService {
         let ci_store = crate::api::ci::CiStore::new();
         let npm_store = crate::api::npm::NpmStore::new();
         let audit_log = Arc::new(crate::security::audit::AuditLog::new());
+        let rum_store = crate::api::rum::RumStore::new();
+        let cspm_store = crate::api::cspm::CspmStore::new();
+        let profiling_store = crate::api::profiling::ProfilingStore::new();
 
         // 1. Configure UI API API Stack
         let api_state = Arc::new(ApiState {
@@ -142,6 +145,9 @@ impl AgentService {
             ci_store,
             npm_store,
             audit_log,
+            rum_store,
+            cspm_store,
+            profiling_store,
         });
 
         let api_server = ApiServer::new(api_state, "0.0.0.0:3000");
