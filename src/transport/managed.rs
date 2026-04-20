@@ -71,6 +71,10 @@ impl crate::core::traits::Protocol for ManagedTransporter {
         self.network.protocol_name()
     }
 
+    fn protocol_type(&self) -> crate::models::event::ProtocolType {
+        crate::models::event::ProtocolType::Other
+    }
+
     async fn start(&self) -> Result<()> {
         self.network.start().await
     }

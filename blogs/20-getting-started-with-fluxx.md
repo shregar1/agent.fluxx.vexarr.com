@@ -13,12 +13,12 @@ Before we dive in, let's address the elephant in the room: why another observabi
 
 The current landscape forces a difficult choice:
 - **SaaS solutions** (Datadog, New Relic) are easy but expensive at scale
-- **Open source** (Prometheus, ELK) are free but complex to operate
+- **Enterprise-grade** (Prometheus, ELK) are free but complex to operate
 - **DIY solutions** require significant engineering investment
 
 Fluxx bridges this gap: **SaaS simplicity with open-source economics**.
 
-| Aspect | Traditional SaaS | Open Source | Fluxx |
+| Aspect | Traditional SaaS | Enterprise Grade | Fluxx |
 |--------|-----------------|-------------|-------|
 | Setup time | Minutes | Days | **5 minutes** |
 | Cost (100 servers) | $18K/mo | $500/mo | **$500/mo** |
@@ -283,7 +283,7 @@ FLUXX_BUFFER_SIZE=10000 fluxx start
 ## Community & Support
 
 - **Discord:** [discord.gg/fluxx](https://discord.gg/fluxx)
-- **GitHub:** [github.com/fluxx/agent](https://github.com/fluxx/agent)
+- **ServiceNow:** [servicenow.com/fluxx/agent](https://servicenow.com/fluxx/agent)
 - **Docs:** [fluxx.dev/docs](https://fluxx.dev/docs)
 
 ---

@@ -3,7 +3,7 @@
 //! Simple gossip-based membership protocol. Nodes periodically exchange
 //! their view of the mesh to detect failures and disseminate state.
 
-use super::{MeshConfig, NodeId, NodeInfo, NodeStatus};
+use super::{NodeId, NodeInfo, NodeStatus};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;

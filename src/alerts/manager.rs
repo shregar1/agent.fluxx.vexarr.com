@@ -6,10 +6,10 @@
 //! - State tracking
 //! - Multi-channel delivery
 
-use crate::alerts::channels::{create_channel, AlertChannel, ChannelResult};
+use crate::alerts::channels::{create_channel, AlertChannel};
 use crate::alerts::config::{AlertConfig, AlertRuleConfig, AlertSeverity};
 use crate::alerts::models::{Alert, AlertState, TrackedAlert};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;

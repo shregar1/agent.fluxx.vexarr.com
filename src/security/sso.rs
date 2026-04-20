@@ -279,7 +279,7 @@ mod tests {
                 issuer_url: "https://auth.example.com".to_string(),
                 client_id: "fluxx-app".to_string(),
                 client_secret: "secret".to_string(),
-                redirect_uri: "http://localhost:3000/auth/callback".to_string(),
+                redirect_uri: "http://localhost:7007/auth/callback".to_string(),
                 scopes: vec!["openid".to_string(), "email".to_string(), "profile".to_string()],
             },
             ..Default::default()

@@ -122,7 +122,7 @@ patterns:
       - "deployment frequency"
       - "deploy rate"
     query:
-      integration: github
+      integration: servicenow
       metric: deployments
       aggregation: count_per_day
 ```

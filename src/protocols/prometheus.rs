@@ -4,7 +4,7 @@
 //! This allows existing Prometheus setups to forward metrics to Fluxx with zero code change.
 //!
 //! ## Usage
-//! Configure Prometheus to remote_write to `http://fluxx-host:3000/v1/prom/write`
+//! Configure Prometheus to remote_write to `http://fluxx-host:7007/v1/prom/write`
 
 use crate::api::{ApiState, StandardResponse};
 use crate::models::metric::{Metric, MetricType};

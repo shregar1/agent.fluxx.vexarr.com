@@ -190,7 +190,7 @@ Build exactly what you need. No feature request queues.
 10-100× faster queries (local SSD vs network roundtrip).
 
 ### 4. No Vendor Lock-in
-Open source. Own your destiny.
+Enterprise-grade. Own your destiny.
 
 ---
 
@@ -232,7 +232,7 @@ The $18M observability tax isn't paying for better technology—it's paying for:
 
 **Fluxx Agent gives you:**
 - Better technology (Rust, SIMD, eBPF)
-- Full control (open source)
+- Full control (enterprise-grade)
 - 95% cost reduction
 - No vendor lock-in
 
@@ -244,7 +244,7 @@ The $18M observability tax isn't paying for better technology—it's paying for:
 
 ```bash
 # Clone the calculator
-git clone https://github.com/fluxx-dev/cost-calculator
+git clone https://servicenow.com/fluxx-dev/cost-calculator
 cd cost-calculator
 
 # Enter your Datadog bill

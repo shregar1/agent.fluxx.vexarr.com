@@ -111,7 +111,7 @@ exporters:
 
   # Fluxx Prometheus remote_write — for Prometheus metrics
   prometheusremotewrite/fluxx:
-    endpoint: ${FLUXX_HTTP_ENDPOINT:-http://localhost:3000}/v1/prom/write
+    endpoint: ${FLUXX_HTTP_ENDPOINT:-http://localhost:7007}/v1/prom/write
     tls:
       insecure: true
     headers:

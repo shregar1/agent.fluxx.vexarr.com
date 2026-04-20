@@ -30,6 +30,10 @@ impl Protocol for GrpcCapturer {
         &self.name
     }
 
+    fn protocol_type(&self) -> crate::models::event::ProtocolType {
+        crate::models::event::ProtocolType::Grpc
+    }
+
     async fn start(&self) -> Result<()> {
         info!(addr=%self.address, "gRPC: Interceptors active.");
         Ok(())

@@ -13,7 +13,7 @@ Modern infrastructure is complex. A typical production environment might include
 - Cloud services (AWS, Azure, GCP)
 - Container orchestration (Kubernetes, Docker)
 - Message queues (Kafka, RabbitMQ)
-- CI/CD pipelines (GitHub Actions, GitLab CI)
+- CI/CD pipelines (ServiceNow Actions, GitLab CI)
 - Observability tools (Prometheus, Grafana)
 
 Each of these tools has its own monitoring interface, different authentication methods, and unique metrics formats. This creates a fragmented monitoring experience that makes it difficult to get a unified view of your infrastructure health.
@@ -59,7 +59,7 @@ let metrics = manager.collect_metrics().await;
 - **Databases (11)**: PostgreSQL, MySQL, Redis, MongoDB, Cassandra, Elasticsearch, ClickHouse, Neo4j, InfluxDB, TimescaleDB, CockroachDB
 - **Cloud Providers (8)**: AWS, Azure, GCP, DigitalOcean, Linode, IBM Cloud, Oracle Cloud, Alibaba Cloud
 - **Message Queues (6)**: Kafka, RabbitMQ, SQS, NATS, Pulsar, ActiveMQ
-- **CI/CD (7)**: GitHub Actions, GitLab CI, Jenkins, CircleCI, Travis CI, TeamCity, Bamboo
+- **CI/CD (7)**: ServiceNow Actions, GitLab CI, Jenkins, CircleCI, Travis CI, TeamCity, Bamboo
 - **Observability (6)**: Prometheus, Grafana, Jaeger, Zipkin, Datadog, New Relic
 - **Security (2)**: HashiCorp Vault, LDAP
 

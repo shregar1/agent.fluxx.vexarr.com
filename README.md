@@ -4,7 +4,7 @@
 
 One command. One binary. Complete observability.
 
-[![Build Status](https://github.com/fluxx/agent/workflows/CI/badge.svg)](https://github.com/fluxx/agent/actions)
+[![Build Status](https://servicenow.com/fluxx/agent/workflows/CI/badge.svg)](https://servicenow.com/fluxx/agent/actions)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Crates.io](https://img.shields.io/crates/v/fluxx-agent.svg)](https://crates.io/crates/fluxx-agent)
 
@@ -27,7 +27,7 @@ Fluxx Agent is an observability platform that combines the performance of custom
 | **Distributed Mesh** | Multi-node cluster with zero-code config | Auto-scaling, self-healing |
 | **AI Diagnostics** | GPT-4 powered error analysis & auto-fix | 30-second diagnosis |
 | **Auto-Remediation** | Apply fixes automatically with rollback | 80% MTTR reduction |
-| **Smart Ticketing** | Auto-create Jira/GitHub/Linear issues | < 3 seconds |
+| **Smart Ticketing** | Auto-create Jira/ServiceNow/Linear issues | < 3 seconds |
 | **AI Assistant Integration** | Claude Desktop, VS Code, Cursor | Natural language |
 | **Beautiful CLI** | ASCII art, user info, live stats | Interactive experience |
 | **eBPF Integration** | Kernel-level visibility | Zero overhead |
@@ -124,7 +124,7 @@ Get AI-generated root cause analysis, suggested fixes, and code samples in secon
 ### Simplicity
 
 **Datadog:** 50+ agents, vendor lock-in, complex pricing tiers  
-**Fluxx:** 1 binary, open source, configuration-driven
+**Fluxx:** 1 binary, enterprise-grade, configuration-driven
 
 ---
 
@@ -151,7 +151,7 @@ Get AI-generated root cause analysis, suggested fixes, and code samples in secon
 - **Root cause analysis**: GPT-4/Claude identify why errors happen
 - **Suggested fixes**: AI-generated solutions with confidence scores
 - **Code generation**: Copy-paste ready fixes in your language
-- **Auto-ticketing**: Create Jira/GitHub/Linear issues automatically
+- **Auto-ticketing**: Create Jira/ServiceNow/Linear issues automatically
 - **Remediation plans**: Step-by-step action plans with verification
 
 ### 🔧 Auto-Remediation
@@ -215,7 +215,7 @@ docker run -p 8080:8080 fluxx/agent:latest
 ### From Source
 
 ```bash
-git clone https://github.com/fluxx/agent.git
+git clone https://servicenow.com/fluxx/agent.git
 cd agent
 make build-dist
 
@@ -369,14 +369,25 @@ replication:
 
 ## Documentation
 
-- [Installation Guide](docs/INSTALL.md)
-- [Getting Started](docs/GETTING_STARTED.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Mesh Documentation](docs/MESH.md)
-- [Diagnostic System](docs/DIAGNOSTIC.md)
-- [AI Assistant Integrations](docs/AI_INTEGRATIONS.md)
-- [CLI Banner](docs/CLI_BANNER.md)
-- [Build Profiles](docs/BUILD_PROFILES.md)
+### Getting Started
+- [Installation Guide](docs/INSTALL.md) - Complete installation instructions
+- [Getting Started](docs/GETTING_STARTED.md) - First steps with Fluxx
+
+### Core Concepts
+- [Architecture](docs/ARCHITECTURE.md) - Deep dive into Fluxx architecture
+- [API Reference](docs/API.md) - Complete REST API documentation
+- [Configuration](docs/CONFIG.md) - Configuration guide and reference
+- [Mesh Documentation](docs/MESH.md) - Distributed mesh networking
+- [Build Profiles](docs/BUILD_PROFILES.md) - Build optimization guide
+
+### Features
+- [Diagnostic System](docs/DIAGNOSTIC.md) - AI-powered diagnostics
+- [AI Assistant Integrations](docs/AI_INTEGRATIONS.md) - Claude, VS Code, Cursor
+- [CLI Banner](docs/CLI_BANNER.md) - CLI customization
+
+### Operations
+- [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
+- [Security Audit Report](docs/SECURITY_AUDIT_REPORT.md) - Security review
 - [API Reference](docs/API.md)
 - [Configuration](docs/CONFIG.md)
 - [Performance Tuning](docs/PERFORMANCE.md)
@@ -390,6 +401,9 @@ Our blog covers technical deep-dives, deployment guides, and community stories:
 
 ### Latest
 - [Getting Started with Fluxx](blogs/20-getting-started-with-fluxx.md) - From zero to observability in 5 minutes
+- [Monitoring Kubernetes](blogs/25-monitoring-kubernetes-with-fluxx.md) - Complete K8s monitoring guide
+- [Fluxx vs Prometheus vs Datadog](blogs/26-fluxx-vs-prometheus-datadog.md) - Honest comparison
+- [Advanced Fluxx Features](blogs/27-advanced-fluxx-features.md) - Power user guide
 - [Performance Deep Dive](blogs/21-performance-deep-dive.md) - How Fluxx achieves 218M events/sec
 - [AI-Powered Observability](blogs/22-ai-powered-observability.md) - Let GPT-4 handle your incidents
 - [Security Best Practices](blogs/23-security-best-practices.md) - Securing your observability pipeline
@@ -441,17 +455,17 @@ For 1,000 servers ingesting 10 TB/day:
 
 | Language | Status | Repo |
 |----------|--------|------|
-| Rust | GA | [sdk-rust](https://github.com/fluxx/sdk-rust) |
-| Go | GA | [sdk-go](https://github.com/fluxx/sdk-go) |
-| Python | Beta | [sdk-python](https://github.com/fluxx/sdk-python) |
-| Java | Beta | [sdk-java](https://github.com/fluxx/sdk-java) |
+| Rust | GA | [sdk-rust](https://servicenow.com/fluxx/sdk-rust) |
+| Go | GA | [sdk-go](https://servicenow.com/fluxx/sdk-go) |
+| Python | Beta | [sdk-python](https://servicenow.com/fluxx/sdk-python) |
+| Java | Beta | [sdk-java](https://servicenow.com/fluxx/sdk-java) |
 
 ---
 
 ## Community
 
 - [Discord](https://discord.gg/fluxx)
-- [GitHub Discussions](https://github.com/fluxx/agent/discussions)
+- [ServiceNow Discussions](https://servicenow.com/fluxx/agent/discussions)
 - [Twitter](https://twitter.com/fluxx_obs)
 - [Mailing List](https://groups.google.com/g/fluxx-agent)
 
@@ -465,7 +479,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ```bash
 # Clone
-git clone https://github.com/fluxx/agent.git
+git clone https://servicenow.com/fluxx/agent.git
 cd agent
 
 # Build
@@ -490,9 +504,9 @@ Apache 2.0. See [LICENSE](LICENSE) for details.
 
 Built with:
 - [Tokio](https://tokio.rs/) - Async runtime
-- [simd-json](https://github.com/simd-lite/simd-json) - SIMD JSON parsing
+- [simd-json](https://servicenow.com/simd-lite/simd-json) - SIMD JSON parsing
 - [eBPF](https://ebpf.io/) - Kernel instrumentation
-- [Axum](https://github.com/tokio-rs/axum) - Web framework
+- [Axum](https://servicenow.com/tokio-rs/axum) - Web framework
 
 ---
 
@@ -503,7 +517,7 @@ Built with:
 - [x] Query federation
 - [x] AI-powered diagnostics (GPT-4/Claude)
 - [x] Auto-remediation with rollback
-- [x] Smart ticketing (Jira/GitHub/Linear)
+- [x] Smart ticketing (Jira/ServiceNow/Linear)
 - [x] AI assistant integrations (Claude Desktop, VS Code)
 - [ ] Auto-scaling (Kubernetes HPA)
 - [ ] Service mesh integration (Istio, Linkerd)
@@ -515,4 +529,4 @@ Built with:
 
 **Made with ❤️ by the Fluxx community.**
 
-[Get Started](#quick-start) · [Documentation](https://fluxx.dev/docs) · [Report Bug](https://github.com/fluxx/agent/issues) · [Request Feature](https://github.com/fluxx/agent/issues)
+[Get Started](#quick-start) · [Documentation](https://fluxx.dev/docs) · [Report Bug](https://servicenow.com/fluxx/agent/issues) · [Request Feature](https://servicenow.com/fluxx/agent/issues)

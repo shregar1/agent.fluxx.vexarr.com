@@ -70,7 +70,7 @@ impl KnowledgeBase {
     }
 
     /// Find similar articles
-    pub fn find_similar(&self, error: &ErrorContext, threshold: f64) -> Vec<KnowledgeArticle> {
+    pub fn find_similar(&self, _error: &ErrorContext, threshold: f64) -> Vec<KnowledgeArticle> {
         // Placeholder - would implement vector similarity search
         self.articles.iter()
             .filter(|a| a.similarity >= threshold)
@@ -228,7 +228,7 @@ impl DiagnosticEngine {
     /// Check if should auto-create ticket
     async fn should_create_ticket(&self, report: &DiagnosticReport) -> bool {
         // Check if any provider has auto_create enabled
-        let has_auto_create = self.ticketing_providers.iter().any(|p| {
+        let has_auto_create = self.ticketing_providers.iter().any(|_p| {
             // This is a simplified check - in reality we'd need to access config
             // For now, assume auto_create is based on severity
             report.error.severity.to_lowercase() == "critical"
@@ -273,10 +273,12 @@ impl DiagnosticEngine {
         ));
 
         // Step 2: Check suggested fixes
-        if !report.suggested_fixes.is_empty() {
+        for (i, fix) in report.suggested_fixes.iter().enumerate() {
             steps.push(format!(
-                "2. Review {} suggested fix(es), starting with the highest confidence one",
-                report.suggested_fixes.len()
+                "{}. {} (confidence: {:.0}%)",
+                i + 2,
+                fix.description,
+                fix.confidence * 100.0
             ));
         }
 

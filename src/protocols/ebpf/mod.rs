@@ -1,8 +1,7 @@
 use async_trait::async_trait;
 use crate::core::error::{Result, Error};
 use crate::core::traits::{Capturer, Protocol};
-use crate::models::event::{Event, ProtocolType};
-use crate::protocols::common::CaptureChannel;
+use crate::models::event::Event;
 #[cfg(target_os = "linux")]
 use crate::protocols::ebpf::kernel::EbpfEvent;
 #[cfg(target_os = "linux")]
@@ -12,8 +11,6 @@ use aya_log::BpfLogger;
 #[cfg(target_os = "linux")]
 pub mod kernel;
 
-use std::sync::Arc;
-use tracing::{info, error, debug};
 
 #[cfg(not(target_os = "linux"))]
 #[derive(Debug)]
@@ -83,6 +80,10 @@ impl EbpfCapture {
 impl Protocol for EbpfCapture {
     fn name(&self) -> &str {
         &self.name
+    }
+
+    fn protocol_type(&self) -> crate::models::event::ProtocolType {
+        crate::models::event::ProtocolType::Ebpf
     }
 
     async fn start(&self) -> Result<()> {

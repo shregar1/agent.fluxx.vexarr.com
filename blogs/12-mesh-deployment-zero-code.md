@@ -439,4 +439,4 @@ No code. No complexity. No compromise.
 
 *Join the movement. Democratize observability.*
 
-[GitHub](https://github.com/fluxx/agent) | [Documentation](https://fluxx.dev/docs) | [Community Discord](https://discord.gg/fluxx)
+[ServiceNow](https://servicenow.com/fluxx/agent) | [Documentation](https://fluxx.dev/docs) | [Community Discord](https://discord.gg/fluxx)

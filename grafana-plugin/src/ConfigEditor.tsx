@@ -45,10 +45,10 @@ export function ConfigEditor(props: Props) {
 
   return (
     <div className="gf-form-group">
-      <InlineField label="Fluxx Agent URL" labelWidth={20} tooltip="URL of your Fluxx agent (e.g., http://localhost:3000)">
+      <InlineField label="Fluxx Agent URL" labelWidth={20} tooltip="URL of your Fluxx agent (e.g., http://localhost:7007)">
         <Input
           value={jsonData.url || ''}
-          placeholder="http://localhost:3000"
+          placeholder="http://localhost:7007"
           width={40}
           onChange={onURLChange}
         />

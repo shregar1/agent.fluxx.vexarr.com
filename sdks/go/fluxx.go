@@ -3,7 +3,7 @@
 //
 // Usage:
 //
-//	client := fluxx.New("http://localhost:3000")
+//	client := fluxx.New("http://localhost:7007")
 //	client.Log("info", "User logged in", fluxx.LogOpts{Service: "auth"})
 //	client.Metric("request.count", 1, "counter", map[string]string{"env": "prod"})
 package fluxx

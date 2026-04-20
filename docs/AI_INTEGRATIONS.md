@@ -9,7 +9,7 @@ Fluxx Agent integrates with popular AI coding assistants to provide infrastructu
 | Claude Desktop | MCP Server | ✅ Ready |
 | VS Code | Extension | ✅ Ready |
 | Cursor | VS Code API | ✅ Compatible |
-| GitHub Copilot | VS Code API | ✅ Compatible |
+| ServiceNow Copilot | VS Code API | ✅ Compatible |
 | Continue.dev | VS Code API | ✅ Compatible |
 
 ## MCP Server (Claude Desktop)

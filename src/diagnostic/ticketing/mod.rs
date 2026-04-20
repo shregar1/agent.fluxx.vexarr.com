@@ -92,7 +92,7 @@ impl TicketTemplate {
 
         if !report.suggested_fixes.is_empty() {
             description.push_str("h2. Suggested Fixes\n\n");
-            for (i, fix) in report.suggested_fixes.iter().enumerate() {
+            for (_i, fix) in report.suggested_fixes.iter().enumerate() {
                 description.push_str(&format!(
                     "# *{}* (confidence: {:.0}%)\n{}\nSteps:\n",
                     fix.title,

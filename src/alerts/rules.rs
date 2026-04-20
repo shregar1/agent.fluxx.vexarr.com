@@ -23,7 +23,7 @@
 //! ```
 
 use crate::alerts::config::{AlertRuleConfig, AlertSeverity};
-use crate::alerts::models::{Alert, AlertRuleResult};
+use crate::alerts::models::Alert;
 use std::collections::HashMap;
 
 /// Rule engine for evaluating alert conditions

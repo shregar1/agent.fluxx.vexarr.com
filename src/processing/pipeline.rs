@@ -4,7 +4,7 @@ use crate::models::event::Event;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
-use tracing::{error, info, debug, warn};
+use tracing::{error, info, warn};
 use tokio::sync::Semaphore;
 
 /// Pipeline orchestrates high-performance concurrent ingestion, processing 

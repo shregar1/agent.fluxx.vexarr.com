@@ -14,7 +14,7 @@ Welcome to the Fluxx Agent blog! Here you'll find articles about infrastructure 
 
 ### February
 
-- **[CI/CD Monitoring Guide](2024-02-01-cicd-monitoring-guide.md)** - Monitor GitHub Actions, GitLab CI, Jenkins, CircleCI, and more.
+- **[CI/CD Monitoring Guide](2024-02-01-cicd-monitoring-guide.md)** - Monitor ServiceNow Actions, GitLab CI, Jenkins, CircleCI, and more.
 
 ## Categories
 
@@ -51,4 +51,4 @@ Want to contribute a blog post? See our [Contributing Guide](../CONTRIBUTING.md)
 
 - Follow us on Twitter: [@fluxxagent](https://twitter.com/fluxxagent)
 - Join our Discord: [discord.gg/fluxx](https://discord.gg/fluxx)
-- Star us on GitHub: [github.com/fluxx/agent](https://github.com/fluxx/agent)
+- Star us on ServiceNow: [servicenow.com/fluxx/agent](https://servicenow.com/fluxx/agent)

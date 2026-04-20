@@ -1,6 +1,6 @@
 # Integrating Fluxx Agent with AI Coding Assistants
 
-This guide explains how to integrate Fluxx Agent with AI coding assistants (Claude, GitHub Copilot, Sourcegraph Cody, Cursor, Continue.dev, Aider, etc.) to create an intelligent observability experience.
+This guide explains how to integrate Fluxx Agent with AI coding assistants (Claude, ServiceNow Copilot, Sourcegraph Cody, Cursor, Continue.dev, Aider, etc.) to create an intelligent observability experience.
 
 ## Overview
 
@@ -250,7 +250,7 @@ context:
       - Databases: PostgreSQL, MySQL, Redis, MongoDB, Cassandra, etc.
       - Cloud: AWS, Azure, GCP, DigitalOcean, etc.
       - Message Queues: Kafka, RabbitMQ, SQS, etc.
-      - CI/CD: GitHub Actions, GitLab CI, Jenkins, etc.
+      - CI/CD: ServiceNow Actions, GitLab CI, Jenkins, etc.
       
     examples:
       - trigger: "monitor database"
@@ -280,7 +280,7 @@ tools:
       return result.json();
 ```
 
-### 4. GitHub Copilot Integration
+### 4. ServiceNow Copilot Integration
 
 Create a Copilot extension for infrastructure queries.
 
@@ -657,7 +657,7 @@ code --install-extension fluxx.fluxx-agent
 For Cursor:
 ```bash
 # Add to .cursor/extensions/
-git clone https://github.com/fluxx/cursor-extension ~/.cursor/extensions/fluxx-agent
+git clone https://servicenow.com/fluxx/cursor-extension ~/.cursor/extensions/fluxx-agent
 ```
 
 ### Step 3: Configure AI Assistant
@@ -717,7 +717,7 @@ Would you like me to generate the configuration changes?
 
 ---
 
-### With GitHub Copilot Chat
+### With ServiceNow Copilot Chat
 
 **User:** @fluxx Check if my Kubernetes deployment is healthy
 
@@ -799,7 +799,7 @@ Solution: Implement caching or increase rate limits in Fluxx config
 
 ## Resources
 
-- [Fluxx Agent MCP Server](https://github.com/fluxx/mcp-server)
+- [Fluxx Agent MCP Server](https://servicenow.com/fluxx/mcp-server)
 - [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=fluxx.fluxx-agent)
-- [Cursor Extension](https://github.com/fluxx/cursor-extension)
-- [Example Configurations](https://github.com/fluxx/examples)
+- [Cursor Extension](https://servicenow.com/fluxx/cursor-extension)
+- [Example Configurations](https://servicenow.com/fluxx/examples)

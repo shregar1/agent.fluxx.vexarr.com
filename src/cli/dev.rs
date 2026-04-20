@@ -1,7 +1,6 @@
-use crate::core::runtime::{AgentService, Lifecycle};
+use crate::core::runtime::AgentService;
 use crate::config::Config;
-use tracing::{info, warn};
-use std::sync::Arc;
+use tracing::info;
 
 /// DevManager: Orchestrates the high-velocity 'dev' mode for Fluxx.
 /// Automatically detects local services and streams real-time telemetry 
@@ -31,7 +30,7 @@ impl DevManager {
         // We ensure that StdoutTransporter is active and we enable debug logging.
         
         // 3. Automated Activation
-        let mut service_ref = &mut self.service;
+        let service_ref = &mut self.service;
         
         info!("DevMode: Fluxx is now LIVE. Streaming captured events below:");
         println!("----------------------------------------------------------");

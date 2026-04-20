@@ -21,10 +21,10 @@ image:
 
 # API server
 api:
-  port: 3000
+  port: 7007
   service:
     type: ClusterIP
-    port: 3000
+    port: 7007
 
 # OTLP ingestion
 otlp:

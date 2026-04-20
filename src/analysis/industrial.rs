@@ -43,7 +43,7 @@ pub struct VehicleAnalyzer;
 impl Analyzer for VehicleAnalyzer {
     fn analyze(&self, event: &Event) -> Vec<Insight> {
         let mut insights = Vec::new();
-        if let Some(restarts) = event.metadata.extra.get("ecu_resets") {
+        if let Some(__restarts) = event.metadata.extra.get("ecu_resets") {
              insights.push(Insight::new(self.protocol(), InsightLevel::Critical, "Vehicle: ECU reset detected on CAN/SomeIP bus."));
         }
         insights

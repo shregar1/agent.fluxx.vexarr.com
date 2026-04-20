@@ -320,7 +320,7 @@ ai:
   auto_remediate: true
   ticketing:
     enabled: true
-    provider: github
+    provider: servicenow
     auto_create: true
 
 alerting:

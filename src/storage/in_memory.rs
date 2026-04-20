@@ -41,4 +41,38 @@ impl EventStore for InMemoryEventStore {
         let map = self.events.read().expect("RwLock poisoned");
         Ok(map.values().map(|v| v.len()).sum())
     }
+
+    async fn list_events(&self, project_id: Option<String>, protocol: Option<crate::models::event::ProtocolType>, severity: Option<crate::models::event::EventSeverity>, service_id: Option<String>) -> Vec<Event> {
+        let map = self.events.read().expect("RwLock poisoned");
+        
+        map.values()
+            .flat_map(|evs| evs.iter())
+            .filter(|ev| {
+                let project_match = project_id.is_none() || ev.project_id == project_id;
+                let protocol_match = protocol.is_none() || Some(ev.protocol) == protocol;
+                let severity_match = severity.is_none() || Some(ev.severity) == severity;
+                let service_match = service_id.is_none() || ev.service_id == service_id;
+                project_match && protocol_match && severity_match && service_match
+            })
+            .cloned()
+            .collect()
+    }
+
+    async fn get_stats(&self) -> serde_json::Value {
+        let map = self.events.read().expect("RwLock poisoned");
+        let total = map.values().map(|v| v.len()).sum::<usize>();
+        
+        let mut protocol_counts = std::collections::HashMap::new();
+        for evs in map.values() {
+            for ev in evs {
+                *protocol_counts.entry(format!("{:?}", ev.protocol)).or_insert(0) += 1;
+            }
+        }
+
+        serde_json::json!({
+            "total_events": total,
+            "unique_time_buckets": map.len(),
+            "protocols": protocol_counts
+        })
+    }
 }

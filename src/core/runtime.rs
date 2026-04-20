@@ -156,7 +156,8 @@ impl AgentService {
             quota_manager,
         });
 
-        let api_server = ApiServer::new(api_state, "0.0.0.0:3000");
+        let api_addr = format!("0.0.0.0:{}", config.server.port);
+        let api_server = ApiServer::new(api_state, &api_addr);
 
         // 2. Configure Ingestion (Capture Layer)
         // Register Protocols & Capturers based on config
@@ -329,7 +330,7 @@ impl AgentService {
     }
 
     pub fn get_config_summary(&self, config: &Config) -> String {
-        format!("Agent identity: '{}', UI server port: 3000", config.agent_name)
+        format!("Agent identity: '{}', API port: {}", config.agent_name, config.server.port)
     }
 
     pub async fn deploy_fleet(

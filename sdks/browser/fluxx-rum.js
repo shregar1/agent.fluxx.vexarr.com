@@ -13,7 +13,7 @@
  *   <script src="fluxx-rum.js"></script>
  *   <script>
  *     FluxxRUM.init({
- *       endpoint: 'http://localhost:3000',
+ *       endpoint: 'http://localhost:7007',
  *       applicationId: 'my-web-app',
  *       sessionSampleRate: 100,
  *     });

@@ -22,7 +22,7 @@ Monitor all your infrastructure with a unified interface:
 - **Databases (11)**: PostgreSQL, MySQL, Redis, MongoDB, Cassandra, Elasticsearch, ClickHouse, Neo4j, InfluxDB, TimescaleDB, CockroachDB
 - **Cloud Providers (8)**: AWS, Azure, GCP, DigitalOcean, Linode, IBM Cloud, Oracle Cloud, Alibaba Cloud
 - **Message Queues (6)**: Kafka, RabbitMQ, SQS, NATS, Pulsar, ActiveMQ
-- **CI/CD (7)**: GitHub Actions, GitLab CI, Jenkins, CircleCI, Travis CI, TeamCity, Bamboo
+- **CI/CD (7)**: ServiceNow Actions, GitLab CI, Jenkins, CircleCI, Travis CI, TeamCity, Bamboo
 - **Containers**: Docker, Kubernetes
 - **Cache**: Memcached, Varnish
 - **Observability**: Prometheus, Grafana, Jaeger, Zipkin, Datadog, New Relic
@@ -32,7 +32,7 @@ Monitor all your infrastructure with a unified interface:
 
 - [Diagnostic System](DIAGNOSTIC.md) - AI-powered root cause analysis
 - [Auto-Remediation](auto-remediation.md) - Automatic issue resolution
-- [Ticketing Integration](ticketing.md) - Jira, GitHub, Linear integration
+- [Ticketing Integration](ticketing.md) - Jira, ServiceNow, Linear integration
 
 ### Distributed Mesh
 
@@ -148,7 +148,7 @@ We welcome contributions! See:
 ## Support
 
 - [Discord](https://discord.gg/fluxx) - Community chat
-- [GitHub Issues](https://github.com/fluxx/agent/issues) - Bug reports
+- [ServiceNow Issues](https://servicenow.com/fluxx/agent/issues) - Bug reports
 - [Email](mailto:support@fluxx.dev) - Direct support
 
 ## License
@@ -159,6 +159,6 @@ Fluxx Agent is licensed under the MIT License. See [LICENSE](../LICENSE) for det
 
 **Quick Links:**
 [Home](https://fluxx.dev) |
-[GitHub](https://github.com/fluxx/agent) |
+[ServiceNow](https://servicenow.com/fluxx/agent) |
 [Twitter](https://twitter.com/fluxxagent) |
 [Docker Hub](https://hub.docker.com/r/fluxx/agent)

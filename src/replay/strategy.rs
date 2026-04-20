@@ -1,6 +1,4 @@
 use crate::models::event::Event;
-use crate::core::error::Result;
-use async_trait::async_trait;
 use std::fmt::Debug;
 
 /// ReplayStrategy: Defines how historical events are mutated before re-injection.

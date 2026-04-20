@@ -380,14 +380,14 @@ Event::new(
 
 ## CI/CD Events
 
-### GitHub Actions
+### ServiceNow Actions
 
 ```rust
 Event::new(
-    "GitHub Actions API Unavailable",
-    "Cannot connect to GitHub API",
+    "ServiceNow Actions API Unavailable",
+    "Cannot connect to ServiceNow API",
     EventSeverity::Warning,
-    "github_actions",
+    "servicenow_actions",
     "api_unavailable",
 );
 ```

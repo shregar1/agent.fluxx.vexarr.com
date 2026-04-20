@@ -80,7 +80,7 @@ pub trait Integration: Send + Sync {
 
 | Integration | Metrics |
 |-------------|---------|
-| **GitHub Actions** | Workflow runs, deployment tracking |
+| **ServiceNow Actions** | Workflow runs, deployment tracking |
 | **GitLab CI** | Pipelines, jobs, runners |
 | **Jenkins** | Jobs, executors, queue, nodes |
 | **CircleCI** | Pipelines, workflows |
@@ -251,10 +251,10 @@ All CI/CD integrations track:
 - Queue depth
 - Agent/runner status
 
-Example with GitHub Actions:
+Example with ServiceNow Actions:
 
 ```rust
-manager.with_github_actions("token", "owner", "repo");
+manager.with_servicenow_actions("token", "owner", "repo");
 ```
 
 ### Message Queue Integrations

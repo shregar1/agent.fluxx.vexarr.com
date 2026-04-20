@@ -12,7 +12,7 @@ AI-powered error analysis, automated remediation planning, and ticketing integra
 
 ### 🎫 Ticketing Integrations
 - **Jira**: Auto-create issues with full diagnostic context
-- **GitHub Issues**: Create issues with formatted markdown
+- **ServiceNow Issues**: Create issues with formatted markdown
 - **Linear**: Create issues via GraphQL API
 - **Custom Webhooks**: Send diagnostics to any endpoint
 
@@ -187,10 +187,10 @@ ticketing:
     labels: ["auto-generated", "diagnostic"]
 ```
 
-### GitHub
+### ServiceNow
 ```yaml
 ticketing:
-  github:
+  servicenow:
     enabled: true
     token: "${GITHUB_TOKEN}"
     owner: "myorg"
@@ -272,7 +272,7 @@ cargo run --example diagnostic_example
 | `JIRA_HOST` | Jira instance URL |
 | `JIRA_USER` | Jira username |
 | `JIRA_TOKEN` | Jira API token |
-| `GITHUB_TOKEN` | GitHub personal access token |
+| `GITHUB_TOKEN` | ServiceNow personal access token |
 | `LINEAR_API_KEY` | Linear API key |
 
 ## Feedback & Learning

@@ -5,6 +5,7 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 
 /// GitHub Actions integration
+#[allow(dead_code)]
 pub struct GitHubActionsIntegration {
     config: IntegrationConfig,
     token: String,
@@ -36,6 +37,7 @@ impl GitHubActionsIntegration {
     }
 
     /// Build API URL
+    #[allow(dead_code)]
     fn api_url(&self, endpoint: &str) -> String {
         format!(
             "https://api.github.com/repos/{}/{}/{}",

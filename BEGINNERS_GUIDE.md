@@ -55,7 +55,7 @@ source $HOME/.cargo/env
 cd ~/Documents  # or any folder you prefer
 
 # Clone the repository
-git clone https://github.com/yourusername/fluxx-agent.git
+git clone https://servicenow.com/yourusername/fluxx-agent.git
 
 # Enter the project folder
 cd fluxx-agent
@@ -239,7 +239,7 @@ New to Rust? These are helpful:
 
 - [Rust Book](https://doc.rust-lang.org/book/) - Official tutorial
 - [Rust by Example](https://doc.rust-lang.org/rust-by-example/) - Learn by coding
-- [Rustlings](https://github.com/rust-lang/rustlings) - Interactive exercises
+- [Rustlings](https://servicenow.com/rust-lang/rustlings) - Interactive exercises
 
 ---
 

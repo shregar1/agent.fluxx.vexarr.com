@@ -25,6 +25,7 @@ use crate::alerts::models::Alert;
 use async_trait::async_trait;
 
 /// Email SMTP channel
+#[allow(dead_code)]
 pub struct EmailChannel {
     name: String,
     smtp_host: String,
@@ -194,8 +195,8 @@ To configure or disable these alerts, edit your alerts.yaml configuration.
     async fn send_email(
         &self,
         subject: &str,
-        html_body: &str,
-        text_body: &str,
+        _html_body: &str,
+        _text_body: &str,
     ) -> ChannelResult<()> {
         // Build the email using lettre crate format
         // For this implementation, we'll use a simple SMTP client

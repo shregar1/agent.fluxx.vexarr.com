@@ -25,6 +25,7 @@ impl QuicCapturer {
         }
     }
 
+    #[allow(dead_code)]
     async fn listen_task(&self, endpoint: Endpoint) -> Result<()> {
         while let Some(connecting) = endpoint.accept().await {
             info!(peer=%connecting.remote_address(), "QUIC: Handshaking incoming connection.");
@@ -59,6 +60,10 @@ impl QuicCapturer {
 impl Protocol for QuicCapturer {
     fn name(&self) -> &str {
         &self.name
+    }
+
+    fn protocol_type(&self) -> crate::models::event::ProtocolType {
+        crate::models::event::ProtocolType::Quic
     }
 
     async fn start(&self) -> Result<()> {

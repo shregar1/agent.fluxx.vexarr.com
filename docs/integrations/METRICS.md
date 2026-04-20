@@ -203,16 +203,16 @@ These metrics are available across most integrations:
 
 ## CI/CD Metrics
 
-### GitHub Actions
+### ServiceNow Actions
 
 | Metric | Type | Description |
 |--------|------|-------------|
-| `github_actions.connection.status` | gauge | API access health |
-| `github_actions.workflows.total` | gauge | Total workflows |
-| `github_actions.runs.total` | gauge | Total runs |
-| `github_actions.runs.success` | gauge | Successful runs |
-| `github_actions.runs.failure` | gauge | Failed runs |
-| `github_actions.success_rate` | gauge | Success percentage |
+| `servicenow_actions.connection.status` | gauge | API access health |
+| `servicenow_actions.workflows.total` | gauge | Total workflows |
+| `servicenow_actions.runs.total` | gauge | Total runs |
+| `servicenow_actions.runs.success` | gauge | Successful runs |
+| `servicenow_actions.runs.failure` | gauge | Failed runs |
+| `servicenow_actions.success_rate` | gauge | Success percentage |
 
 ### GitLab CI
 

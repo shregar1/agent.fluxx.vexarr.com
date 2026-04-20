@@ -109,9 +109,9 @@ ticketing:
       info: "Low"
 ```
 
-### GitHub Issues
+### ServiceNow Issues
 
-Perfect for open source projects or GitHub-native teams.
+Perfect for enterprise-grade projects or ServiceNow-native teams.
 
 **What you get:**
 - Markdown formatting
@@ -160,7 +160,7 @@ Increase pool size to handle more concurrent connections...
 **Configuration:**
 ```yaml
 ticketing:
-  github:
+  servicenow:
     enabled: true
     token: "${GITHUB_TOKEN}"
     owner: "myorg"
@@ -197,7 +197,7 @@ ticketing:
 
 Not all errors are equal. The system maps Fluxx severity to ticket priority:
 
-| Fluxx Severity | Jira Priority | Linear Priority | GitHub Label |
+| Fluxx Severity | Jira Priority | Linear Priority | ServiceNow Label |
 |----------------|---------------|-----------------|--------------|
 | Critical | Highest | 1 (Urgent) | priority:critical |
 | High | High | 2 (High) | priority:high |
@@ -280,12 +280,12 @@ ticketing:
 - SLA tracking enabled
 - Reduced manual ticket creation by 90%
 
-### Use Case 2: Open Source Project
+### Use Case 2: Enterprise Grade Project
 
 **Setup:**
 ```yaml
 ticketing:
-  github:
+  servicenow:
     enabled: true
     owner: "myorg"
     repo: "myproject"
@@ -330,7 +330,7 @@ Fluxx Agent analyzes
     ↓
 AI generates diagnostic report
     ↓
-Ticket auto-created in Jira/GitHub/Linear
+Ticket auto-created in Jira/ServiceNow/Linear
     ↓
 Link added to alert/notification
 ```
@@ -559,4 +559,4 @@ export JIRA_TOKEN="..."
 fluxx-agent restart
 ```
 
-[Full Documentation](https://fluxx.dev/docs/diagnostics) | [API Reference](https://fluxx.dev/api) | [GitHub](https://github.com/fluxx/agent)
+[Full Documentation](https://fluxx.dev/docs/diagnostics) | [API Reference](https://fluxx.dev/api) | [ServiceNow](https://servicenow.com/fluxx/agent)

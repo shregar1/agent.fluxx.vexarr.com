@@ -32,9 +32,22 @@ Technical articles, case studies, and guides for Fluxx Agent.
 
 | # | Title | Description | Read Time |
 |---|-------|-------------|-----------|
+| 25 | [Monitoring Kubernetes](25-monitoring-kubernetes-with-fluxx.md) | Complete K8s monitoring guide | 15 min |
 | 23 | [Security Best Practices](23-security-best-practices.md) | Securing your observability pipeline | 10 min |
 | 24 | [Real-World Use Cases](24-real-world-use-cases.md) | 5 production success stories | 12 min |
-| 17 | [Automated Ticketing](17-ticketing-integrations.md) | Jira, GitHub, Linear automation | 8 min |
+| 17 | [Automated Ticketing](17-ticketing-integrations.md) | Jira, ServiceNow, Linear automation | 8 min |
+
+### Comparisons & Decision Making
+
+| # | Title | Description | Read Time |
+|---|-------|-------------|-----------|
+| 26 | [Fluxx vs Prometheus vs Datadog](26-fluxx-vs-prometheus-datadog.md) | Honest comparison | 12 min |
+
+### Advanced Usage
+
+| # | Title | Description | Read Time |
+|---|-------|-------------|-----------|
+| 27 | [Advanced Fluxx Features](27-advanced-fluxx-features.md) | Power user guide | 14 min |
 
 ---
 
@@ -44,22 +57,50 @@ Technical articles, case studies, and guides for Fluxx Agent.
 1. [Getting Started with Fluxx](20-getting-started-with-fluxx.md)
 2. [Zero-Code Distributed Observability](12-mesh-deployment-zero-code.md)
 3. [The Manifesto](11-the-manifesto.md)
+4. [Real-World Use Cases](24-real-world-use-cases.md)
 
 ### For Engineers
 1. [Performance Deep Dive](21-performance-deep-dive.md)
 2. [Gossip Protocols](13-gossip-protocol-distributed-systems.md)
 3. [AI-Powered Observability](22-ai-powered-observability.md)
 4. [Security Best Practices](23-security-best-practices.md)
+5. [Monitoring Kubernetes](25-monitoring-kubernetes-with-fluxx.md)
 
 ### For Architects
 1. [Deployment Patterns](14-mesh-deployment-patterns.md)
 2. [Mesh vs Centralized](15-mesh-vs-centralized-observability.md)
 3. [Real-World Use Cases](24-real-world-use-cases.md)
+4. [Fluxx vs Prometheus vs Datadog](26-fluxx-vs-prometheus-datadog.md)
 
 ### For DevOps/SRE
-1. [Automated Ticketing](17-ticketing-integrations.md)
+1. [Monitoring Kubernetes](25-monitoring-kubernetes-with-fluxx.md)
 2. [AI-Powered Diagnostics](16-ai-powered-diagnostics.md)
 3. [Security Best Practices](23-security-best-practices.md)
+4. [Automated Ticketing](17-ticketing-integrations.md)
+
+### For Power Users
+1. [Advanced Fluxx Features](27-advanced-fluxx-features.md)
+2. [Performance Deep Dive](21-performance-deep-dive.md)
+3. [AI-Powered Observability](22-ai-powered-observability.md)
+
+---
+
+## By Reading Time
+
+**Quick reads (5-10 min):**
+- Getting Started with Fluxx
+- Zero-Code Distributed Observability
+- Security Best Practices
+
+**Medium reads (10-15 min):**
+- Performance Deep Dive
+- AI-Powered Observability
+- Real-World Use Cases
+- Fluxx vs Prometheus vs Datadog
+
+**Deep dives (15+ min):**
+- Monitoring Kubernetes
+- Advanced Fluxx Features
 
 ---
 
@@ -72,7 +113,7 @@ Want to write for the Fluxx blog? We welcome:
 - **Deep dives** - Technical explorations
 - **Comparisons** - Fluxx vs other tools
 
-Submit ideas via [GitHub Issues](https://github.com/fluxx/agent/issues) or Discord.
+Submit ideas via [ServiceNow Issues](https://servicenow.com/fluxx/agent/issues) or Discord.
 
 ---
 

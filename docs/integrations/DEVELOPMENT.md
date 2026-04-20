@@ -28,7 +28,7 @@ Decide which category your integration belongs to:
 - `cloud/` - Cloud providers (AWS, Azure, etc.)
 - `queue/` - Message queues (Kafka, RabbitMQ, etc.)
 - `containers/` - Container platforms (Docker, Kubernetes)
-- `cicd/` - CI/CD platforms (GitHub Actions, Jenkins)
+- `cicd/` - CI/CD platforms (ServiceNow Actions, Jenkins)
 - `cache/` - Caching systems (Memcached, Varnish)
 - `observability/` - Monitoring tools (Prometheus, Grafana)
 - `security/` - Security tools (Vault, LDAP)
@@ -454,7 +454,7 @@ See existing integrations for complete examples:
 ## Questions?
 
 - Join our [Discord](https://discord.gg/fluxx)
-- Open an [issue](https://github.com/fluxx/agent/issues)
+- Open an [issue](https://servicenow.com/fluxx/agent/issues)
 - Email: dev@fluxx.dev
 
 Thank you for contributing to Fluxx Agent!

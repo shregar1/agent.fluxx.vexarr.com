@@ -69,6 +69,10 @@ impl Protocol for WebSocketCapturer {
         &self.name
     }
 
+    fn protocol_type(&self) -> crate::models::event::ProtocolType {
+        crate::models::event::ProtocolType::Ws
+    }
+
     async fn start(&self) -> Result<()> {
         info!(addr=%self.address, "WS: Initializing listener daemon.");
         // Note: The actual TCP server is orchestrated by the Agent via TcpServer host.

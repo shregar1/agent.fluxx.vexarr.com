@@ -18,7 +18,7 @@
 //   }
 //
 //   provider "fluxx" {
-//     endpoint = "http://localhost:3000"
+//     endpoint = "http://localhost:7007"
 //     api_key  = var.fluxx_api_key
 //   }
 
@@ -42,7 +42,7 @@ func Provider() *schema.Provider {
 			"endpoint": {
 				Type:        schema.TypeString,
 				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("FLUXX_ENDPOINT", "http://localhost:3000"),
+				DefaultFunc: schema.EnvDefaultFunc("FLUXX_ENDPOINT", "http://localhost:7007"),
 				Description: "Fluxx agent HTTP endpoint URL",
 			},
 			"api_key": {

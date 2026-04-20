@@ -28,6 +28,12 @@ pub trait EventStore: Send + Sync + std::fmt::Debug {
     
     /// Returns the total volume of events in storage.
     async fn len(&self) -> Result<usize>;
+
+    /// Lists events with optional filtering.
+    async fn list_events(&self, project_id: Option<String>, protocol: Option<crate::models::event::ProtocolType>, severity: Option<crate::models::event::EventSeverity>, service_id: Option<String>) -> Vec<Event>;
+
+    /// Returns aggregate statistics for the event store.
+    async fn get_stats(&self) -> serde_json::Value;
 }
 
 #[cfg(test)]

@@ -1,6 +1,6 @@
 //! AI Analyzer Implementation
 
-use super::{AiProvider, ParsedAiResponse, parse_ai_response};
+use super::AiProvider;
 use crate::diagnostic::models::*;
 use crate::diagnostic::config::AiConfig;
 use async_trait::async_trait;
@@ -8,6 +8,7 @@ use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
 use serde_json::json;
 
 /// AI Analyzer using external LLM providers
+#[allow(dead_code)]
 pub struct AiAnalyzer {
     config: AiConfig,
     client: reqwest::Client,

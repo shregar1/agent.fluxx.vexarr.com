@@ -1,4 +1,4 @@
-# CI/CD Monitoring: From GitHub Actions to Jenkins
+# CI/CD Monitoring: From ServiceNow Actions to Jenkins
 
 **Date:** February 1, 2024  
 **Author:** Fluxx Agent Team  
@@ -20,10 +20,10 @@ Without unified monitoring, these issues go unnoticed until they impact producti
 
 Fluxx Agent supports 7 major CI/CD platforms:
 
-### GitHub Actions
+### ServiceNow Actions
 
 ```rust
-manager.with_github_actions("ghp_token", "myorg", "myrepo");
+manager.with_servicenow_actions("ghp_token", "myorg", "myrepo");
 ```
 
 **Metrics:**
@@ -155,7 +155,7 @@ Event::new(
     "Long Running Build",
     "Build #1234 has been running for 2 hours (expected: 15 min)",
     EventSeverity::Warning,
-    "github_actions",
+    "servicenow_actions",
     "long_running_build",
 )
 .with_metadata("build_id", "1234")
@@ -198,8 +198,8 @@ use std::env;
 
 let mut manager = IntegrationManager::new();
 
-// Primary CI/CD: GitHub Actions
-manager.with_github_actions(
+// Primary CI/CD: ServiceNow Actions
+manager.with_servicenow_actions(
     &env::var("GITHUB_TOKEN")?,
     "mycompany",
     "main-service"
@@ -253,7 +253,7 @@ Track build duration trends:
 ```rust
 // Metrics include average duration for each platform
 // Example output:
-// github_actions.pipelines.avg_duration_seconds: 245.5
+// servicenow_actions.pipelines.avg_duration_seconds: 245.5
 // jenkins.jobs.avg_duration_seconds: 189.2
 // gitlab_ci.pipelines.avg_duration_seconds: 312.8
 ```
@@ -266,7 +266,7 @@ Event::new(
     "Build Duration Increase",
     "Average build duration increased from 5min to 12min",
     EventSeverity::Warning,
-    "github_actions",
+    "servicenow_actions",
     "duration_increase",
 );
 ```
@@ -276,11 +276,11 @@ Event::new(
 Track deployment frequency and success:
 
 ```rust
-// GitHub Actions deployment workflow
-manager.with_github_actions("token", "org", "repo");
+// ServiceNow Actions deployment workflow
+manager.with_servicenow_actions("token", "org", "repo");
 
 // Track deployments to production
-// Metric: github_actions.workflows.production_deployments
+// Metric: servicenow_actions.workflows.production_deployments
 ```
 
 Deployment events:
@@ -290,7 +290,7 @@ Event::new(
     "Production Deployment",
     "Deployment v2.3.1 to production completed successfully",
     EventSeverity::Info,
-    "github_actions",
+    "servicenow_actions",
     "deployment_success",
 )
 .with_metadata("version", "2.3.1")
@@ -303,13 +303,13 @@ Event::new(
 
 ```rust
 // Production
-manager.with_github_actions("prod_token", "org", "prod-repo");
+manager.with_servicenow_actions("prod_token", "org", "prod-repo");
 
 // Staging
-manager.with_github_actions("staging_token", "org", "staging-repo");
+manager.with_servicenow_actions("staging_token", "org", "staging-repo");
 
 // Development
-manager.with_github_actions("dev_token", "org", "dev-repo");
+manager.with_servicenow_actions("dev_token", "org", "dev-repo");
 ```
 
 ### 2. Track Runner/Agent Health
@@ -318,10 +318,10 @@ manager.with_github_actions("dev_token", "org", "dev-repo");
 // Monitor available capacity
 let health = manager.health_check().await;
 for (name, status) in health {
-    if name.contains("github_actions") {
+    if name.contains("servicenow_actions") {
         match status {
             IntegrationStatus::Healthy => {
-                println!("GitHub Actions runners available");
+                println!("ServiceNow Actions runners available");
             }
             IntegrationStatus::Unhealthy(reason) => {
                 println!("Runner issue: {}", reason);
@@ -343,17 +343,17 @@ for (name, status) in health {
 ### 4. Monitor Credential Expiration
 
 ```rust
-// GitHub tokens expire
+// ServiceNow tokens expire
 // Jenkins API tokens can be revoked
 // Set up alerts before expiration
 ```
 
 ## Troubleshooting
 
-### GitHub Actions: Authentication Failed
+### ServiceNow Actions: Authentication Failed
 
 ```
-Error: GitHub API authentication failed
+Error: ServiceNow API authentication failed
 Solution:
   1. Check token hasn't expired
   2. Verify token has 'repo' scope
@@ -393,7 +393,7 @@ Rate limits:
 
 | Platform | Limit | Our Strategy |
 |----------|-------|--------------|
-| GitHub | 5000/hour | Cache for 5 minutes |
+| ServiceNow | 5000/hour | Cache for 5 minutes |
 | GitLab | 2000/minute | Batched requests |
 | CircleCI | 100/minute | Incremental fetch |
 | Jenkins | No limit | Direct API calls |

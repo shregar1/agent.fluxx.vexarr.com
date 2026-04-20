@@ -11,7 +11,7 @@
 Choosing observability tooling in 2026 is overwhelming:
 - SaaS giants: Datadog, New Relic, Dynatrace
 - Cloud-native: AWS CloudWatch, GCP Monitoring, Azure Monitor
-- Open source: Prometheus, Grafana, Jaeger, Elasticsearch
+- Enterprise-grade: Prometheus, Grafana, Jaeger, Elasticsearch
 - Modern: Honeycomb, Lightstep, SigNoz
 - And now: Fluxx Agent
 
@@ -49,11 +49,11 @@ This post compares them all—honestly.
 | Ease of use | ⭐⭐⭐⭐ | Decent UI |
 | Performance | ⭐⭐⭐ | Similar to Datadog |
 | Cost | ⭐⭐ | Still expensive |
-| Open source | ⭐ | Proprietary |
+| Enterprise-grade | ⭐ | Proprietary |
 
 **Best for:** APM-heavy workloads.
 
-**Fluxx comparison:** Better performance, lower cost, open source.
+**Fluxx comparison:** Better performance, lower cost, enterprise-grade.
 
 ---
 
@@ -126,14 +126,14 @@ This post compares them all—honestly.
 **Fluxx comparison:**
 - Similar event model
 - Self-hosted (cheaper)
-- Open source
+- Enterprise-grade
 - Comparable query speed
 
 ---
 
 ### 6. SigNoz
 
-**The open source alternative**
+**The enterprise-grade alternative**
 
 | Aspect | Rating | Notes |
 |--------|--------|-------|
@@ -185,7 +185,7 @@ This post compares them all—honestly.
 
 ## The Comparison Matrix
 
-| Solution | Throughput | Cost/1M events | Open Source | Maintenance |
+| Solution | Throughput | Cost/1M events | Enterprise Grade | Maintenance |
 |----------|-----------|----------------|-------------|-------------|
 | Datadog | 50K/s | $0.005 | ❌ | None |
 | New Relic | 60K/s | $0.004 | ❌ | None |
@@ -211,7 +211,7 @@ This post compares them all—honestly.
 - Small scale (<100 hosts)
 - Metrics only
 - Love operational work
-- Want pure open source
+- Want pure enterprise-grade
 - Have time to debug issues
 
 ### Choose Honeycomb if:
@@ -221,7 +221,7 @@ This post compares them all—honestly.
 - Okay with proprietary
 
 ### Choose SigNoz if:
-- Want open source full-stack
+- Want enterprise-grade full-stack
 - Okay with Go ecosystem
 - Moderate scale
 - Prefer ClickHouse
@@ -244,7 +244,7 @@ This post compares them all—honestly.
 |--------|-----|
 | Performance | Rust + SIMD + zero-copy |
 | Cost | Self-hosted + efficient |
-| Control | Open source + self-hosted |
+| Control | Enterprise-grade + self-hosted |
 | Security | Data never leaves your infra |
 | Customization | Modify anything |
 
@@ -325,7 +325,7 @@ kubectl apply -f https://prometheus.io/deploy.yml
 # Sign up, love it, see pricing page
 
 # 4. Fluxx Agent (free)
-git clone https://github.com/fluxx-dev/fluxx-agent
+git clone https://servicenow.com/fluxx-dev/fluxx-agent
 cargo run --release
 # Benchmark, compare, decide
 ```
@@ -366,7 +366,7 @@ Need data control?
 Performance critical?
   ├─ Yes → Fluxx Agent
   ↓ No
-Want open source?
+Want enterprise-grade?
   ├─ Yes → Fluxx or SigNoz
   ↓ No
 Just want it to work?

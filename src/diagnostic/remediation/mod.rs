@@ -1,6 +1,6 @@
 //! Remediation engine for applying fixes
 
-use crate::diagnostic::models::{RemediationPlan, RemediationStep, Action, ActionType, SuggestedFix};
+use crate::diagnostic::models::{RemediationPlan, RemediationStep, Action, SuggestedFix};
 use crate::diagnostic::config::RemediationConfig;
 
 /// Remediation engine
@@ -152,8 +152,8 @@ impl RemediationEngine {
     async fn apply_code_change(
         &self,
         file_path: &str,
-        search_pattern: &str,
-        replacement: &str,
+        _search_pattern: &str,
+        _replacement: &str,
     ) -> Result<(), String> {
         tracing::info!(
             file = %file_path,

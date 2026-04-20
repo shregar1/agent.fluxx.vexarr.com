@@ -63,7 +63,7 @@ pub async fn cluster_status(
         }],
         nodes: vec![NodeSummary {
             id: node_id,
-            address: "0.0.0.0:3000".to_string(),
+            address: "0.0.0.0:7007".to_string(),
             region: "local".to_string(),
             zone: "default".to_string(),
             status: "healthy".to_string(),

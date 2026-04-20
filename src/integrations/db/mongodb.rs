@@ -5,6 +5,7 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 
 /// MongoDB integration
+#[allow(dead_code)]
 pub struct MongoDbIntegration {
     config: IntegrationConfig,
     connection_string: String,

@@ -12,7 +12,7 @@ FROM otel/opentelemetry-collector-contrib:latest
 COPY otelcol-fluxx.yaml /etc/otelcol-contrib/config.yaml
 
 ENV FLUXX_ENDPOINT=localhost:4317
-ENV FLUXX_HTTP_ENDPOINT=http://localhost:3000
+ENV FLUXX_HTTP_ENDPOINT=http://localhost:7007
 ENV FLUXX_API_KEY=
 
 EXPOSE 4317 4318 8888 13133

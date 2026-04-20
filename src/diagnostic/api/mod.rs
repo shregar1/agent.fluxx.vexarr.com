@@ -274,6 +274,7 @@ struct KnowledgeArticleResponse {
 }
 
 #[derive(serde::Deserialize)]
+#[allow(dead_code)]
 struct RemediateRequest {
     fix_id: Option<String>,
     auto_approve: Option<bool>,

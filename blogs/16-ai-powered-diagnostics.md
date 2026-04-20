@@ -27,7 +27,7 @@ Fluxx Agent now includes an AI diagnostic engine that:
 2. **Identifies root causes** from logs, metrics, and traces
 3. **Suggests fixes** with confidence scores
 4. **Generates code samples** in your language
-5. **Creates tickets** in Jira/GitHub/Linear
+5. **Creates tickets** in Jira/ServiceNow/Linear
 6. **Applies fixes** automatically (if you let it)
 
 All in under 30 seconds.
@@ -85,7 +85,7 @@ Error Occurs
      ▼
 ┌─────────────────────────────────────────┐
 │  6. Ticketing Integration               │
-│     - Auto-create Jira/GitHub issue     │
+│     - Auto-create Jira/ServiceNow issue     │
 │     - Full context included             │
 │     - Links to code samples             │
 └─────────────────────────────────────────┘
@@ -184,7 +184,7 @@ diagnostic:
       project_key: "OPS"
       auto_create: true
       
-    github:
+    servicenow:
       enabled: true
       token: "${GITHUB_TOKEN}"
       owner: "myorg"
@@ -292,7 +292,7 @@ jira:
     warning: "Medium"
 ```
 
-### GitHub Issues
+### ServiceNow Issues
 
 Issues created with:
 - Markdown formatting
@@ -302,7 +302,7 @@ Issues created with:
 
 **Configuration:**
 ```yaml
-github:
+servicenow:
   enabled: true
   token: "${GITHUB_TOKEN}"
   owner: "myorg"
@@ -504,4 +504,4 @@ export OPENAI_API_KEY="sk-..."
 fluxx-agent start --enable-diagnostics
 ```
 
-[Documentation](https://fluxx.dev/docs/diagnostics) | [API Reference](https://fluxx.dev/api) | [GitHub](https://github.com/fluxx/agent)
+[Documentation](https://fluxx.dev/docs/diagnostics) | [API Reference](https://fluxx.dev/api) | [ServiceNow](https://servicenow.com/fluxx/agent)

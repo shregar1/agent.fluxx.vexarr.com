@@ -26,7 +26,6 @@ pub use timescaledb::TimescaleDbIntegration;
 
 use super::framework::*;
 use async_trait::async_trait;
-use std::collections::HashMap;
 
 /// Database-specific integration trait
 #[async_trait]

@@ -15,7 +15,7 @@ We achieve 600× better performance through:
 4. **io_uring** - Zero-copy I/O (5× faster)
 5. **Lock-free structures** - No contention
 
-Want the code? It's all at [github.com/fluxx-dev/fluxx-agent](https://github.com/fluxx-dev/fluxx-agent)
+Want the code? It's all at [servicenow.com/fluxx-dev/fluxx-agent](https://servicenow.com/fluxx-dev/fluxx-agent)
 
 ---
 
@@ -604,7 +604,7 @@ test result: ok.
 
 ```bash
 # Clone
-git clone https://github.com/fluxx-dev/fluxx-agent
+git clone https://servicenow.com/fluxx-dev/fluxx-agent
 cd fluxx-agent
 
 # Run benchmarks
@@ -622,7 +622,7 @@ rustc --emit asm src/parser/simd_json.rs
 ## Further Reading
 
 - [eBPF Documentation](https://ebpf.io/what-is-ebpf)
-- [simd-json Rust crate](https://github.com/simd-lite/simd-json)
+- [simd-json Rust crate](https://servicenow.com/simd-lite/simd-json)
 - [io_uring explained](https://kernel.dk/io_uring.pdf)
 - [Lock-free programming](https://www.1024cores.net/home/lock-free-algorithms)
 

@@ -1,10 +1,11 @@
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, broadcast};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use crate::models::event::Event;
 use crate::core::error::{Result, Error};
 use async_trait::async_trait;
 use crate::core::traits::Capturer;
+use tracing::{info, error};
 
 /// Shared component for protocols that use internal buffering (MPSC)
 /// to bridge between async collectors and the synchronous pipeline demand.
@@ -44,6 +45,62 @@ impl Capturer for CaptureChannel {
 
     fn name(&self) -> &str {
         &self.name
+    }
+}
+
+/// A reusable component that handles the ingestion loop for any protocol.
+/// Following: DRY - Eliminates duplicated lifecycle logic in start/stop methods.
+/// Following: SRP - Focuses purely on reliable task execution and signal handling.
+pub struct ProtocolRunner {
+    pub name: String,
+    stop_tx: broadcast::Sender<()>,
+}
+
+impl ProtocolRunner {
+    pub fn new(name: &str) -> (Self, broadcast::Receiver<()>) {
+        let (tx, rx) = broadcast::channel(1);
+        (
+            Self {
+                name: name.to_string(),
+                stop_tx: tx,
+            },
+            rx,
+        )
+    }
+
+    /// Runs the ingestion loop given a capturer and a way to handle results.
+    /// Encapsulates the boilerplate tokio::spawn and loop logic.
+    pub async fn run_loop<C, F>(
+        &self,
+        capturer: Arc<C>,
+        mut stop_rx: broadcast::Receiver<()>,
+        mut handler: F,
+    ) where
+        C: Capturer + 'static,
+        F: FnMut(Event) + Send + 'static,
+    {
+        let name = self.name.clone();
+        tokio::spawn(async move {
+            info!("Runner '{}': Ingestion loop active.", name);
+            loop {
+                tokio::select! {
+                    _ = stop_rx.recv() => {
+                        info!("Runner '{}': Shutdown signal received.", name);
+                        break;
+                    }
+                    result = capturer.capture() => {
+                        match result {
+                            Ok(event) => handler(event),
+                            Err(e) => error!("Runner '{}': Capture failed: {}", name, e),
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    pub fn stop(&self) {
+        let _ = self.stop_tx.send(());
     }
 }
 

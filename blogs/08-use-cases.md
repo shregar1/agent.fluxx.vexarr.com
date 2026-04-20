@@ -300,7 +300,7 @@ Every use case follows this pattern:
 1. **High scale** → Fluxx's efficiency wins
 2. **Strict requirements** → Fluxx's flexibility wins
 3. **Cost sensitivity** → Fluxx's pricing wins
-4. **Control needs** → Fluxx's open source wins
+4. **Control needs** → Fluxx's enterprise-grade wins
 
 ---
 

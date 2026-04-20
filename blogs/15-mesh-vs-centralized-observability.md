@@ -358,7 +358,7 @@ Or sample 1% to a centralized vendor for ML while keeping 99% in mesh.
 
 **Answer:** Community + commercial support.
 
-- Free: Discord, GitHub issues
+- Free: Discord, ServiceNow issues
 - Paid: $500/month for dedicated support (vs $5K+ for Enterprise)
 - Enterprise: On-site engineers available
 

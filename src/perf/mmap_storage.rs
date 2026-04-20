@@ -5,12 +5,13 @@
 //! - OS handles caching automatically
 //! - Crash-safe with proper sync
 
-use memmap2::{Mmap, MmapMut, MmapOptions};
+use memmap2::{Mmap, MmapMut};
 use std::fs::{File, OpenOptions};
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Memory-mapped append-only log
+#[allow(dead_code)]
 pub struct MmapLog {
     file: File,
     mmap: MmapMut,

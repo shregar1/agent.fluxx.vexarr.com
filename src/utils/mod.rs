@@ -3,7 +3,7 @@ use tracing::Level;
 
 pub fn init_logging() {
     let filter = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new("info"))
+        .or_else(|_| EnvFilter::try_new("error"))
         .unwrap();
 
     fmt()
@@ -11,6 +11,6 @@ pub fn init_logging() {
         .with_target(false)
         .with_thread_ids(true)
         .with_line_number(true)
-        .with_max_level(Level::DEBUG) // Explicit max level
+        .with_max_level(Level::ERROR) // Default to error only
         .init();
 }

@@ -6,7 +6,7 @@ Lightweight client for sending traces, metrics, and logs to a Fluxx agent.
 Usage:
     from fluxx import Fluxx
 
-    client = Fluxx("http://localhost:3000")
+    client = Fluxx("http://localhost:7007")
     client.log("info", "User logged in", service="auth-service")
     client.metric("request.count", 1, metric_type="counter", tags={"env": "prod"})
     client.event("api-gateway", protocol="http", latency_us=1500)
@@ -26,7 +26,7 @@ class Fluxx:
 
     def __init__(
         self,
-        endpoint: str = "http://localhost:3000",
+        endpoint: str = "http://localhost:7007",
         statsd_host: str = "localhost",
         statsd_port: int = 8125,
         project_id: Optional[str] = None,
@@ -185,7 +185,7 @@ def _now_us() -> int:
 _default_client: Optional[Fluxx] = None
 
 
-def init(endpoint: str = "http://localhost:3000", **kwargs) -> Fluxx:
+def init(endpoint: str = "http://localhost:7007", **kwargs) -> Fluxx:
     """Initialize the default Fluxx client."""
     global _default_client
     _default_client = Fluxx(endpoint, **kwargs)

@@ -4,7 +4,7 @@ use crate::storage::EventStore;
 use crate::storage::event_store::TimeWindow;
 use crate::core::error::Result;
 use std::sync::Arc;
-use tracing::{info, debug};
+use tracing::info;
 
 /// ComparisonEngine: Analyzes historical event data to produce high-fidelity 
 /// performance comparisons between deployment environments.

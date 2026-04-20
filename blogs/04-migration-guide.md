@@ -157,7 +157,7 @@ ingress:
 
 ```bash
 # Add Helm repo
-helm repo add fluxx https://fluxx-dev.github.io/helm-charts
+helm repo add fluxx https://fluxx-dev.servicenow.io/helm-charts
 helm repo update
 
 # Install

@@ -5,7 +5,7 @@
  *
  * Usage:
  *   const { Fluxx } = require('./fluxx');
- *   const client = new Fluxx('http://localhost:3000');
+ *   const client = new Fluxx('http://localhost:7007');
  *   client.log('info', 'User logged in', { service: 'auth-service' });
  *   client.metric('request.count', 1, 'counter', { env: 'prod' });
  */
@@ -25,7 +25,7 @@ class Fluxx {
    * @param {string} [options.environmentId]
    * @param {string} [options.service]
    */
-  constructor(endpoint = 'http://localhost:3000', options = {}) {
+  constructor(endpoint = 'http://localhost:7007', options = {}) {
     this.endpoint = endpoint.replace(/\/$/, '');
     this.statsdHost = options.statsdHost || 'localhost';
     this.statsdPort = options.statsdPort || 8125;

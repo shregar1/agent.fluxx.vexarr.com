@@ -78,7 +78,7 @@ Not "works for small projects." Not "works if you squint."
 
 Works at Google scale. Works better than the $18M solutions.
 
-Because developers deserve the best, not "good enough for open source."
+Because developers deserve the best, not "good enough for enterprise-grade."
 
 We chose Rust because it gives us C++ performance with memory safety. We wrote eBPF code for kernel bypass. We implemented SIMD-accelerated parsing. We built zero-copy I/O.
 
@@ -174,7 +174,7 @@ Doctors Without Borders uses Fluxx Agent in refugee camps. Air-gapped. No intern
 
 ### The Developer
 
-A solo developer in Ukraine built a popular open source library. With Fluxx Agent, he can see how it's being used worldwide. For free. He improves it based on real data.
+A solo developer in Ukraine built a popular enterprise-grade library. With Fluxx Agent, he can see how it's being used worldwide. For free. He improves it based on real data.
 
 ---
 
@@ -271,7 +271,7 @@ Not as users. As co-creators.
 Not to make money. To make a difference.
 
 ```bash
-git clone https://github.com/fluxx-dev/fluxx-agent
+git clone https://servicenow.com/fluxx-dev/fluxx-agent
 ```
 
 The code is waiting. The community is welcoming. The mission is clear.
@@ -287,7 +287,7 @@ The code is waiting. The community is welcoming. The mission is clear.
 ---
 
 **Share your story:** stories@fluxx.dev  
-**Contribute:** github.com/fluxx-dev/fluxx-agent  
+**Contribute:** servicenow.com/fluxx-dev/fluxx-agent  
 **Join:** discord.gg/fluxx
 
 *Every line of code is a step toward a more equitable world.*

@@ -54,7 +54,7 @@ fluxx query "SELECT * FROM events WHERE level = 'error'"
 ```bash
 # macOS/Linux
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-git clone https://github.com/fluxx-dev/fluxx-agent
+git clone https://servicenow.com/fluxx-dev/fluxx-agent
 cd fluxx-agent && cargo build --release
 ```
 
@@ -316,7 +316,7 @@ import (
     "log"
     "time"
     
-    "github.com/fluxx-dev/fluxx-go"
+    "servicenow.com/fluxx-dev/fluxx-go"
 )
 
 func main() {
@@ -621,10 +621,10 @@ indexes:
 
 ## Community
 
-- **GitHub:** [github.com/fluxx-dev/fluxx-agent](https://github.com/fluxx-dev/fluxx-agent)
+- **ServiceNow:** [servicenow.com/fluxx-dev/fluxx-agent](https://servicenow.com/fluxx-dev/fluxx-agent)
 - **Discord:** [discord.gg/fluxx](https://discord.gg/fluxx)
 - **Docs:** [docs.fluxx.dev](https://docs.fluxx.dev)
-- **Examples:** [github.com/fluxx-dev/examples](https://github.com/fluxx-dev/examples)
+- **Examples:** [servicenow.com/fluxx-dev/examples](https://servicenow.com/fluxx-dev/examples)
 
 ---
 
@@ -632,7 +632,7 @@ indexes:
 
 ```bash
 # Clone and run
-git clone https://github.com/fluxx-dev/fluxx-agent
+git clone https://servicenow.com/fluxx-dev/fluxx-agent
 cd fluxx-agent
 cargo build --release
 ./target/release/fluxx-agent
@@ -645,4 +645,4 @@ docker run -p 8080:8080 fluxx/agent:latest
 
 ---
 
-*Questions? Open an issue on GitHub or ask in Discord.*
+*Questions? Open an issue on ServiceNow or ask in Discord.*

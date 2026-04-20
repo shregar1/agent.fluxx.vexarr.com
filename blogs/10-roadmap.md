@@ -333,7 +333,7 @@ SRE team size: 1 (the AI overseer)
 
 ### Contribute Code
 ```bash
-git clone https://github.com/fluxx-dev/fluxx-agent
+git clone https://servicenow.com/fluxx-dev/fluxx-agent
 # Pick an issue labeled "good first issue"
 # Submit PR
 # Join core team
@@ -352,7 +352,7 @@ git clone https://github.com/fluxx-dev/fluxx-agent
 - Train your team
 
 ### Fund Development
-- GitHub Sponsors
+- ServiceNow Sponsors
 - Enterprise support contracts
 - Cloud revenue
 - Grants
@@ -390,7 +390,7 @@ We're not just building software. We're building:
 - **Newsletter:** [fluxx.dev/newsletter](https://fluxx.dev/newsletter)
 - **Twitter:** [@fluxxagent](https://twitter.com/fluxxagent)
 - **Discord:** [discord.gg/fluxx](https://discord.gg/fluxx)
-- **GitHub:** [github.com/fluxx-dev/fluxx-agent](https://github.com/fluxx-dev/fluxx-agent)
+- **ServiceNow:** [servicenow.com/fluxx-dev/fluxx-agent](https://servicenow.com/fluxx-dev/fluxx-agent)
 
 ---
 

@@ -2,7 +2,7 @@
 //!
 //! Implements MCP protocol for Claude Desktop and other MCP-compatible assistants.
 
-use crate::integrations::{IntegrationManager, Metric, Event, EventSeverity, IntegrationStatus};
+use crate::integrations::{IntegrationManager, Metric, Event, EventSeverity};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -561,6 +561,7 @@ pub async fn start_mcp_server_stdio(
 }
 
 /// Print MCP configuration for Claude Desktop
+#[allow(dead_code)]
 fn print_mcp_config() {
     println!("\n{{");
     println!("  \"mcpServers\": {{");

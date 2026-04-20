@@ -45,7 +45,7 @@ use crate::config::Config;
 use crate::utils::init_logging;
 use crate::core::AgentService;
 use crate::cli::dev::DevManager;
-use crate::cli::banner::{print_banner, print_compact_banner, SystemInfo, print_welcome, print_shutdown};
+use crate::cli::banner::{print_banner, print_compact_banner, SystemInfo, print_shutdown};
 use tracing::info;
 
 /// CLI interface: Parser and Entry Point for the Fluxx agent.
@@ -201,7 +201,7 @@ pub async fn run() -> anyhow::Result<()> {
             
             info!("CLI: Initializing MCP server flow...");
             let cfg = match config {
-                Some(path) => crate::ai::McpConfig::default(), // Future: load from path
+                Some(_path) => crate::ai::McpConfig::default(), // Future: load from path
                 None => crate::ai::McpConfig::default(),
             };
             

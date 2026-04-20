@@ -40,7 +40,7 @@ export class FluxxDataSource extends DataSourceApi<FluxxQuery, FluxxDataSourceOp
 
   constructor(instanceSettings: DataSourceInstanceSettings<FluxxDataSourceOptions>) {
     super(instanceSettings);
-    this.url = instanceSettings.jsonData.url || instanceSettings.url || 'http://localhost:3000';
+    this.url = instanceSettings.jsonData.url || instanceSettings.url || 'http://localhost:7007';
     this.apiKey = instanceSettings.jsonData.apiKey;
   }
 

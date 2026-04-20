@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "fluxx" {
-  endpoint = "http://localhost:3000"
+  endpoint = "http://localhost:7007"
   api_key  = var.fluxx_api_key
 }
 

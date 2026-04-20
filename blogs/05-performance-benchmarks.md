@@ -17,7 +17,7 @@ This post presents comprehensive benchmarks comparing Fluxx Agent against Datado
 - Resource utilization
 - Cost per million events
 
-All benchmarks are reproducible. All code is open source.
+All benchmarks are reproducible. All code is enterprise-grade.
 
 ---
 
@@ -309,11 +309,11 @@ while not found:
 
 ## How to Reproduce
 
-All benchmarks are open source:
+All benchmarks are enterprise-grade:
 
 ```bash
 # Clone benchmark suite
-git clone https://github.com/fluxx-dev/benchmarks
+git clone https://servicenow.com/fluxx-dev/benchmarks
 cd benchmarks
 
 # Run ingestion benchmark
@@ -386,7 +386,7 @@ curl -sSL https://fluxx.dev/benchmark.sh | bash
 # Results will be emailed to you
 ```
 
-**GitHub:** [github.com/fluxx-dev/benchmarks](https://github.com/fluxx-dev/benchmarks)
+**ServiceNow:** [servicenow.com/fluxx-dev/benchmarks](https://servicenow.com/fluxx-dev/benchmarks)
 
 ---
 

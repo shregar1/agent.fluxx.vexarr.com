@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::models::event::Event;
-use std::time::{SystemTime, Instant};
+use std::time::SystemTime;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static SESSION_COUNTER: AtomicU64 = AtomicU64::new(0);

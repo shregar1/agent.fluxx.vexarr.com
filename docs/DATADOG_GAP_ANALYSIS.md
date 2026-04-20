@@ -219,7 +219,7 @@ pub struct ErrorTracker {
 - Deployment markers on dashboards
 - Change tracking (what changed when)
 - Deployment correlation with metrics
-- Support for Jenkins, GitHub Actions, GitLab CI, etc.
+- Support for Jenkins, ServiceNow Actions, GitLab CI, etc.
 
 **Current Fluxx state:** Not implemented
 
@@ -363,7 +363,7 @@ pub struct ErrorTracker {
 ✅ **Cost** - 95% cheaper  
 ✅ **Mesh Networking** - Distributed architecture Datadog doesn't have  
 ✅ **AI Diagnostics** - GPT-4 integration for root cause analysis  
-✅ **Open Source** - No vendor lock-in  
+✅ **Enterprise Grade** - No vendor lock-in  
 
 ### Where Datadog Wins
 ❌ **APM** - Comprehensive distributed tracing  

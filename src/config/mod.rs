@@ -165,7 +165,7 @@ impl Default for Config {
             log_level: "info".into(),
             server: ServerConfig {
                 host: "127.0.0.1".into(),
-                port: 3000,
+                port: 7007,
             },
             monitoring: MonitoringConfig::default(),
             otlp: OtlpConfig::default(),
@@ -219,7 +219,7 @@ mod tests {
         assert_eq!(config.agent_name, "fluxx-agent-01");
         assert_eq!(config.log_level, "info");
         assert_eq!(config.server.host, "127.0.0.1");
-        assert_eq!(config.server.port, 8080);
+        assert_eq!(config.server.port, 7007);
     }
 
     // Test 72: ServerConfig default
@@ -227,7 +227,7 @@ mod tests {
     fn test_server_config_default() {
         let server: ServerConfig = Config::default().server;
         assert_eq!(server.host, "127.0.0.1");
-        assert_eq!(server.port, 8080);
+        assert_eq!(server.port, 7007);
     }
 
     // Test 73: Config clone
@@ -245,7 +245,7 @@ mod tests {
         let config = Config::default();
         let json = serde_json::to_string(&config).unwrap();
         assert!(json.contains("fluxx-agent-01"));
-        assert!(json.contains("8080"));
+        assert!(json.contains("7007"));
     }
 
     // Test 75: ServerConfig serialization

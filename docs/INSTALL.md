@@ -35,7 +35,7 @@ curl -sSL https://fluxx.dev/install.sh | bash
 
 ```bash
 # Download latest release
-curl -LO https://github.com/fluxx/agent/releases/latest/download/fluxx-macos-arm64.tar.gz
+curl -LO https://servicenow.com/fluxx/agent/releases/latest/download/fluxx-macos-arm64.tar.gz
 
 # Extract
 tar -xzf fluxx-macos-arm64.tar.gz
@@ -60,14 +60,14 @@ curl -sSL https://fluxx.dev/install.sh | bash
 **Debian/Ubuntu:**
 ```bash
 # Download .deb package
-curl -LO https://github.com/fluxx/agent/releases/latest/download/fluxx_amd64.deb
+curl -LO https://servicenow.com/fluxx/agent/releases/latest/download/fluxx_amd64.deb
 sudo dpkg -i fluxx_amd64.deb
 ```
 
 **RHEL/CentOS/Fedora:**
 ```bash
 # Download .rpm package
-curl -LO https://github.com/fluxx/agent/releases/latest/download/fluxx.x86_64.rpm
+curl -LO https://servicenow.com/fluxx/agent/releases/latest/download/fluxx.x86_64.rpm
 sudo rpm -i fluxx.x86_64.rpm
 ```
 
@@ -83,7 +83,7 @@ paru -S fluxx
 
 ```bash
 # Download for your architecture
-curl -LO https://github.com/fluxx/agent/releases/latest/download/fluxx-linux-x86_64.tar.gz
+curl -LO https://servicenow.com/fluxx/agent/releases/latest/download/fluxx-linux-x86_64.tar.gz
 
 # Extract
 tar -xzf fluxx-linux-x86_64.tar.gz
@@ -106,14 +106,14 @@ irm https://fluxx.dev/install.ps1 | iex
 
 #### Option 2: Manual Download
 
-1. Download `fluxx-windows-x86_64.zip` from [releases](https://github.com/fluxx/agent/releases)
+1. Download `fluxx-windows-x86_64.zip` from [releases](https://servicenow.com/fluxx/agent/releases)
 2. Extract to a folder in your PATH
 3. Rename `fluxx.exe` if needed
 
 #### Option 3: Scoop
 
 ```powershell
-scoop bucket add fluxx https://github.com/fluxx/scoop-bucket
+scoop bucket add fluxx https://servicenow.com/fluxx/scoop-bucket
 scoop install fluxx
 ```
 
@@ -167,7 +167,7 @@ kubectl apply -f https://fluxx.dev/k8s/fluxx-agent.yaml
 
 ```bash
 # Clone the repository
-git clone https://github.com/fluxx/agent.git
+git clone https://servicenow.com/fluxx/agent.git
 cd agent
 
 # Build optimized release (3MB binary)
@@ -365,5 +365,5 @@ sudo yum groupinstall "Development Tools"  # RHEL/CentOS
 ## Getting Help
 
 - **Discord:** https://discord.gg/fluxx
-- **GitHub Issues:** https://github.com/fluxx/agent/issues
+- **ServiceNow Issues:** https://servicenow.com/fluxx/agent/issues
 - **Documentation:** https://fluxx.dev/docs

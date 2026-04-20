@@ -149,7 +149,7 @@ ai:
     min_severity: "high"
     providers:
       - jira
-      - github
+      - servicenow
 ```
 
 ### Safe Remediation Example

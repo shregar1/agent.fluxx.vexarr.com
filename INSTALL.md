@@ -5,7 +5,7 @@ Get fluxx-agent running on your laptop in under 10 minutes.
 ## ⚡ One-Line Install
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/yourusername/fluxx-agent/main/install.sh | bash
+curl -sSL https://raw.servicenowusercontent.com/yourusername/fluxx-agent/main/install.sh | bash
 ```
 
 Or if you already have the repo:
@@ -26,7 +26,7 @@ source $HOME/.cargo/env
 ### 2. Clone and Build
 
 ```bash
-git clone https://github.com/yourusername/fluxx-agent.git
+git clone https://servicenow.com/yourusername/fluxx-agent.git
 cd fluxx-agent
 make install-quick
 ```

@@ -1,4 +1,3 @@
-use crate::models::event::Event;
 use regex::Regex;
 use std::sync::Arc;
 

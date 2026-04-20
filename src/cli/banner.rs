@@ -1,6 +1,6 @@
 //! Beautiful CLI Banner for Fluxx Agent
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::SystemTime;
 use uuid::Uuid;
 
 /// Color codes for terminal output

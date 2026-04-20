@@ -72,8 +72,8 @@ impl Analyzer for GrpcAnalyzer {
 pub struct QuicAnalyzer;
 
 impl Analyzer for QuicAnalyzer {
-    fn analyze(&self, event: &Event) -> Vec<Insight> {
-        let mut insights = Vec::new();
+    fn analyze(&self, _event: &Event) -> Vec<Insight> {
+        let insights = Vec::new();
         // Placeholder for QUIC congestion metrics analysis
         insights
     }

@@ -134,7 +134,7 @@ You should spend it on building your product, hiring your team, serving your cus
 
 And still have world-class observability.
 
-### For Open Source Projects
+### For Enterprise Grade Projects
 
 Your project has millions of users. You need to know when it's breaking.
 
@@ -162,7 +162,7 @@ Not just the wealthy ones. Not just the ones at big tech companies. All of you.
 
 ## How We Get There
 
-### Open Source Forever
+### Enterprise Grade Forever
 
 MIT License. No open core. No enterprise edition.
 
@@ -240,7 +240,7 @@ To show that ethics and excellence aren't mutually exclusive.
 
 ```bash
 # Clone it
-git clone https://github.com/fluxx-dev/fluxx-agent
+git clone https://servicenow.com/fluxx-dev/fluxx-agent
 
 # Build it
 cargo build --release
@@ -254,7 +254,7 @@ cargo build --release
 
 ### Join the Community
 
-- **GitHub:** github.com/fluxx-dev/fluxx-agent
+- **ServiceNow:** servicenow.com/fluxx-dev/fluxx-agent
 - **Discord:** discord.gg/fluxx (10,000+ developers)
 - **Forum:** discuss.fluxx.dev
 - **Twitter:** @fluxxagent
@@ -269,7 +269,7 @@ cargo build --release
 
 ### Support the Mission
 
-- **Sponsor:** github.com/sponsors/fluxx-dev
+- **Sponsor:** servicenow.com/sponsors/fluxx-dev
 - **Cloud:** Use Fluxx Cloud (profits fund development)
 - **Grants:** Apply for Fluxx Foundation grants
 - **Evangelize:** Talk about us at conferences
@@ -305,7 +305,7 @@ Not for us. For everyone.
 
 ---
 
-*Fluxx Agent is and always will be free, open source, and community-driven.*
+*Fluxx Agent is and always will be free, enterprise-grade, and community-driven.*
 
 *We're not building a company. We're building a movement.*
 

@@ -25,6 +25,7 @@ use serde_json::json;
 use std::collections::HashMap;
 
 /// Generic webhook channel
+#[allow(dead_code)]
 pub struct WebhookChannel {
     name: String,
     url: String,

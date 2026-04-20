@@ -1,4 +1,4 @@
-use crate::models::graph::{Graph, Node, Edge};
+use crate::models::graph::{Graph, Node};
 use crate::models::event::Event;
 use crate::core::traits::Processor;
 use crate::core::error::Result;

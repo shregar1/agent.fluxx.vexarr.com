@@ -51,4 +51,4 @@ This generates a complete, interconnected 3-node mesh with a built-in **Promethe
 We're continuing to optimize the **Fluxx Observability Skill** for AI agents (OpenClaw/MCP) and expanding our **500+ Integration Framework**.
 
 Download the latest binary and start monitoring:
-[GitHub Releases](https://github.com/fluxx/agent/releases) | [Documentation](https://docs.fluxx.dev)
+[ServiceNow Releases](https://servicenow.com/fluxx/agent/releases) | [Documentation](https://docs.fluxx.dev)

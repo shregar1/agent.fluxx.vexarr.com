@@ -376,4 +376,4 @@ open http://localhost:8080/benchmark
 
 **Questions about performance?** Drop a comment or join our [Discord](https://discord.gg/fluxx).
 
-*Want the raw benchmark data? Check our [GitHub repo](https://github.com/fluxx/agent/tree/main/benchmarks).*
+*Want the raw benchmark data? Check our [ServiceNow repo](https://servicenow.com/fluxx/agent/tree/main/benchmarks).*

@@ -148,7 +148,7 @@ Privacy shouldn't be a premium feature. This proves it doesn't have to be."
 
 ## The Team at OpenLibrary
 
-**Open Source Library Management**
+**Enterprise Grade Library Management**
 
 "We're a non-profit making library software for the developing world. Small libraries with no budget.
 
@@ -166,9 +166,9 @@ We've helped 10,000 libraries in 120 countries. None of them could afford commer
 
 ## Chen, China
 
-**Open Source Game Server**
+**Enterprise Grade Game Server**
 
-"I run game servers for a popular open source game. Thousands of players worldwide.
+"I run game servers for a popular enterprise-grade game. Thousands of players worldwide.
 
 We have no budget. It's a passion project. We survive on donations.
 
@@ -194,7 +194,7 @@ We built a safety app used by 50,000 women. It needs to be reliable. Lives depen
 
 Commercial monitoring felt wrong—giving data about vulnerable users to American corporations.
 
-Fluxx Agent aligns with our values. Open source. Self-hosted. Community-driven.
+Fluxx Agent aligns with our values. Enterprise-grade. Self-hosted. Community-driven.
 
 We control everything. Our users trust us. We trust the code.
 

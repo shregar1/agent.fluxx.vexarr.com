@@ -22,7 +22,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::SocketAddr;
-use std::time::Duration;
 
 pub mod config;
 pub mod gossip;

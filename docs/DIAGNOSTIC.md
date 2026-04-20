@@ -21,7 +21,7 @@ The Diagnostic System uses Large Language Models (GPT-4, Claude) to:
 - Analyze errors and identify root causes
 - Generate fix recommendations with confidence scores
 - Create code samples in your preferred language
-- Automatically create tickets in Jira/GitHub/Linear
+- Automatically create tickets in Jira/ServiceNow/Linear
 - Apply fixes automatically (with safeguards)
 
 ### Architecture
@@ -36,7 +36,7 @@ The Diagnostic System uses Large Language Models (GPT-4, Claude) to:
 │  │  Analyzer   │  │   Engine    │  │  Providers          │ │
 │  │             │  │             │  │                     │ │
 │  │ • OpenAI    │  │ • Commands  │  │ • Jira              │ │
-│  │ • Anthropic │  │ • Code      │  │ • GitHub            │ │
+│  │ • Anthropic │  │ • Code      │  │ • ServiceNow            │ │
 │  │ • Local LLM │  │ • Config    │  │ • Linear            │ │
 │  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘ │
 │         │                │                    │            │
@@ -104,7 +104,7 @@ diagnostic:
         warning: "Medium"
         info: "Low"
     
-    github:
+    servicenow:
       enabled: true
       token: "${GITHUB_TOKEN}"
       owner: "myorg"
@@ -143,7 +143,7 @@ diagnostic:
 | `JIRA_HOST` | Jira instance URL | For Jira integration |
 | `JIRA_USER` | Jira username/email | For Jira integration |
 | `JIRA_TOKEN` | Jira API token | For Jira integration |
-| `GITHUB_TOKEN` | GitHub personal access token | For GitHub integration |
+| `GITHUB_TOKEN` | ServiceNow personal access token | For ServiceNow integration |
 | `LINEAR_API_KEY` | Linear API key | For Linear integration |
 
 ---
@@ -287,7 +287,7 @@ Check diagnostic system health.
   "providers": {
     "openai": "healthy",
     "jira": "healthy",
-    "github": "degraded"
+    "servicenow": "degraded"
   }
 }
 ```
@@ -333,15 +333,15 @@ production:
 {code}
 ```
 
-### GitHub
+### ServiceNow
 
 **Setup:**
-1. Go to GitHub Settings → Developer settings → Personal access tokens
+1. Go to ServiceNow Settings → Developer settings → Personal access tokens
 2. Generate token with `repo` scope
 3. Configure in `diagnostic.yaml`
 
 **Auto-Created Issue Format:**
-Uses GitHub-flavored markdown with syntax highlighting.
+Uses ServiceNow-flavored markdown with syntax highlighting.
 
 ### Linear
 
@@ -538,7 +538,7 @@ engine.submit_feedback(DiagnosticFeedback {
 - Check user has create issue permission
 - Ensure project key exists
 
-**Error:** "GitHub API error: 404"
+**Error:** "ServiceNow API error: 404"
 
 **Solution:**
 - Verify owner/repo name

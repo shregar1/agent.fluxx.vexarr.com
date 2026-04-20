@@ -16,6 +16,11 @@ impl HttpTransport {
             url: url.to_string(),
             client: Client::builder()
                 .timeout(std::time::Duration::from_secs(5))
+                .default_headers({
+                    let mut headers = reqwest::header::HeaderMap::new();
+                    headers.insert("Content-Type", "application/json".parse().unwrap());
+                    headers
+                })
                 .build()
                 .unwrap_or_default(),
         }
@@ -27,8 +32,14 @@ impl NetworkLayer for HttpTransport {
     async fn write(&self, data: Vec<u8>) -> Result<()> {
         debug!("HTTP Delivery: Posting bytes to {}", self.url);
         
-        let response = self.client.post(&self.url)
-            .body(data) // Raw bytes, serialization handled by ManagedTransporter
+        let mut request = self.client.post(&self.url)
+            .header("Content-Type", "application/json")
+            .body(data);
+        if let Ok(key) = std::env::var("FLUXX_API_KEY") {
+            request = request.header("X-API-Key", key);
+        }
+
+        let response = request
             .send()
             .await
             .map_err(|e| Error::Transport(format!("HTTP POST failed: {}", e)))?;
