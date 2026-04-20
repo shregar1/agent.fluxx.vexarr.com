@@ -1,6 +1,5 @@
 use axum::{
-    extract::Path,
-    http::{header, StatusCode},
+    http::{header, StatusCode, Uri},
     response::{IntoResponse, Response},
     routing::get,
     Router,
@@ -13,7 +12,7 @@ use tracing::info;
 #[folder = "dashboard/"]
 struct DashboardAssets;
 
-/// Serve the embedded dashboard on a random available port.
+/// Serve the embedded dashboard on a stable port (API port + 1).
 /// Returns the actual port the server bound to.
 pub async fn start_dashboard_server(api_port: u16) -> anyhow::Result<u16> {
     let app = Router::new()
@@ -30,10 +29,10 @@ pub async fn start_dashboard_server(api_port: u16) -> anyhow::Result<u16> {
         }))
         // Root serves index.html
         .route("/", get(serve_root))
-        // Serve all static assets, fallback to index.html for SPA routing
-        .fallback(get(serve_embedded));
+        // Everything else: try static file, then SPA fallback
+        .fallback(get(serve_any));
 
-    // Bind to port 7008 (API port + 1) for a stable, predictable URL
+    // Bind to API port + 1 for a stable, predictable URL
     let dash_port = api_port + 1;
     let listener = match tokio::net::TcpListener::bind(format!("0.0.0.0:{}", dash_port)).await {
         Ok(l) => l,
@@ -53,21 +52,24 @@ pub async fn start_dashboard_server(api_port: u16) -> anyhow::Result<u16> {
     Ok(port)
 }
 
-/// Serve an embedded static file, or index.html for SPA fallback.
-async fn serve_embedded(Path(path): Path<String>) -> impl IntoResponse {
-    // Try to find the exact file
-    if let Some(file) = DashboardAssets::get(&path) {
-        let mime = mime_guess::from_path(&path).first_or_octet_stream();
-        return Response::builder()
-            .header(header::CONTENT_TYPE, mime.as_ref())
-            .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
-            .body(axum::body::Body::from(file.data.to_vec()))
-            .unwrap()
-            .into_response();
+/// Fallback handler: uses the full URI path to find embedded files.
+async fn serve_any(uri: Uri) -> impl IntoResponse {
+    let path = uri.path().trim_start_matches('/');
+
+    // Try exact file match
+    if !path.is_empty() {
+        if let Some(file) = DashboardAssets::get(path) {
+            let mime = mime_guess::from_path(path).first_or_octet_stream();
+            return Response::builder()
+                .header(header::CONTENT_TYPE, mime.as_ref())
+                .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+                .body(axum::body::Body::from(file.data.to_vec()))
+                .unwrap();
+        }
     }
 
-    // SPA fallback: serve index.html with config.js injected
-    serve_index_html().into_response()
+    // SPA fallback: serve index.html for any unmatched route
+    serve_index_html()
 }
 
 /// Serve the root index.html with the config script injected.
