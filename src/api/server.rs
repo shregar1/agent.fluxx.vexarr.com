@@ -146,6 +146,12 @@ impl ApiServer {
             // Predictive Alerting
             .route("/v1/predict", get(crate::api::predictive::predict_metric))
             .route("/v1/predict/alerts", get(crate::api::predictive::predicted_alerts))
+            // Dashboard Templates
+            .route("/v1/templates", get(crate::api::templates::list_templates))
+            .route("/v1/templates/active", get(crate::api::templates::list_active_templates))
+            .route("/v1/templates/:id/activate", post(crate::api::templates::activate_template))
+            .route("/v1/templates/:id/deactivate", post(crate::api::templates::deactivate_template))
+            .route("/v1/templates/:id/data", get(crate::api::templates::get_template_data))
             // Correlation Engine
             .route("/v1/correlate", get(crate::api::correlate::correlate))
             // Change Intelligence

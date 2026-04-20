@@ -27,6 +27,7 @@ pub mod quotas;
 pub mod ai_rca;
 pub mod nl_dashboard;
 pub mod predictive;
+pub mod templates;
 
 use crate::sessions::SessionManager;
 use crate::storage::event_store::EventStore;
@@ -78,6 +79,7 @@ pub struct ApiState {
     pub change_store: ChangeStore,
     pub pipeline_store: PipelineStore,
     pub quota_manager: QuotaManager,
+    pub template_store: crate::api::templates::TemplateStore,
 }
 
 pub use server::ApiServer;

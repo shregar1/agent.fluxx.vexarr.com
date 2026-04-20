@@ -128,6 +128,7 @@ impl AgentService {
         let change_store = crate::api::changes::ChangeStore::new();
         let pipeline_store = crate::api::pipelines::PipelineStore::new();
         let quota_manager = crate::api::quotas::QuotaManager::new();
+        let template_store = crate::api::templates::TemplateStore::new();
 
         // 1. Configure UI API API Stack
         let api_state = Arc::new(ApiState {
@@ -154,6 +155,7 @@ impl AgentService {
             change_store,
             pipeline_store,
             quota_manager,
+            template_store,
         });
 
         let api_addr = format!("0.0.0.0:{}", config.server.port);
