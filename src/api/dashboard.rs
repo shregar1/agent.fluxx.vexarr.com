@@ -28,11 +28,20 @@ pub async fn start_dashboard_server(api_port: u16) -> anyhow::Result<u16> {
                 .body(js)
                 .unwrap()
         }))
+        // Root serves index.html
+        .route("/", get(serve_root))
         // Serve all static assets, fallback to index.html for SPA routing
         .fallback(get(serve_embedded));
 
-    // Bind to port 0 = OS picks a random available port
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:0").await?;
+    // Bind to port 7008 (API port + 1) for a stable, predictable URL
+    let dash_port = api_port + 1;
+    let listener = match tokio::net::TcpListener::bind(format!("0.0.0.0:{}", dash_port)).await {
+        Ok(l) => l,
+        Err(_) => {
+            // Fallback to random port if preferred port is taken
+            tokio::net::TcpListener::bind("0.0.0.0:0").await?
+        }
+    };
     let port = listener.local_addr()?.port();
 
     info!("Dashboard: Serving on http://localhost:{}", port);
