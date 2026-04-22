@@ -202,4 +202,81 @@ mod tests {
         let m = parse_statsd_line("gauge.temp:-5.2|g").unwrap();
         assert_eq!(m.value, -5.2);
     }
+
+    #[test]
+    fn test_parse_missing_colon() {
+        assert!(parse_statsd_line("noColonHere").is_err());
+    }
+
+    #[test]
+    fn test_parse_empty_name() {
+        assert!(parse_statsd_line(":1|c").is_err());
+    }
+
+    #[test]
+    fn test_parse_invalid_value_non_numeric() {
+        assert!(parse_statsd_line("foo:notanumber|c").is_err());
+    }
+
+    #[test]
+    fn test_parse_set_with_string_value() {
+        let m = parse_statsd_line("unique:some-user-id|s").unwrap();
+        assert_eq!(m.metric_type, MetricType::Set);
+        // value is the hash; should be non-zero
+        assert!(m.value != 0.0);
+    }
+
+    #[test]
+    fn test_parse_datagram_skips_blank_lines() {
+        let data = "cpu:1|g\n\n\nmem:2|g\n";
+        let results = parse_statsd_datagram(data);
+        assert_eq!(results.len(), 2);
+    }
+
+    #[test]
+    fn test_parse_datagram_mix_of_valid_invalid() {
+        let data = "good:1|c\nbad\nalsogood:2|g";
+        let results = parse_statsd_datagram(data);
+        assert_eq!(results.len(), 3);
+        assert!(results[0].is_ok());
+        assert!(results[1].is_err());
+        assert!(results[2].is_ok());
+    }
+
+    #[test]
+    fn test_parse_zero_value() {
+        let m = parse_statsd_line("zero:0|c").unwrap();
+        assert_eq!(m.value, 0.0);
+    }
+
+    #[test]
+    fn test_parse_large_value() {
+        let m = parse_statsd_line("big:1000000000|c").unwrap();
+        assert_eq!(m.value, 1_000_000_000.0);
+    }
+
+    #[test]
+    fn test_parse_multiple_tags_no_values() {
+        let m = parse_statsd_line("foo:1|c|#a,b,c").unwrap();
+        assert_eq!(m.tags.len(), 3);
+        assert_eq!(m.tags.get("a"), Some(&"true".to_string()));
+    }
+
+    #[test]
+    fn test_parse_invalid_sample_rate_defaults_to_one() {
+        let m = parse_statsd_line("foo:1|c|@abc").unwrap();
+        assert_eq!(m.sample_rate, 1.0);
+    }
+
+    #[test]
+    fn test_parse_datagram_empty_string() {
+        let results = parse_statsd_datagram("");
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn test_parse_trims_whitespace() {
+        let m = parse_statsd_line("  foo:1|c  ").unwrap();
+        assert_eq!(m.name, "foo");
+    }
 }

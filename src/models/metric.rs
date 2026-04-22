@@ -183,4 +183,90 @@ mod tests {
         assert_eq!(MetricType::Gauge.to_string(), "gauge");
         assert_eq!(MetricType::Histogram.to_string(), "histogram");
     }
+
+    #[test]
+    fn test_metric_type_display_all_variants() {
+        assert_eq!(MetricType::Set.to_string(), "set");
+        assert_eq!(MetricType::Timing.to_string(), "timing");
+        assert_eq!(MetricType::Distribution.to_string(), "distribution");
+        assert_eq!(MetricType::Summary.to_string(), "summary");
+    }
+
+    #[test]
+    fn test_metric_with_sample_rate() {
+        let m = Metric::new("x".into(), 1.0, MetricType::Counter)
+            .with_sample_rate(0.25);
+        assert_eq!(m.sample_rate, 0.25);
+    }
+
+    #[test]
+    fn test_metric_with_timestamp() {
+        let m = Metric::new("x".into(), 1.0, MetricType::Gauge)
+            .with_timestamp(12345);
+        assert_eq!(m.timestamp_us, 12345);
+    }
+
+    #[test]
+    fn test_metric_has_unique_ids() {
+        let a = Metric::new("x".into(), 1.0, MetricType::Counter);
+        let b = Metric::new("x".into(), 1.0, MetricType::Counter);
+        assert_ne!(a.id, b.id);
+    }
+
+    #[test]
+    fn test_metric_defaults_none() {
+        let m = Metric::new("x".into(), 1.0, MetricType::Gauge);
+        assert!(m.service_id.is_none());
+        assert!(m.project_id.is_none());
+        assert!(m.environment_id.is_none());
+    }
+
+    #[test]
+    fn test_aggregated_single_value() {
+        let mut v = vec![42.0];
+        let agg = AggregatedMetric::from_values("x", 1, &mut v);
+        assert_eq!(agg.count, 1);
+        assert_eq!(agg.min, 42.0);
+        assert_eq!(agg.max, 42.0);
+        assert_eq!(agg.avg, 42.0);
+        assert_eq!(agg.p50, 42.0);
+    }
+
+    #[test]
+    fn test_aggregated_unsorted_input() {
+        let mut v = vec![5.0, 1.0, 3.0, 2.0, 4.0];
+        let agg = AggregatedMetric::from_values("x", 0, &mut v);
+        assert_eq!(agg.min, 1.0);
+        assert_eq!(agg.max, 5.0);
+        assert_eq!(agg.avg, 3.0);
+    }
+
+    #[test]
+    fn test_aggregated_percentiles_large() {
+        let mut v: Vec<f64> = (1..=100).map(|i| i as f64).collect();
+        let agg = AggregatedMetric::from_values("x", 0, &mut v);
+        assert!(agg.p99 >= 95.0);
+        assert!(agg.p50 >= 45.0 && agg.p50 <= 55.0);
+    }
+
+    #[test]
+    fn test_metric_type_equality() {
+        assert_eq!(MetricType::Counter, MetricType::Counter);
+        assert_ne!(MetricType::Counter, MetricType::Gauge);
+    }
+
+    #[test]
+    fn test_metric_type_deserialize() {
+        let t: MetricType = serde_json::from_str("\"gauge\"").unwrap();
+        assert_eq!(t, MetricType::Gauge);
+    }
+
+    #[test]
+    fn test_aggregated_negative_values() {
+        let mut v = vec![-5.0, -1.0, 0.0, 1.0, 5.0];
+        let agg = AggregatedMetric::from_values("x", 0, &mut v);
+        assert_eq!(agg.sum, 0.0);
+        assert_eq!(agg.min, -5.0);
+        assert_eq!(agg.max, 5.0);
+    }
 }

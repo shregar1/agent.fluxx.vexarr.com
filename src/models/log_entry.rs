@@ -156,4 +156,85 @@ mod tests {
         assert_eq!(LogLevel::Info.to_string(), "info");
         assert_eq!(LogLevel::Error.to_string(), "error");
     }
+
+    #[test]
+    fn test_log_level_display_all() {
+        assert_eq!(LogLevel::Trace.to_string(), "trace");
+        assert_eq!(LogLevel::Debug.to_string(), "debug");
+        assert_eq!(LogLevel::Warn.to_string(), "warn");
+        assert_eq!(LogLevel::Fatal.to_string(), "fatal");
+    }
+
+    #[test]
+    fn test_log_level_from_otel_boundaries() {
+        assert_eq!(LogLevel::from_otel_severity(4), LogLevel::Trace);
+        assert_eq!(LogLevel::from_otel_severity(5), LogLevel::Debug);
+        assert_eq!(LogLevel::from_otel_severity(8), LogLevel::Debug);
+        assert_eq!(LogLevel::from_otel_severity(12), LogLevel::Info);
+        assert_eq!(LogLevel::from_otel_severity(13), LogLevel::Warn);
+        assert_eq!(LogLevel::from_otel_severity(16), LogLevel::Warn);
+        assert_eq!(LogLevel::from_otel_severity(20), LogLevel::Error);
+        assert_eq!(LogLevel::from_otel_severity(24), LogLevel::Fatal);
+    }
+
+    #[test]
+    fn test_log_level_from_otel_out_of_range() {
+        assert_eq!(LogLevel::from_otel_severity(0), LogLevel::Info);
+        assert_eq!(LogLevel::from_otel_severity(-1), LogLevel::Info);
+        assert_eq!(LogLevel::from_otel_severity(100), LogLevel::Info);
+    }
+
+    #[test]
+    fn test_log_entry_with_service() {
+        let e = LogEntry::new(LogLevel::Info, "m".into()).with_service("svc-1".into());
+        assert_eq!(e.service, Some("svc-1".to_string()));
+    }
+
+    #[test]
+    fn test_log_entry_unique_ids() {
+        let a = LogEntry::new(LogLevel::Info, "a".into());
+        let b = LogEntry::new(LogLevel::Info, "a".into());
+        assert_ne!(a.id, b.id);
+    }
+
+    #[test]
+    fn test_log_entry_defaults() {
+        let e = LogEntry::new(LogLevel::Info, "m".into());
+        assert!(e.service.is_none());
+        assert!(e.trace_id.is_none());
+        assert!(e.span_id.is_none());
+        assert!(e.project_id.is_none());
+        assert!(e.attributes.is_empty());
+        assert!(e.resource.is_empty());
+    }
+
+    #[test]
+    fn test_log_entry_all_levels_serialize() {
+        for lvl in &[LogLevel::Trace, LogLevel::Debug, LogLevel::Info,
+                     LogLevel::Warn, LogLevel::Error, LogLevel::Fatal] {
+            let e = LogEntry::new(*lvl, "x".into());
+            let _json = serde_json::to_string(&e).unwrap();
+        }
+    }
+
+    #[test]
+    fn test_log_entry_with_attributes_roundtrip() {
+        let mut e = LogEntry::new(LogLevel::Info, "m".into());
+        e.attributes.insert("k".to_string(), serde_json::json!(42));
+        let json = serde_json::to_string(&e).unwrap();
+        let parsed: LogEntry = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.attributes.get("k"), Some(&serde_json::json!(42)));
+    }
+
+    #[test]
+    fn test_log_level_equality() {
+        assert_eq!(LogLevel::Info, LogLevel::Info);
+        assert_ne!(LogLevel::Info, LogLevel::Warn);
+    }
+
+    #[test]
+    fn test_log_entry_empty_message() {
+        let e = LogEntry::new(LogLevel::Info, String::new());
+        assert_eq!(e.message, "");
+    }
 }

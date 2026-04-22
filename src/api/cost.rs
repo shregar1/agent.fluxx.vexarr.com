@@ -185,3 +185,126 @@ pub async fn cost_analysis(State(state): State<Arc<ApiState>>) -> impl IntoRespo
     let data = serde_json::to_value(&comparison).unwrap_or_default();
     StandardResponse::ok(data, "Cost comparison.")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn zero_usage() -> UsageMetrics {
+        UsageMetrics {
+            hosts: 0, apm_hosts: 0, log_gb_per_month: 0.0, custom_metrics: 0,
+            synthetic_checks: 0, rum_sessions_per_month: 0, npm_hosts: 0,
+            dbm_hosts: 0, cspm_hosts: 0, profiling_hosts: 0, ci_committers: 0,
+        }
+    }
+
+    #[test]
+    fn datadog_pricing_has_expected_name() {
+        let p = datadog_pricing();
+        assert_eq!(p.vendor, "Datadog");
+        assert!(p.apm_per_host > 0.0);
+        assert!(p.infrastructure_per_host > 0.0);
+    }
+
+    #[test]
+    fn newrelic_pricing_has_log_cost() {
+        let p = newrelic_pricing();
+        assert_eq!(p.vendor, "New Relic");
+        assert!(p.logs_per_gb > 0.0);
+    }
+
+    #[test]
+    fn splunk_pricing_has_highest_apm() {
+        let p = splunk_pricing();
+        assert_eq!(p.vendor, "Splunk");
+        assert!(p.apm_per_host >= datadog_pricing().apm_per_host);
+    }
+
+    #[test]
+    fn grafana_cloud_pricing_has_name() {
+        let p = grafana_cloud_pricing();
+        assert_eq!(p.vendor, "Grafana Cloud");
+        assert!(p.logs_per_gb > 0.0);
+    }
+
+    #[test]
+    fn compute_vendor_cost_zero_usage_yields_zero() {
+        let cost = compute_vendor_cost(&zero_usage(), &datadog_pricing());
+        assert_eq!(cost.monthly_cost, 0.0);
+        assert_eq!(cost.annual_cost, 0.0);
+    }
+
+    #[test]
+    fn compute_vendor_cost_datadog_infra_10_hosts() {
+        let mut u = zero_usage();
+        u.hosts = 10;
+        let cost = compute_vendor_cost(&u, &datadog_pricing());
+        assert!((cost.breakdown.infrastructure - 150.0).abs() < 1e-9);
+        assert!((cost.monthly_cost - 150.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn compute_vendor_cost_apm_costs() {
+        let mut u = zero_usage();
+        u.apm_hosts = 5;
+        let cost = compute_vendor_cost(&u, &datadog_pricing());
+        assert!((cost.breakdown.apm - 155.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn compute_vendor_cost_logs_cost() {
+        let mut u = zero_usage();
+        u.log_gb_per_month = 100.0;
+        let cost = compute_vendor_cost(&u, &datadog_pricing());
+        assert!((cost.breakdown.logs - 10.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn compute_vendor_cost_rum_per_1k() {
+        let mut u = zero_usage();
+        u.rum_sessions_per_month = 2000;
+        let cost = compute_vendor_cost(&u, &datadog_pricing());
+        assert!((cost.breakdown.rum - 3.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn compute_vendor_cost_annual_is_12x_monthly() {
+        let mut u = zero_usage();
+        u.hosts = 3;
+        let cost = compute_vendor_cost(&u, &datadog_pricing());
+        assert!((cost.annual_cost - cost.monthly_cost * 12.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn compute_vendor_cost_savings_equals_monthly() {
+        let mut u = zero_usage();
+        u.hosts = 2;
+        let cost = compute_vendor_cost(&u, &datadog_pricing());
+        assert_eq!(cost.savings_vs_fluxx, cost.monthly_cost);
+    }
+
+    #[test]
+    fn compute_vendor_cost_breakdown_sums_to_monthly() {
+        let mut u = zero_usage();
+        u.hosts = 2; u.apm_hosts = 2; u.log_gb_per_month = 10.0; u.custom_metrics = 5;
+        let cost = compute_vendor_cost(&u, &datadog_pricing());
+        let b = &cost.breakdown;
+        let sum = b.infrastructure + b.apm + b.logs + b.metrics + b.synthetics + b.rum
+            + b.npm + b.dbm + b.cspm + b.profiling + b.ci;
+        assert!((sum - cost.monthly_cost).abs() < 1e-9);
+    }
+
+    #[test]
+    fn compute_vendor_cost_preserves_vendor_name() {
+        let cost = compute_vendor_cost(&zero_usage(), &splunk_pricing());
+        assert_eq!(cost.vendor, "Splunk");
+    }
+
+    #[test]
+    fn newrelic_zero_infra_cost() {
+        let mut u = zero_usage();
+        u.hosts = 100;
+        let cost = compute_vendor_cost(&u, &newrelic_pricing());
+        assert_eq!(cost.breakdown.infrastructure, 0.0);
+    }
+}

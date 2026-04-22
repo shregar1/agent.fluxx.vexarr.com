@@ -212,6 +212,112 @@ fn extract_metric_from_query(query: &str) -> String {
     name.trim().to_string()
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_template_store_new_has_builtin_templates() {
+        let store = TemplateStore::new();
+        let templates = store.list_available();
+        assert!(templates.len() >= 8, "Should have at least 8 built-in templates");
+    }
+
+    #[test]
+    fn test_template_store_activate() {
+        let store = TemplateStore::new();
+        let result = store.activate("host-system");
+        assert!(result.is_some());
+        assert!(store.is_active("host-system"));
+    }
+
+    #[test]
+    fn test_template_store_activate_nonexistent() {
+        let store = TemplateStore::new();
+        assert!(store.activate("does-not-exist").is_none());
+    }
+
+    #[test]
+    fn test_template_store_deactivate() {
+        let store = TemplateStore::new();
+        store.activate("redis");
+        assert!(store.is_active("redis"));
+        assert!(store.deactivate("redis"));
+        assert!(!store.is_active("redis"));
+    }
+
+    #[test]
+    fn test_template_store_deactivate_not_active() {
+        let store = TemplateStore::new();
+        assert!(!store.deactivate("never-was"));
+    }
+
+    #[test]
+    fn test_template_store_list_active() {
+        let store = TemplateStore::new();
+        store.activate("host-system");
+        store.activate("redis");
+        assert_eq!(store.list_active().len(), 2);
+    }
+
+    #[test]
+    fn test_template_store_get_active() {
+        let store = TemplateStore::new();
+        store.activate("nginx");
+        let active = store.get_active("nginx");
+        assert!(active.is_some());
+        assert_eq!(active.unwrap().template.id, "nginx");
+    }
+
+    #[test]
+    fn test_extract_metric_from_simple_query() {
+        assert_eq!(extract_metric_from_query("avg(cpu.usage)"), "cpu.usage");
+    }
+
+    #[test]
+    fn test_extract_metric_from_rate_query() {
+        assert_eq!(extract_metric_from_query("rate(http_requests[5m])"), "http_requests");
+    }
+
+    #[test]
+    fn test_extract_metric_from_labeled_query() {
+        assert_eq!(extract_metric_from_query(r#"sum(errors{service="api"})"#), "errors");
+    }
+
+    #[test]
+    fn test_extract_metric_from_bare_name() {
+        assert_eq!(extract_metric_from_query("cpu.usage"), "cpu.usage");
+    }
+
+    #[test]
+    fn test_all_builtin_templates_have_panels() {
+        let templates = built_in_templates();
+        for t in &templates {
+            assert!(!t.panels.is_empty(), "Template {} has no panels", t.id);
+            assert!(!t.metrics.is_empty(), "Template {} has no metrics", t.id);
+        }
+    }
+
+    #[test]
+    fn test_all_builtin_templates_have_unique_ids() {
+        let templates = built_in_templates();
+        let ids: std::collections::HashSet<_> = templates.iter().map(|t| &t.id).collect();
+        assert_eq!(ids.len(), templates.len(), "Template IDs must be unique");
+    }
+
+    #[test]
+    fn test_template_panels_have_queries() {
+        let templates = built_in_templates();
+        for t in &templates {
+            for p in &t.panels {
+                assert!(!p.query.is_empty(), "Panel {} in {} has empty query", p.title, t.id);
+                assert!(!p.title.is_empty());
+                assert!(!p.chart_type.is_empty());
+            }
+        }
+    }
+}
+
 /// Built-in templates with real PromQL queries.
 fn built_in_templates() -> Vec<DashboardTemplate> {
     vec![

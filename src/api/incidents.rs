@@ -184,4 +184,136 @@ mod tests {
         let resolved = store.update_status(&inc.id, IncidentStatus::Resolved, "bob", "Fixed DB config").unwrap();
         assert!(resolved.resolved_at_us.is_some());
     }
+
+    fn mk(title: &str, sev: IncidentSeverity) -> Incident {
+        Incident {
+            id: String::new(), title: title.to_string(), description: String::new(),
+            severity: sev, status: IncidentStatus::Open, commander: None,
+            services: vec![], created_at_us: 0, updated_at_us: 0,
+            resolved_at_us: None, timeline: vec![], postmortem: None, labels: HashMap::new(),
+        }
+    }
+
+    #[test]
+    fn test_create_assigns_id_when_empty() {
+        let store = IncidentStore::new();
+        let inc = store.create(mk("x", IncidentSeverity::Sev2));
+        assert!(!inc.id.is_empty());
+    }
+
+    #[test]
+    fn test_create_preserves_nonempty_id() {
+        let store = IncidentStore::new();
+        let mut i = mk("x", IncidentSeverity::Sev2);
+        i.id = "custom-id".to_string();
+        let created = store.create(i);
+        assert_eq!(created.id, "custom-id");
+    }
+
+    #[test]
+    fn test_list_multiple_incidents() {
+        let store = IncidentStore::new();
+        store.create(mk("a", IncidentSeverity::Sev1));
+        store.create(mk("b", IncidentSeverity::Sev2));
+        store.create(mk("c", IncidentSeverity::Sev3));
+        assert_eq!(store.list(None).len(), 3);
+    }
+
+    #[test]
+    fn test_list_filter_by_status() {
+        let store = IncidentStore::new();
+        let i1 = store.create(mk("a", IncidentSeverity::Sev1));
+        store.create(mk("b", IncidentSeverity::Sev2));
+        store.update_status(&i1.id, IncidentStatus::Resolved, "x", "done");
+
+        assert_eq!(store.list(Some(IncidentStatus::Open)).len(), 1);
+        assert_eq!(store.list(Some(IncidentStatus::Resolved)).len(), 1);
+    }
+
+    #[test]
+    fn test_get_incident_found() {
+        let store = IncidentStore::new();
+        let i = store.create(mk("a", IncidentSeverity::Sev1));
+        assert!(store.get(&i.id).is_some());
+    }
+
+    #[test]
+    fn test_get_incident_not_found() {
+        let store = IncidentStore::new();
+        assert!(store.get("nope").is_none());
+    }
+
+    #[test]
+    fn test_update_status_nonexistent() {
+        let store = IncidentStore::new();
+        let r = store.update_status("nope", IncidentStatus::Resolved, "x", "m");
+        assert!(r.is_none());
+    }
+
+    #[test]
+    fn test_timeline_grows_with_updates() {
+        let store = IncidentStore::new();
+        let i = store.create(mk("a", IncidentSeverity::Sev1));
+        store.update_status(&i.id, IncidentStatus::Acknowledged, "u", "ack");
+        store.update_status(&i.id, IncidentStatus::Investigating, "u", "inv");
+        store.update_status(&i.id, IncidentStatus::Mitigated, "u", "mit");
+        let final_ = store.update_status(&i.id, IncidentStatus::Resolved, "u", "res").unwrap();
+        assert_eq!(final_.timeline.len(), 5); // create + 4 updates
+    }
+
+    #[test]
+    fn test_add_postmortem() {
+        let store = IncidentStore::new();
+        let i = store.create(mk("a", IncidentSeverity::Sev1));
+        let pm = Postmortem {
+            summary: "s".into(), root_cause: "rc".into(), impact: "i".into(),
+            detection_time_secs: 60, resolution_time_secs: 3600, action_items: vec![],
+        };
+        let updated = store.add_postmortem(&i.id, pm).unwrap();
+        assert!(updated.postmortem.is_some());
+        assert_eq!(updated.status, IncidentStatus::Postmortem);
+    }
+
+    #[test]
+    fn test_add_postmortem_nonexistent() {
+        let store = IncidentStore::new();
+        let pm = Postmortem {
+            summary: "s".into(), root_cause: "r".into(), impact: "i".into(),
+            detection_time_secs: 1, resolution_time_secs: 2, action_items: vec![],
+        };
+        assert!(store.add_postmortem("nope", pm).is_none());
+    }
+
+    #[test]
+    fn test_severity_variants() {
+        assert_ne!(IncidentSeverity::Sev1, IncidentSeverity::Sev2);
+        assert_eq!(IncidentSeverity::Sev3, IncidentSeverity::Sev3);
+    }
+
+    #[test]
+    fn test_list_sorted_by_created_desc() {
+        let store = IncidentStore::new();
+        store.create(mk("first", IncidentSeverity::Sev1));
+        std::thread::sleep(std::time::Duration::from_millis(2));
+        store.create(mk("second", IncidentSeverity::Sev1));
+        let list = store.list(None);
+        assert!(list[0].created_at_us >= list[1].created_at_us);
+    }
+
+    #[test]
+    fn test_resolved_sets_resolved_at() {
+        let store = IncidentStore::new();
+        let i = store.create(mk("a", IncidentSeverity::Sev1));
+        assert!(i.resolved_at_us.is_none());
+        let r = store.update_status(&i.id, IncidentStatus::Resolved, "u", "done").unwrap();
+        assert!(r.resolved_at_us.is_some());
+    }
+
+    #[test]
+    fn test_non_resolved_status_no_resolved_at() {
+        let store = IncidentStore::new();
+        let i = store.create(mk("a", IncidentSeverity::Sev1));
+        let r = store.update_status(&i.id, IncidentStatus::Acknowledged, "u", "m").unwrap();
+        assert!(r.resolved_at_us.is_none());
+    }
 }

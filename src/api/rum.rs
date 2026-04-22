@@ -223,3 +223,175 @@ pub async fn rum_stats(
         "total_sessions": state.rum_store.total_sessions(),
     }), "RUM stats.")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn mk_event(event_type: &str, session: &str, app: &str, ts_us: u64) -> RumEvent {
+        RumEvent {
+            event_type: event_type.to_string(),
+            timestamp_us: ts_us,
+            session_id: session.to_string(),
+            page_view_id: None,
+            application_id: app.to_string(),
+            environment: None,
+            app_version: None,
+            user_id: None,
+            user_email: None,
+            url: Some("https://example.com/".to_string()),
+            user_agent: Some("test-agent".to_string()),
+            screen_width: None,
+            screen_height: None,
+            viewport_width: None,
+            viewport_height: None,
+            data: HashMap::new(),
+        }
+    }
+
+    fn mk_vital(session: &str, app: &str, name: &str, value: f64, rating: &str) -> RumEvent {
+        let mut e = mk_event("vital", session, app, 1);
+        e.data.insert("vital_name".to_string(), serde_json::json!(name));
+        e.data.insert("vital_value".to_string(), serde_json::json!(value));
+        e.data.insert("vital_rating".to_string(), serde_json::json!(rating));
+        e
+    }
+
+    #[test]
+    fn ingest_empty_vec_no_effect() {
+        let store = RumStore::new();
+        store.ingest(vec![]);
+        assert_eq!(store.total_sessions(), 0);
+        assert_eq!(store.total_events(), 0);
+    }
+
+    #[test]
+    fn ingest_single_view_creates_session() {
+        let store = RumStore::new();
+        store.ingest(vec![mk_event("view", "s1", "app", 100)]);
+        assert_eq!(store.total_sessions(), 1);
+        assert_eq!(store.total_events(), 1);
+    }
+
+    #[test]
+    fn ingest_tracks_view_count() {
+        let store = RumStore::new();
+        store.ingest(vec![
+            mk_event("view", "s1", "app", 100),
+            mk_event("view", "s1", "app", 200),
+            mk_event("view", "s1", "app", 300),
+        ]);
+        let sessions = store.get_sessions(None, 10);
+        assert_eq!(sessions[0].page_view_count, 3);
+    }
+
+    #[test]
+    fn ingest_tracks_error_count() {
+        let store = RumStore::new();
+        store.ingest(vec![
+            mk_event("error", "s1", "app", 100),
+            mk_event("error", "s1", "app", 200),
+            mk_event("view", "s1", "app", 300),
+        ]);
+        let sessions = store.get_sessions(None, 10);
+        assert_eq!(sessions[0].error_count, 2);
+        assert_eq!(sessions[0].page_view_count, 1);
+    }
+
+    #[test]
+    fn ingest_tracks_action_count() {
+        let store = RumStore::new();
+        store.ingest(vec![
+            mk_event("action", "s1", "app", 100),
+            mk_event("action", "s1", "app", 200),
+        ]);
+        let sessions = store.get_sessions(None, 10);
+        assert_eq!(sessions[0].action_count, 2);
+    }
+
+    #[test]
+    fn ingest_computes_duration() {
+        let store = RumStore::new();
+        store.ingest(vec![
+            mk_event("view", "s1", "app", 1_000_000),
+            mk_event("view", "s1", "app", 5_000_000),
+        ]);
+        let sessions = store.get_sessions(None, 10);
+        // 4 seconds = 4000 ms
+        assert_eq!(sessions[0].duration_ms, 4000);
+    }
+
+    #[test]
+    fn get_sessions_filters_by_application() {
+        let store = RumStore::new();
+        store.ingest(vec![
+            mk_event("view", "s1", "appA", 100),
+            mk_event("view", "s2", "appB", 200),
+        ]);
+        assert_eq!(store.get_sessions(Some("appA"), 10).len(), 1);
+        assert_eq!(store.get_sessions(Some("appB"), 10).len(), 1);
+        assert_eq!(store.get_sessions(Some("missing"), 10).len(), 0);
+    }
+
+    #[test]
+    fn get_sessions_respects_limit() {
+        let store = RumStore::new();
+        for i in 0..5 {
+            store.ingest(vec![mk_event("view", &format!("s{}", i), "app", i)]);
+        }
+        assert_eq!(store.get_sessions(None, 2).len(), 2);
+    }
+
+    #[test]
+    fn get_sessions_sorted_by_last_activity_desc() {
+        let store = RumStore::new();
+        store.ingest(vec![mk_event("view", "old", "app", 100)]);
+        store.ingest(vec![mk_event("view", "new", "app", 500)]);
+        let sessions = store.get_sessions(None, 10);
+        assert_eq!(sessions[0].session_id, "new");
+    }
+
+    #[test]
+    fn total_sessions_unique_by_session_id() {
+        let store = RumStore::new();
+        store.ingest(vec![
+            mk_event("view", "s1", "app", 100),
+            mk_event("view", "s1", "app", 200),
+            mk_event("view", "s2", "app", 300),
+        ]);
+        assert_eq!(store.total_sessions(), 2);
+    }
+
+    #[test]
+    fn total_events_counts_all_ingested() {
+        let store = RumStore::new();
+        store.ingest(vec![
+            mk_event("view", "s1", "app", 1),
+            mk_event("error", "s1", "app", 2),
+            mk_event("action", "s1", "app", 3),
+        ]);
+        assert_eq!(store.total_events(), 3);
+    }
+
+    #[test]
+    fn get_vitals_empty_for_unknown_app() {
+        let store = RumStore::new();
+        let v = store.get_vitals("nope");
+        assert_eq!(v.sample_count, 0);
+        assert_eq!(v.lcp_p75_ms, 0.0);
+    }
+
+    #[test]
+    fn get_vitals_aggregates_lcp() {
+        let store = RumStore::new();
+        store.ingest(vec![
+            mk_vital("s1", "app", "LCP", 1000.0, "good"),
+            mk_vital("s1", "app", "LCP", 2000.0, "good"),
+            mk_vital("s1", "app", "LCP", 3000.0, "good"),
+            mk_vital("s1", "app", "LCP", 4000.0, "poor"),
+        ]);
+        let v = store.get_vitals("app");
+        assert_eq!(v.sample_count, 4);
+        assert!(v.lcp_p75_ms >= 3000.0);
+    }
+}

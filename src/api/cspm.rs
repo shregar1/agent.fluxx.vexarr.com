@@ -178,3 +178,143 @@ pub async fn get_compliance(State(state): State<Arc<ApiState>>) -> impl IntoResp
 pub async fn list_security_rules(State(state): State<Arc<ApiState>>) -> impl IntoResponse {
     StandardResponse::ok(serde_json::to_value(&state.cspm_store.get_rules()).unwrap_or_default(), "Security rules.")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn mk_finding(id: &str, rule_id: &str, severity: FindingSeverity, status: FindingStatus, provider: &str, frameworks: Vec<ComplianceFramework>) -> SecurityFinding {
+        SecurityFinding {
+            id: id.to_string(),
+            rule_id: rule_id.to_string(),
+            rule_name: "rule".to_string(),
+            description: "d".to_string(),
+            severity,
+            status,
+            cloud_provider: provider.to_string(),
+            resource_type: "r".to_string(),
+            resource_id: "res-1".to_string(),
+            region: "us-east-1".to_string(),
+            account_id: None,
+            frameworks,
+            remediation: "fix it".to_string(),
+            detected_at_us: 0,
+            tags: HashMap::new(),
+        }
+    }
+
+    #[test]
+    fn default_rules_non_empty() {
+        let rules = default_rules();
+        assert!(!rules.is_empty());
+    }
+
+    #[test]
+    fn default_rules_contain_aws_s3_public() {
+        let rules = default_rules();
+        assert!(rules.iter().any(|r| r.id == "aws-s3-public"));
+    }
+
+    #[test]
+    fn new_store_has_default_rules() {
+        let store = CspmStore::new();
+        assert!(!store.get_rules().is_empty());
+    }
+
+    #[test]
+    fn new_store_has_no_findings() {
+        let store = CspmStore::new();
+        assert!(store.get_findings(None, None, None, 100).is_empty());
+    }
+
+    #[test]
+    fn add_finding_stores_it() {
+        let store = CspmStore::new();
+        store.add_finding(mk_finding("f1", "aws-s3-public", FindingSeverity::Critical, FindingStatus::Open, "aws", vec![ComplianceFramework::Cis]));
+        assert_eq!(store.get_findings(None, None, None, 100).len(), 1);
+    }
+
+    #[test]
+    fn get_findings_filters_by_severity() {
+        let store = CspmStore::new();
+        store.add_finding(mk_finding("f1", "r1", FindingSeverity::Critical, FindingStatus::Open, "aws", vec![]));
+        store.add_finding(mk_finding("f2", "r2", FindingSeverity::Low, FindingStatus::Open, "aws", vec![]));
+        let result = store.get_findings(Some(FindingSeverity::Critical), None, None, 100);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].severity, FindingSeverity::Critical);
+    }
+
+    #[test]
+    fn get_findings_filters_by_provider() {
+        let store = CspmStore::new();
+        store.add_finding(mk_finding("f1", "r1", FindingSeverity::High, FindingStatus::Open, "aws", vec![]));
+        store.add_finding(mk_finding("f2", "r2", FindingSeverity::High, FindingStatus::Open, "gcp", vec![]));
+        let result = store.get_findings(None, Some("aws"), None, 100);
+        assert_eq!(result.len(), 1);
+    }
+
+    #[test]
+    fn get_findings_filters_by_status() {
+        let store = CspmStore::new();
+        store.add_finding(mk_finding("f1", "r1", FindingSeverity::High, FindingStatus::Open, "aws", vec![]));
+        store.add_finding(mk_finding("f2", "r2", FindingSeverity::High, FindingStatus::Resolved, "aws", vec![]));
+        let result = store.get_findings(None, None, Some(FindingStatus::Resolved), 100);
+        assert_eq!(result.len(), 1);
+    }
+
+    #[test]
+    fn get_findings_respects_limit() {
+        let store = CspmStore::new();
+        for i in 0..5 {
+            store.add_finding(mk_finding(&format!("f{}", i), "r", FindingSeverity::High, FindingStatus::Open, "aws", vec![]));
+        }
+        assert_eq!(store.get_findings(None, None, None, 2).len(), 2);
+    }
+
+    #[test]
+    fn get_compliance_empty_findings_perfect_score() {
+        let store = CspmStore::new();
+        let p = store.get_compliance(ComplianceFramework::Cis);
+        assert_eq!(p.failing, 0);
+        assert_eq!(p.score_percent, 100.0);
+        assert!(p.total_rules > 0);
+    }
+
+    #[test]
+    fn get_compliance_failing_reduces_score() {
+        let store = CspmStore::new();
+        store.add_finding(mk_finding("f1", "aws-s3-public", FindingSeverity::Critical, FindingStatus::Open, "aws", vec![ComplianceFramework::Cis]));
+        let p = store.get_compliance(ComplianceFramework::Cis);
+        assert!(p.failing >= 1);
+        assert!(p.score_percent < 100.0);
+    }
+
+    #[test]
+    fn get_compliance_suppressed_not_failing() {
+        let store = CspmStore::new();
+        store.add_finding(mk_finding("f1", "aws-s3-public", FindingSeverity::Critical, FindingStatus::Suppressed, "aws", vec![ComplianceFramework::Cis]));
+        let p = store.get_compliance(ComplianceFramework::Cis);
+        assert_eq!(p.failing, 0);
+    }
+
+    #[test]
+    fn get_compliance_framework_scoped() {
+        let store = CspmStore::new();
+        // Finding only applies to SOC2, not HIPAA
+        store.add_finding(mk_finding("f1", "aws-s3-public", FindingSeverity::Critical, FindingStatus::Open, "aws", vec![ComplianceFramework::Soc2]));
+        let soc2 = store.get_compliance(ComplianceFramework::Soc2);
+        let hipaa = store.get_compliance(ComplianceFramework::Hipaa);
+        assert!(soc2.failing >= 1);
+        assert_eq!(hipaa.failing, 0);
+    }
+
+    #[test]
+    fn get_compliance_dedupes_findings_by_rule() {
+        let store = CspmStore::new();
+        store.add_finding(mk_finding("f1", "aws-s3-public", FindingSeverity::Critical, FindingStatus::Open, "aws", vec![ComplianceFramework::Cis]));
+        store.add_finding(mk_finding("f2", "aws-s3-public", FindingSeverity::Critical, FindingStatus::Open, "aws", vec![ComplianceFramework::Cis]));
+        let p = store.get_compliance(ComplianceFramework::Cis);
+        // Both findings share the same rule_id, so they count as 1 failing rule.
+        assert_eq!(p.failing, 1);
+    }
+}

@@ -255,4 +255,157 @@ mod tests {
         assert_eq!(usage.logs_count, 30);
         assert_eq!(usage.bytes_count, 8000);
     }
+
+    fn quota(action: &str) -> QuotaDefinition {
+        QuotaDefinition {
+            project_id: "p".into(), name: "n".into(),
+            events_per_minute: 100, logs_per_minute: 100,
+            metrics_per_minute: 100, spans_per_minute: 100,
+            bytes_per_minute: 1_000_000, exceeded_action: action.into(), enabled: true,
+        }
+    }
+
+    #[test]
+    fn test_signal_type_logs() {
+        let mgr = QuotaManager::new();
+        mgr.set_quota(quota("drop"));
+        assert_eq!(mgr.check_rate("p", "logs", 50, 0), RateLimitResult::Allowed);
+        assert_eq!(mgr.check_rate("p", "logs", 60, 0), RateLimitResult::Dropped);
+    }
+
+    #[test]
+    fn test_signal_type_metrics() {
+        let mgr = QuotaManager::new();
+        mgr.set_quota(quota("drop"));
+        assert_eq!(mgr.check_rate("p", "metrics", 50, 0), RateLimitResult::Allowed);
+        let u = mgr.get_usage("p");
+        assert_eq!(u.metrics_count, 50);
+    }
+
+    #[test]
+    fn test_signal_type_spans() {
+        let mgr = QuotaManager::new();
+        mgr.set_quota(quota("drop"));
+        assert_eq!(mgr.check_rate("p", "spans", 50, 0), RateLimitResult::Allowed);
+        let u = mgr.get_usage("p");
+        assert_eq!(u.spans_count, 50);
+    }
+
+    #[test]
+    fn test_signal_type_unknown_defaults_to_events() {
+        let mgr = QuotaManager::new();
+        mgr.set_quota(quota("drop"));
+        mgr.check_rate("p", "unknown-signal", 10, 0);
+        let u = mgr.get_usage("p");
+        assert_eq!(u.events_count, 10);
+    }
+
+    #[test]
+    fn test_throttle_action() {
+        let mgr = QuotaManager::new();
+        mgr.set_quota(quota("throttle"));
+        mgr.check_rate("p", "events", 100, 0);
+        assert_eq!(mgr.check_rate("p", "events", 10, 0), RateLimitResult::Throttled);
+    }
+
+    #[test]
+    fn test_warn_action_allows() {
+        let mgr = QuotaManager::new();
+        mgr.set_quota(quota("warn"));
+        mgr.check_rate("p", "events", 100, 0);
+        assert_eq!(mgr.check_rate("p", "events", 10, 0), RateLimitResult::Allowed);
+    }
+
+    #[test]
+    fn test_disabled_quota_allows() {
+        let mgr = QuotaManager::new();
+        let mut q = quota("drop");
+        q.enabled = false;
+        mgr.set_quota(q);
+        assert_eq!(mgr.check_rate("p", "events", 1_000_000, 0), RateLimitResult::Allowed);
+    }
+
+    #[test]
+    fn test_bytes_limit_triggers() {
+        let mgr = QuotaManager::new();
+        mgr.set_quota(quota("drop"));
+        assert_eq!(mgr.check_rate("p", "events", 1, 2_000_000), RateLimitResult::Dropped);
+    }
+
+    #[test]
+    fn test_delete_quota_returns_true() {
+        let mgr = QuotaManager::new();
+        mgr.set_quota(quota("drop"));
+        assert!(mgr.delete_quota("p"));
+        assert!(mgr.get_quota("p").is_none());
+    }
+
+    #[test]
+    fn test_delete_quota_nonexistent() {
+        let mgr = QuotaManager::new();
+        assert!(!mgr.delete_quota("nope"));
+    }
+
+    #[test]
+    fn test_list_quotas_empty() {
+        let mgr = QuotaManager::new();
+        assert!(mgr.list_quotas().is_empty());
+    }
+
+    #[test]
+    fn test_list_quotas_multiple() {
+        let mgr = QuotaManager::new();
+        let mut q1 = quota("drop"); q1.project_id = "a".into();
+        let mut q2 = quota("drop"); q2.project_id = "b".into();
+        mgr.set_quota(q1);
+        mgr.set_quota(q2);
+        assert_eq!(mgr.list_quotas().len(), 2);
+    }
+
+    #[test]
+    fn test_get_usage_no_activity() {
+        let mgr = QuotaManager::new();
+        let u = mgr.get_usage("fresh");
+        assert_eq!(u.events_count, 0);
+        assert_eq!(u.bytes_count, 0);
+    }
+
+    #[test]
+    fn test_dropped_count_tracked() {
+        let mgr = QuotaManager::new();
+        mgr.set_quota(quota("drop"));
+        mgr.check_rate("p", "events", 100, 0);
+        mgr.check_rate("p", "events", 50, 0); // over limit
+        let u = mgr.get_usage("p");
+        assert_eq!(u.dropped_count, 50);
+    }
+
+    #[test]
+    fn test_throttled_count_tracked() {
+        let mgr = QuotaManager::new();
+        mgr.set_quota(quota("throttle"));
+        mgr.check_rate("p", "events", 100, 0);
+        mgr.check_rate("p", "events", 25, 0);
+        let u = mgr.get_usage("p");
+        assert_eq!(u.throttled_count, 25);
+    }
+
+    #[test]
+    fn test_set_quota_overwrites() {
+        let mgr = QuotaManager::new();
+        let mut q1 = quota("drop");
+        q1.events_per_minute = 50;
+        mgr.set_quota(q1);
+        let mut q2 = quota("drop");
+        q2.events_per_minute = 999;
+        mgr.set_quota(q2);
+        assert_eq!(mgr.get_quota("p").unwrap().events_per_minute, 999);
+    }
+
+    #[test]
+    fn test_rate_limit_result_variants() {
+        assert_ne!(RateLimitResult::Allowed, RateLimitResult::Throttled);
+        assert_ne!(RateLimitResult::Throttled, RateLimitResult::Dropped);
+        assert_eq!(RateLimitResult::Allowed, RateLimitResult::Allowed);
+    }
 }

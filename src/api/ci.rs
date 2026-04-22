@@ -118,3 +118,142 @@ pub async fn get_dora_metrics(State(state): State<Arc<ApiState>>, Query(params):
     let dora = state.ci_store.compute_dora(days);
     StandardResponse::ok(serde_json::to_value(&dora).unwrap_or_default(), "DORA metrics.")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn mk_run(name: &str, status: PipelineStatus, duration: Option<f64>) -> PipelineRun {
+        PipelineRun {
+            id: name.to_string(),
+            pipeline_name: name.to_string(),
+            provider: "github".to_string(),
+            branch: "main".to_string(),
+            commit_sha: "abc123".to_string(),
+            status,
+            started_at_us: 0,
+            finished_at_us: None,
+            duration_secs: duration,
+            stages: vec![],
+            test_results: None,
+            labels: HashMap::new(),
+        }
+    }
+
+    #[test]
+    fn record_adds_run() {
+        let store = CiStore::new();
+        store.record(mk_run("p1", PipelineStatus::Success, Some(120.0)));
+        assert_eq!(store.list(None, None, 100).len(), 1);
+    }
+
+    #[test]
+    fn list_empty_store() {
+        let store = CiStore::new();
+        assert!(store.list(None, None, 10).is_empty());
+    }
+
+    #[test]
+    fn list_filters_by_pipeline_name() {
+        let store = CiStore::new();
+        store.record(mk_run("ci-a", PipelineStatus::Success, None));
+        store.record(mk_run("ci-b", PipelineStatus::Success, None));
+        let result = store.list(Some("ci-a"), None, 100);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].pipeline_name, "ci-a");
+    }
+
+    #[test]
+    fn list_filters_by_status() {
+        let store = CiStore::new();
+        store.record(mk_run("a", PipelineStatus::Success, None));
+        store.record(mk_run("b", PipelineStatus::Failed, None));
+        let result = store.list(None, Some(PipelineStatus::Failed), 100);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].status, PipelineStatus::Failed);
+    }
+
+    #[test]
+    fn list_respects_limit() {
+        let store = CiStore::new();
+        for _ in 0..5 {
+            store.record(mk_run("x", PipelineStatus::Success, None));
+        }
+        assert_eq!(store.list(None, None, 2).len(), 2);
+    }
+
+    #[test]
+    fn list_reverse_order_most_recent_first() {
+        let store = CiStore::new();
+        store.record(mk_run("first", PipelineStatus::Success, None));
+        store.record(mk_run("second", PipelineStatus::Success, None));
+        let result = store.list(None, None, 10);
+        assert_eq!(result[0].pipeline_name, "second");
+    }
+
+    #[test]
+    fn compute_dora_empty_store() {
+        let store = CiStore::new();
+        let d = store.compute_dora(30);
+        assert_eq!(d.deployment_frequency_per_day, 0.0);
+        assert_eq!(d.change_failure_rate_percent, 0.0);
+        assert_eq!(d.period_days, 30);
+    }
+
+    #[test]
+    fn compute_dora_deployment_frequency() {
+        let store = CiStore::new();
+        for _ in 0..15 {
+            store.record(mk_run("p", PipelineStatus::Success, Some(3600.0)));
+        }
+        let d = store.compute_dora(30);
+        assert!((d.deployment_frequency_per_day - 0.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn compute_dora_change_failure_rate() {
+        let store = CiStore::new();
+        for _ in 0..3 {
+            store.record(mk_run("p", PipelineStatus::Success, None));
+        }
+        store.record(mk_run("p", PipelineStatus::Failed, None));
+        let d = store.compute_dora(1);
+        assert!((d.change_failure_rate_percent - 25.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn compute_dora_lead_time() {
+        let store = CiStore::new();
+        store.record(mk_run("p", PipelineStatus::Success, Some(3600.0)));
+        store.record(mk_run("p", PipelineStatus::Success, Some(7200.0)));
+        let d = store.compute_dora(1);
+        assert!((d.lead_time_for_changes_hours - 1.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn compute_dora_period_clamped_to_min_1() {
+        let store = CiStore::new();
+        store.record(mk_run("p", PipelineStatus::Success, None));
+        let d = store.compute_dora(0);
+        assert!(d.deployment_frequency_per_day > 0.0);
+    }
+
+    #[test]
+    fn compute_dora_only_failed_runs() {
+        let store = CiStore::new();
+        store.record(mk_run("p", PipelineStatus::Failed, None));
+        store.record(mk_run("p", PipelineStatus::Failed, None));
+        let d = store.compute_dora(7);
+        assert_eq!(d.deployment_frequency_per_day, 0.0);
+        assert!((d.change_failure_rate_percent - 100.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn compute_dora_cancelled_runs_not_counted_as_success_or_failure() {
+        let store = CiStore::new();
+        store.record(mk_run("p", PipelineStatus::Cancelled, None));
+        let d = store.compute_dora(1);
+        assert_eq!(d.deployment_frequency_per_day, 0.0);
+        assert_eq!(d.change_failure_rate_percent, 0.0);
+    }
+}

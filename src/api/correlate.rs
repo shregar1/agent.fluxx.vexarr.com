@@ -240,3 +240,47 @@ fn format_timestamp(us: u64) -> String {
         .unwrap_or_else(|| "unknown".to_string());
     dt
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn format_timestamp_epoch_zero() {
+        assert_eq!(format_timestamp(0), "00:00:00");
+    }
+
+    #[test]
+    fn format_timestamp_known_value() {
+        // 3600 seconds = 01:00:00 UTC
+        assert_eq!(format_timestamp(3600 * 1_000_000), "01:00:00");
+    }
+
+    #[test]
+    fn format_timestamp_midday() {
+        // 12:34:56 UTC
+        let secs = 12 * 3600 + 34 * 60 + 56;
+        assert_eq!(format_timestamp(secs * 1_000_000), "12:34:56");
+    }
+
+    #[test]
+    fn format_timestamp_returns_8_chars() {
+        let out = format_timestamp(1_700_000_000_000_000);
+        assert_eq!(out.len(), 8);
+        assert!(out.chars().nth(2) == Some(':'));
+    }
+
+    #[test]
+    fn format_timestamp_truncates_subsecond() {
+        // Microseconds within the same second produce the same output.
+        let a = format_timestamp(1_700_000_000_000_000);
+        let b = format_timestamp(1_700_000_000_999_999);
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn format_timestamp_never_panics_on_max() {
+        // Must not panic for extreme values
+        let _ = format_timestamp(u64::MAX);
+    }
+}

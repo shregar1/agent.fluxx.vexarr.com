@@ -292,4 +292,114 @@ mod tests {
             assert!(forecast.predicted_values[i].predicted_value >= forecast.predicted_values[i-1].predicted_value);
         }
     }
+
+    fn make_metrics(values: &[f64]) -> Vec<Metric> {
+        let base = 1_000_000u64;
+        values.iter().enumerate().map(|(i, v)| {
+            Metric::new("cpu".into(), *v, MetricType::Gauge)
+                .with_timestamp(base + (i as u64) * 3600 * 1_000_000)
+        }).collect()
+    }
+
+    #[test]
+    fn test_decreasing_trend() {
+        let metrics = make_metrics(&[90.0, 85.0, 80.0, 75.0, 70.0]);
+        let forecast = compute_forecast("cpu", &metrics, 6.0, Some(95.0));
+        assert_eq!(forecast.trend, "decreasing");
+        assert!(forecast.slope_per_hour < 0.0);
+    }
+
+    #[test]
+    fn test_decreasing_below_threshold_no_breach() {
+        let metrics = make_metrics(&[50.0, 45.0, 40.0, 35.0, 30.0]);
+        let forecast = compute_forecast("cpu", &metrics, 6.0, Some(80.0));
+        assert!(forecast.threshold_breach.is_none());
+    }
+
+    #[test]
+    fn test_current_at_threshold_breach_immediate() {
+        let metrics = make_metrics(&[70.0, 72.0, 74.0, 76.0, 80.0]);
+        let forecast = compute_forecast("cpu", &metrics, 6.0, Some(80.0));
+        let breach = forecast.threshold_breach.expect("should breach");
+        assert_eq!(breach.estimated_breach_hours, 0.0);
+        assert_eq!(breach.severity, "critical");
+    }
+
+    #[test]
+    fn test_current_above_threshold_breach_immediate() {
+        let metrics = make_metrics(&[80.0, 82.0, 85.0, 88.0, 92.0]);
+        let forecast = compute_forecast("cpu", &metrics, 6.0, Some(80.0));
+        let breach = forecast.threshold_breach.expect("should breach");
+        assert_eq!(breach.estimated_breach_hours, 0.0);
+    }
+
+    #[test]
+    fn test_hours_to_breach_accuracy() {
+        // Linear increase of 5/hour from 50. Threshold 80 → reach at t=6
+        // Last data point is t=4 at 70. So 2 more hours to reach 80.
+        let metrics = make_metrics(&[50.0, 55.0, 60.0, 65.0, 70.0]);
+        let forecast = compute_forecast("cpu", &metrics, 6.0, Some(80.0));
+        let breach = forecast.threshold_breach.expect("should breach");
+        assert!((breach.estimated_breach_hours - 2.0).abs() < 0.1,
+            "expected ~2h, got {}", breach.estimated_breach_hours);
+    }
+
+    #[test]
+    fn test_breach_severity_critical_under_1h() {
+        let metrics = make_metrics(&[75.0, 76.0, 77.0, 78.0, 79.5]);
+        let forecast = compute_forecast("cpu", &metrics, 6.0, Some(80.0));
+        if let Some(b) = forecast.threshold_breach {
+            assert_eq!(b.severity, "critical");
+        }
+    }
+
+    #[test]
+    fn test_breach_severity_warning_far_out() {
+        // Breach in ~5 hours
+        let metrics = make_metrics(&[50.0, 52.0, 54.0, 56.0, 58.0]);
+        let forecast = compute_forecast("cpu", &metrics, 10.0, Some(80.0));
+        if let Some(b) = forecast.threshold_breach {
+            assert!(b.estimated_breach_hours > 3.0);
+            assert_eq!(b.severity, "warning");
+        }
+    }
+
+    #[test]
+    fn test_breach_beyond_horizon_returns_none() {
+        // Very slow growth, threshold unreachable in short horizon
+        let metrics = make_metrics(&[50.0, 50.1, 50.2, 50.3, 50.4]);
+        let forecast = compute_forecast("cpu", &metrics, 2.0, Some(80.0));
+        assert!(forecast.threshold_breach.is_none());
+    }
+
+    #[test]
+    fn test_no_threshold_no_breach() {
+        let metrics = make_metrics(&[10.0, 20.0, 30.0, 40.0, 50.0]);
+        let forecast = compute_forecast("cpu", &metrics, 6.0, None);
+        assert!(forecast.threshold_breach.is_none());
+    }
+
+    #[test]
+    fn test_forecast_includes_bounds() {
+        let metrics = make_metrics(&[50.0, 52.0, 54.0, 56.0, 58.0]);
+        let forecast = compute_forecast("cpu", &metrics, 3.0, None);
+        for p in &forecast.predicted_values {
+            assert!(p.upper_bound >= p.predicted_value);
+            assert!(p.lower_bound <= p.predicted_value);
+        }
+    }
+
+    #[test]
+    fn test_r_squared_non_negative() {
+        let metrics = make_metrics(&[50.0, 60.0, 55.0, 65.0, 60.0]);
+        let forecast = compute_forecast("cpu", &metrics, 3.0, None);
+        assert!(forecast.r_squared >= 0.0);
+    }
+
+    #[test]
+    fn test_current_value_matches_last() {
+        let metrics = make_metrics(&[10.0, 20.0, 30.0, 40.0, 77.0]);
+        let forecast = compute_forecast("cpu", &metrics, 3.0, None);
+        assert_eq!(forecast.current_value, 77.0);
+    }
 }

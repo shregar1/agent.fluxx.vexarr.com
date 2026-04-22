@@ -174,3 +174,151 @@ pub async fn get_profile(
         None => StandardResponse::error(serde_json::json!({}), "Profile not found", "NOT_FOUND", vec![]),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn mk_profile(service: &str, pt: ProfileType) -> Profile {
+        Profile {
+            id: String::new(),
+            service: service.to_string(),
+            profile_type: pt,
+            format: "pprof".to_string(),
+            duration_secs: 30.0,
+            timestamp_us: 0,
+            sample_count: 100,
+            environment: None,
+            version: None,
+            runtime: "go".to_string(),
+            labels: HashMap::new(),
+            top_functions: vec![],
+            data_size: 0,
+        }
+    }
+
+    #[test]
+    fn store_profile_assigns_id_when_empty() {
+        let store = ProfilingStore::new();
+        let id = store.store_profile(mk_profile("svc", ProfileType::Cpu), None);
+        assert!(!id.is_empty());
+    }
+
+    #[test]
+    fn store_profile_preserves_provided_id() {
+        let store = ProfilingStore::new();
+        let mut p = mk_profile("svc", ProfileType::Cpu);
+        p.id = "custom".to_string();
+        let id = store.store_profile(p, None);
+        assert_eq!(id, "custom");
+    }
+
+    #[test]
+    fn store_profile_sets_timestamp_when_zero() {
+        let store = ProfilingStore::new();
+        let id = store.store_profile(mk_profile("svc", ProfileType::Cpu), None);
+        let p = store.get_profile(&id).unwrap();
+        assert!(p.timestamp_us > 0);
+    }
+
+    #[test]
+    fn store_profile_preserves_existing_timestamp() {
+        let store = ProfilingStore::new();
+        let mut prof = mk_profile("svc", ProfileType::Cpu);
+        prof.timestamp_us = 42;
+        let id = store.store_profile(prof, None);
+        assert_eq!(store.get_profile(&id).unwrap().timestamp_us, 42);
+    }
+
+    #[test]
+    fn store_profile_with_raw_data_sets_size() {
+        let store = ProfilingStore::new();
+        let data = vec![1u8, 2, 3, 4, 5];
+        let id = store.store_profile(mk_profile("svc", ProfileType::Cpu), Some(data.clone()));
+        let p = store.get_profile(&id).unwrap();
+        assert_eq!(p.data_size, 5);
+        assert_eq!(store.get_raw(&id).unwrap(), data);
+    }
+
+    #[test]
+    fn get_profile_missing_returns_none() {
+        let store = ProfilingStore::new();
+        assert!(store.get_profile("missing").is_none());
+    }
+
+    #[test]
+    fn get_raw_missing_returns_none() {
+        let store = ProfilingStore::new();
+        assert!(store.get_raw("missing").is_none());
+    }
+
+    #[test]
+    fn list_profiles_empty() {
+        let store = ProfilingStore::new();
+        assert!(store.list_profiles(None, None, 100).is_empty());
+    }
+
+    #[test]
+    fn list_profiles_filters_by_service() {
+        let store = ProfilingStore::new();
+        store.store_profile(mk_profile("web", ProfileType::Cpu), None);
+        store.store_profile(mk_profile("api", ProfileType::Cpu), None);
+        let result = store.list_profiles(Some("web"), None, 100);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].service, "web");
+    }
+
+    #[test]
+    fn list_profiles_filters_by_type() {
+        let store = ProfilingStore::new();
+        store.store_profile(mk_profile("svc", ProfileType::Cpu), None);
+        store.store_profile(mk_profile("svc", ProfileType::Heap), None);
+        let result = store.list_profiles(None, Some(ProfileType::Heap), 100);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].profile_type, ProfileType::Heap);
+    }
+
+    #[test]
+    fn list_profiles_respects_limit() {
+        let store = ProfilingStore::new();
+        for _ in 0..5 {
+            store.store_profile(mk_profile("svc", ProfileType::Cpu), None);
+        }
+        assert_eq!(store.list_profiles(None, None, 2).len(), 2);
+    }
+
+    #[test]
+    fn list_profiles_sorted_by_timestamp_desc() {
+        let store = ProfilingStore::new();
+        let mut p1 = mk_profile("svc", ProfileType::Cpu);
+        p1.timestamp_us = 100;
+        let id1 = store.store_profile(p1, None);
+        let mut p2 = mk_profile("svc", ProfileType::Cpu);
+        p2.timestamp_us = 500;
+        let id2 = store.store_profile(p2, None);
+        let result = store.list_profiles(None, None, 10);
+        assert_eq!(result[0].id, id2);
+        assert_eq!(result[1].id, id1);
+    }
+
+    #[test]
+    fn list_profiles_top_function_extracted() {
+        let store = ProfilingStore::new();
+        let mut p = mk_profile("svc", ProfileType::Cpu);
+        p.top_functions.push(ProfileFunction {
+            function_name: "hot_fn".to_string(), file: None, line: None,
+            self_value: 100.0, total_value: 100.0, self_percent: 50.0, total_percent: 50.0,
+        });
+        store.store_profile(p, None);
+        let result = store.list_profiles(None, None, 10);
+        assert_eq!(result[0].top_function, Some("hot_fn".to_string()));
+    }
+
+    #[test]
+    fn unique_ids_auto_generated() {
+        let store = ProfilingStore::new();
+        let a = store.store_profile(mk_profile("svc", ProfileType::Cpu), None);
+        let b = store.store_profile(mk_profile("svc", ProfileType::Cpu), None);
+        assert_ne!(a, b);
+    }
+}

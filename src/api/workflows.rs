@@ -83,3 +83,121 @@ pub async fn get_workflow(Path(id): Path<String>, State(state): State<Arc<ApiSta
         None => StandardResponse::error(serde_json::json!({}), "Not found", "NOT_FOUND", vec![]),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn mk_workflow(name: &str, enabled: bool) -> Workflow {
+        Workflow {
+            id: String::new(),
+            name: name.to_string(),
+            description: "desc".to_string(),
+            enabled,
+            trigger: WorkflowTrigger::AlertFired { alert_rule: "rule-1".into(), severity: None },
+            steps: vec![],
+            labels: HashMap::new(),
+            created_at_us: 0,
+            last_run_us: None,
+            run_count: 99, // should be reset to 0 on create
+        }
+    }
+
+    #[test]
+    fn create_assigns_id_when_empty() {
+        let store = WorkflowStore::new();
+        let wf = store.create(mk_workflow("a", true));
+        assert!(!wf.id.is_empty());
+    }
+
+    #[test]
+    fn create_preserves_provided_id() {
+        let store = WorkflowStore::new();
+        let mut wf = mk_workflow("a", true);
+        wf.id = "my-id".into();
+        let created = store.create(wf);
+        assert_eq!(created.id, "my-id");
+    }
+
+    #[test]
+    fn create_sets_timestamp_and_resets_run_count() {
+        let store = WorkflowStore::new();
+        let wf = store.create(mk_workflow("a", true));
+        assert!(wf.created_at_us > 0);
+        assert_eq!(wf.run_count, 0);
+    }
+
+    #[test]
+    fn get_missing_returns_none() {
+        let store = WorkflowStore::new();
+        assert!(store.get("missing").is_none());
+    }
+
+    #[test]
+    fn get_returns_created_workflow() {
+        let store = WorkflowStore::new();
+        let wf = store.create(mk_workflow("foo", true));
+        let got = store.get(&wf.id).unwrap();
+        assert_eq!(got.name, "foo");
+    }
+
+    #[test]
+    fn list_empty_store() {
+        let store = WorkflowStore::new();
+        assert!(store.list().is_empty());
+    }
+
+    #[test]
+    fn list_multiple_workflows() {
+        let store = WorkflowStore::new();
+        for i in 0..3 {
+            store.create(mk_workflow(&format!("wf-{}", i), true));
+        }
+        assert_eq!(store.list().len(), 3);
+    }
+
+    #[test]
+    fn delete_existing_returns_true() {
+        let store = WorkflowStore::new();
+        let wf = store.create(mk_workflow("del", true));
+        assert!(store.delete(&wf.id));
+        assert!(store.get(&wf.id).is_none());
+    }
+
+    #[test]
+    fn delete_missing_returns_false() {
+        let store = WorkflowStore::new();
+        assert!(!store.delete("none"));
+    }
+
+    #[test]
+    fn toggle_flips_enabled() {
+        let store = WorkflowStore::new();
+        let wf = store.create(mk_workflow("t", true));
+        assert_eq!(store.toggle(&wf.id), Some(false));
+        assert_eq!(store.toggle(&wf.id), Some(true));
+    }
+
+    #[test]
+    fn toggle_missing_returns_none() {
+        let store = WorkflowStore::new();
+        assert!(store.toggle("missing").is_none());
+    }
+
+    #[test]
+    fn toggle_persists_state() {
+        let store = WorkflowStore::new();
+        let wf = store.create(mk_workflow("t", false));
+        store.toggle(&wf.id);
+        let got = store.get(&wf.id).unwrap();
+        assert!(got.enabled);
+    }
+
+    #[test]
+    fn unique_ids_auto_generated() {
+        let store = WorkflowStore::new();
+        let a = store.create(mk_workflow("a", true));
+        let b = store.create(mk_workflow("b", true));
+        assert_ne!(a.id, b.id);
+    }
+}
