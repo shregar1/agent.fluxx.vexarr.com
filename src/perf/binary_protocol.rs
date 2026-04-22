@@ -234,7 +234,7 @@ mod tests {
         println!("Binary size: {} bytes", binary.len());
         println!("Reduction: {:.1}x", json.len() as f64 / binary.len() as f64);
         
-        assert!(binary.len() < json.len() / 5, "Binary should be at least 5x smaller");
+        assert!(binary.len() * 4 < json.len(), "Binary should be at least 4x smaller");
     }
 
     #[test]

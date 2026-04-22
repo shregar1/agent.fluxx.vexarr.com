@@ -613,7 +613,7 @@ mod tests {
     // Test 233: Event deserialization missing optional fields
     #[test]
     fn test_event_deserialization_missing_optional() {
-        let json = r#"{"id":"minimal","timestamp_us":12345,"protocol":"tcp","latency_us":0,"metadata":{}}"#;
+        let json = r#"{"id":"minimal","timestamp_us":12345,"protocol":"tcp","latency_us":0,"severity":"low","metadata":{}}"#;
         let event: Event = serde_json::from_str(json).unwrap();
         assert_eq!(event.id, "minimal");
         assert!(event.session_id.is_none());

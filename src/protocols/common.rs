@@ -185,15 +185,16 @@ mod tests {
         assert!(debug_str.contains("test-channel"));
     }
 
-    // Test 119: Empty channel recv returns error
+    // Test 119: Empty channel recv times out (sender is held by the channel itself,
+    // so the receiver will never see a close — verify it simply blocks).
     #[tokio::test]
     async fn test_capture_channel_empty_recv() {
         let channel = CaptureChannel::new("test", 1);
-        let sender = channel.sender();
-        drop(sender); // Close the channel
-        
-        let result = channel.recv().await;
-        assert!(result.is_err());
+        let result = tokio::time::timeout(
+            std::time::Duration::from_millis(50),
+            channel.recv(),
+        ).await;
+        assert!(result.is_err(), "recv should not return while no messages are sent");
     }
 
     // Test 120: CaptureChannel implements Capturer
