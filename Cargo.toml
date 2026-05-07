@@ -2,7 +2,7 @@
 name = "fluxx-agent"
 version = "0.1.0"
 edition = "2021"
-authors = ["Fluxx Team <team@fluxx.dev>"]
+authors = ["Fluxx Team <team@fluxx.vexarr.com>"]
 description = "High-performance observability agent"
 license = "Apache-2.0"
 repository = "https://github.com/fluxx/agent"
