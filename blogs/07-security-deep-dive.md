@@ -272,7 +272,7 @@ cosign sign --key cosign.key fluxx-agent:v1.2.3
 
 ```bash
 # Security scan results
-curl https://fluxx.dev/security/report-latest.json | jq
+curl https://fluxx.vexarr.com/security/report-latest.json | jq
 
 # Output:
 {
@@ -412,16 +412,16 @@ Fluxx Agent gives you **control, transparency, and security**.
 
 ## Resources
 
-- [Security Whitepaper](https://fluxx.dev/security-whitepaper.pdf)
-- [Compliance Guide](https://fluxx.dev/compliance)
-- [Threat Model](https://fluxx.dev/threat-model)
-- [Audit Reports](https://fluxx.dev/audits)
+- [Security Whitepaper](https://fluxx.vexarr.com/security-whitepaper.pdf)
+- [Compliance Guide](https://fluxx.vexarr.com/compliance)
+- [Threat Model](https://fluxx.vexarr.com/threat-model)
+- [Audit Reports](https://fluxx.vexarr.com/audits)
 
 ---
 
-**Questions?** security@fluxx.dev
+**Questions?** security@fluxx.vexarr.com
 
-**Report vulnerabilities:** security@fluxx.dev (GPG key available)
+**Report vulnerabilities:** security@fluxx.vexarr.com (GPG key available)
 
 ---
 

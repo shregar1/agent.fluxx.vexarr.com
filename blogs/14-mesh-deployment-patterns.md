@@ -580,6 +580,6 @@ Coming soon:
 
 ---
 
-*Ready to deploy? Start with Pattern 1 and grow: [Deployment Guide](https://fluxx.dev/docs/mesh/deployment)*
+*Ready to deploy? Start with Pattern 1 and grow: [Deployment Guide](https://fluxx.vexarr.com/docs/mesh/deployment)*
 
-*Need help choosing? [Book a free architecture review](https://fluxx.dev/consulting)*
+*Need help choosing? [Book a free architecture review](https://fluxx.vexarr.com/consulting)*

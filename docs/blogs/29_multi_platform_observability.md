@@ -26,12 +26,12 @@ Observability agents are often notoriously difficult to install. We've simplifie
 
 **macOS & Linux**:
 ```bash
-curl -fsSL https://fluxx.dev/install.sh | bash
+curl -fsSL https://fluxx.vexarr.com/install.sh | bash
 ```
 
 **Windows (PowerShell)**:
 ```powershell
-iwr -useb https://fluxx.dev/install.ps1 | iex
+iwr -useb https://fluxx.vexarr.com/install.ps1 | iex
 ```
 
 These scripts are self-contained and perform intelligent platform detection, binary deployment, and initial configuration setup. **No Makefile or build tools required for end users.**
@@ -51,4 +51,4 @@ This generates a complete, interconnected 3-node mesh with a built-in **Promethe
 We're continuing to optimize the **Fluxx Observability Skill** for AI agents (OpenClaw/MCP) and expanding our **500+ Integration Framework**.
 
 Download the latest binary and start monitoring:
-[ServiceNow Releases](https://servicenow.com/fluxx/agent/releases) | [Documentation](https://docs.fluxx.dev)
+[ServiceNow Releases](https://servicenow.com/fluxx/agent/releases) | [Documentation](https://docs.fluxx.vexarr.com)

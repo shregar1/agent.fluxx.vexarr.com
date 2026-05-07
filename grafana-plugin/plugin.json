@@ -4,7 +4,7 @@
   "id": "fluxx-datasource",
   "info": {
     "description": "Fluxx observability platform data source for Grafana",
-    "author": { "name": "Fluxx Team", "url": "https://fluxx.dev" },
+    "author": { "name": "Fluxx Team", "url": "https://fluxx.vexarr.com" },
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"

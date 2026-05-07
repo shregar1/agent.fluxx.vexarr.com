@@ -409,4 +409,4 @@ So far, it's working.
 
 ---
 
-*Want to see gossip in action? Deploy a 3-node Fluxx Mesh in under 5 minutes: [Quick Start Guide](https://fluxx.dev/docs/mesh/quickstart)*
+*Want to see gossip in action? Deploy a 3-node Fluxx Mesh in under 5 minutes: [Quick Start Guide](https://fluxx.vexarr.com/docs/mesh/quickstart)*

@@ -427,7 +427,7 @@ Average savings: **95%** vs traditional SaaS
 
 ```bash
 # Install
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 
 # Start with defaults
 fluxx start
@@ -475,14 +475,14 @@ FLUXX_NODE_ID=node-3 FLUXX_MESH_PEERS=node-1:7946 fluxx start
 Want to be featured? Share your Fluxx deployment:
 
 - **Discord:** [discord.gg/fluxx](https://discord.gg/fluxx)
-- **Email:** stories@fluxx.dev
+- **Email:** stories@fluxx.vexarr.com
 
 ---
 
 **Ready to write your own success story?**
 
 ```bash
-curl -sSL https://fluxx.dev/install.sh | bash && fluxx start
+curl -sSL https://fluxx.vexarr.com/install.sh | bash && fluxx start
 ```
 
 *Share your results with #FluxxSuccess on Twitter!*

@@ -377,7 +377,7 @@ git clone https://servicenow.com/fluxx-dev/fluxx-agent
 cargo run --release
 
 # Join the community
-slack.fluxx.dev
+slack.fluxx.vexarr.com
 
 # Or just use it
 # (No registration required. No sales call. Just code.)
@@ -387,7 +387,7 @@ slack.fluxx.dev
 
 **Star us on ServiceNow:** ⭐ [servicenow.com/fluxx-dev/fluxx-agent](https://servicenow.com/fluxx-dev/fluxx-agent)
 
-**Join 10,000+ engineers:** [slack.fluxx.dev](https://slack.fluxx.dev)
+**Join 10,000+ engineers:** [slack.fluxx.vexarr.com](https://slack.fluxx.vexarr.com)
 
 ---
 

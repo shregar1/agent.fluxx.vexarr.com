@@ -253,7 +253,7 @@ cd cost-calculator
 # See your personalized savings report
 ```
 
-**Try it:** [fluxx.dev/calculator](https://fluxx.dev/calculator)
+**Try it:** [fluxx.vexarr.com/calculator](https://fluxx.vexarr.com/calculator)
 
 ---
 

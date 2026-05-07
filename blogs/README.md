@@ -119,8 +119,8 @@ Submit ideas via [ServiceNow Issues](https://servicenow.com/fluxx/agent/issues) 
 
 ## Stay Updated
 
-- **Subscribe:** [RSS Feed](https://fluxx.dev/blog/rss.xml)
-- **Newsletter:** [Monthly digest](https://fluxx.dev/newsletter)
+- **Subscribe:** [RSS Feed](https://fluxx.vexarr.com/blog/rss.xml)
+- **Newsletter:** [Monthly digest](https://fluxx.vexarr.com/newsletter)
 - **Twitter:** [@fluxx_obs](https://twitter.com/fluxx_obs)
 
 ---

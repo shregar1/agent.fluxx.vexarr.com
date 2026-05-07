@@ -1,13 +1,13 @@
 #!/bin/bash
 #
 # Fluxx Agent — One-line Install Script
-# Usage: curl -fsSL https://api.fluxx.dev/install.sh | bash
+# Usage: curl -fsSL https://api.fluxx.vexarr.com/install.sh | bash
 #
 # Options (via env vars):
 #   FLUXX_VERSION=0.1.0          — pin to a specific version
 #   FLUXX_INSTALL_DIR=~/.local/bin — override install directory
 #   FLUXX_API_KEY=flx_live_...   — pre-configure API key
-#   FLUXX_API_URL=https://...    — override API base (default: https://api.fluxx.dev)
+#   FLUXX_API_URL=https://...    — override API base (default: https://api.fluxx.vexarr.com)
 #
 set -euo pipefail
 
@@ -17,7 +17,7 @@ DEFAULT_INSTALL_DIR="/usr/local/bin"
 USER_INSTALL_DIR="$HOME/.fluxx/bin"
 CONFIG_DIR="$HOME/.fluxx"
 VERSION="${FLUXX_VERSION:-latest}"
-API_URL="${FLUXX_API_URL:-https://api.fluxx.dev}"
+API_URL="${FLUXX_API_URL:-https://api.fluxx.vexarr.com}"
 
 # ─── Colors ─────────────────────────────────────────────────────────────────────
 if [ -t 1 ]; then
@@ -268,7 +268,7 @@ setup_config() {
     info "Creating default configuration..."
     cat > "${CONFIG_DIR}/config.toml" << 'TOML'
 # Fluxx Agent Configuration
-# Docs: https://docs.fluxx.dev/configuration
+# Docs: https://docs.fluxx.vexarr.com/configuration
 
 [agent]
 # Unique node name (auto-detected if empty)
@@ -276,9 +276,9 @@ setup_config() {
 
 [endpoint]
 # Fluxx platform API endpoint
-url = "https://api.fluxx.dev/api/v1"
+url = "https://api.fluxx.vexarr.com/api/v1"
 
-# Your API key — get one at https://dashboard.fluxx.dev
+# Your API key — get one at https://dashboard.fluxx.vexarr.com
 # Or set via FLUXX_API_KEY environment variable
 # api_key = ""
 
@@ -357,7 +357,7 @@ print_success() {
   echo ""
   if [ -z "${FLUXX_API_KEY:-}" ]; then
     echo -e "  ${DIM}1.${NC} Get your API key from the dashboard:"
-    echo -e "     ${CYAN}https://dashboard.fluxx.dev${NC}"
+    echo -e "     ${CYAN}https://dashboard.fluxx.vexarr.com${NC}"
     echo ""
     echo -e "  ${DIM}2.${NC} Configure the agent:"
     echo -e "     ${YELLOW}export FLUXX_API_KEY=\"flx_live_...\"${NC}"
@@ -369,11 +369,11 @@ print_success() {
     echo -e "     ${YELLOW}fluxx start${NC}"
     echo ""
     echo -e "  ${DIM}2.${NC} View your dashboard:"
-    echo -e "     ${CYAN}https://dashboard.fluxx.dev${NC}"
+    echo -e "     ${CYAN}https://dashboard.fluxx.vexarr.com${NC}"
   fi
   echo ""
   echo -e "  ${DIM}Config:${NC}  ~/.fluxx/config.toml"
-  echo -e "  ${DIM}Docs:${NC}    https://docs.fluxx.dev"
+  echo -e "  ${DIM}Docs:${NC}    https://docs.fluxx.vexarr.com"
   echo -e "  ${DIM}Status:${NC}  fluxx status"
   echo ""
 }

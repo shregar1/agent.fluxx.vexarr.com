@@ -38,7 +38,7 @@ export PATH="/usr/local/bin:$PATH"
 echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc
 
 # Or reinstall
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 ```
 
 ### "Permission denied"
@@ -52,7 +52,7 @@ curl -sSL https://fluxx.dev/install.sh | bash
 sudo chmod +x /usr/local/bin/fluxx
 
 # Or reinstall with sudo
-curl -sSL https://fluxx.dev/install.sh | sudo bash
+curl -sSL https://fluxx.vexarr.com/install.sh | sudo bash
 ```
 
 ### "Cannot execute binary file"
@@ -622,7 +622,7 @@ rm -rf ~/.config/fluxx
 rm -f ./fluxx.yaml
 
 # Reinstall
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 ```
 
 ### Security incident
@@ -638,7 +638,7 @@ fluxx admin keys rotate
 fluxx audit logs --since "24h ago"
 
 # 4. Report incident
-# security@fluxx.dev
+# security@fluxx.vexarr.com
 ```
 
 ---
@@ -659,4 +659,4 @@ A: Yes, but check migration notes. Some versions may not be compatible.
 
 ---
 
-For more help, visit [fluxx.dev/docs](https://fluxx.dev/docs).
+For more help, visit [fluxx.vexarr.com/docs](https://fluxx.vexarr.com/docs).

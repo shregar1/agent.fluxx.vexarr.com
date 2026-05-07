@@ -608,12 +608,12 @@ fluxx admin incident-report --since "24h ago" > report.html
 
 ## Resources
 
-- [Security Configuration Reference](https://fluxx.dev/docs/security)
-- [Compliance Guide](https://fluxx.dev/docs/compliance)
-- [Incident Response Playbook](https://fluxx.dev/docs/incident-response)
+- [Security Configuration Reference](https://fluxx.vexarr.com/docs/security)
+- [Compliance Guide](https://fluxx.vexarr.com/docs/compliance)
+- [Incident Response Playbook](https://fluxx.vexarr.com/docs/incident-response)
 
 ---
 
 **Questions about security?** Join our [Discord](https://discord.gg/fluxx) security channel.
 
-*Found a vulnerability? Email security@fluxx.dev (PGP key available).*
+*Found a vulnerability? Email security@fluxx.vexarr.com (PGP key available).*

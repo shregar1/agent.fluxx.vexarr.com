@@ -740,10 +740,10 @@ kubectl set env deployment/fluxx-agent \
 
 ## Resources
 
-- **Migration Checklist:** [fluxx.dev/migration-checklist.pdf](https://fluxx.dev/migration-checklist.pdf)
-- **Support Slack:** [slack.fluxx.dev](https://slack.fluxx.dev)
+- **Migration Checklist:** [fluxx.vexarr.com/migration-checklist.pdf](https://fluxx.vexarr.com/migration-checklist.pdf)
+- **Support Slack:** [slack.fluxx.vexarr.com](https://slack.fluxx.vexarr.com)
 - **Office Hours:** Every Tuesday 10am PT
-- **Paid Migration Support:** migration@fluxx.dev
+- **Paid Migration Support:** migration@fluxx.vexarr.com
 
 ---
 

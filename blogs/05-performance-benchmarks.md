@@ -381,7 +381,7 @@ The choice is clear.
 
 ```bash
 # One-line benchmark on your infrastructure
-curl -sSL https://fluxx.dev/benchmark.sh | bash
+curl -sSL https://fluxx.vexarr.com/benchmark.sh | bash
 
 # Results will be emailed to you
 ```

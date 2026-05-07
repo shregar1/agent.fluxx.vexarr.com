@@ -286,7 +286,7 @@ The code is waiting. The community is welcoming. The mission is clear.
 
 ---
 
-**Share your story:** stories@fluxx.dev  
+**Share your story:** stories@fluxx.vexarr.com  
 **Contribute:** servicenow.com/fluxx-dev/fluxx-agent  
 **Join:** discord.gg/fluxx
 

@@ -5,7 +5,7 @@ Complete installation instructions for Fluxx Agent.
 ## Quick Install (30 seconds)
 
 ```bash
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 ```
 
 This will automatically:
@@ -28,7 +28,7 @@ brew install fluxx
 #### Option 2: Install Script
 
 ```bash
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 ```
 
 #### Option 3: Download Manually
@@ -52,7 +52,7 @@ chmod +x /usr/local/bin/fluxx
 #### Option 1: Install Script (Recommended)
 
 ```bash
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 ```
 
 #### Option 2: Package Managers
@@ -101,7 +101,7 @@ chmod +x /usr/local/bin/fluxx
 
 ```powershell
 # Run in PowerShell as Administrator
-irm https://fluxx.dev/install.ps1 | iex
+irm https://fluxx.vexarr.com/install.ps1 | iex
 ```
 
 #### Option 2: Manual Download
@@ -146,11 +146,11 @@ docker-compose up -d
 
 ```bash
 # Using Helm
-helm repo add fluxx https://fluxx.dev/helm-charts
+helm repo add fluxx https://fluxx.vexarr.com/helm-charts
 helm install fluxx-agent fluxx/fluxx-agent
 
 # Or using kubectl
-kubectl apply -f https://fluxx.dev/k8s/fluxx-agent.yaml
+kubectl apply -f https://fluxx.vexarr.com/k8s/fluxx-agent.yaml
 ```
 
 ---
@@ -266,7 +266,7 @@ Create a `.env` file or export these variables:
 export FLUXX_API_KEY="your-secret-key"
 
 # Optional: CORS origin for web UI
-export FLUXX_CORS_ORIGIN="https://app.fluxx.dev"
+export FLUXX_CORS_ORIGIN="https://app.fluxx.vexarr.com"
 
 # Optional: Disable auth (development only!)
 export FLUXX_DISABLE_AUTH=1
@@ -329,7 +329,7 @@ echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc
 sudo chmod +x /usr/local/bin/fluxx
 
 # Or reinstall with sudo
-curl -sSL https://fluxx.dev/install.sh | sudo bash
+curl -sSL https://fluxx.vexarr.com/install.sh | sudo bash
 ```
 
 ### Binary Too Large
@@ -366,4 +366,4 @@ sudo yum groupinstall "Development Tools"  # RHEL/CentOS
 
 - **Discord:** https://discord.gg/fluxx
 - **ServiceNow Issues:** https://servicenow.com/fluxx/agent/issues
-- **Documentation:** https://fluxx.dev/docs
+- **Documentation:** https://fluxx.vexarr.com/docs

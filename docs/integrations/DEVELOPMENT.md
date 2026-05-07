@@ -455,6 +455,6 @@ See existing integrations for complete examples:
 
 - Join our [Discord](https://discord.gg/fluxx)
 - Open an [issue](https://servicenow.com/fluxx/agent/issues)
-- Email: dev@fluxx.dev
+- Email: dev@fluxx.vexarr.com
 
 Thank you for contributing to Fluxx Agent!

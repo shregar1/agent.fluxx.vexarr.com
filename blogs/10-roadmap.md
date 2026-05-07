@@ -387,7 +387,7 @@ We're not just building software. We're building:
 
 ## Stay Updated
 
-- **Newsletter:** [fluxx.dev/newsletter](https://fluxx.dev/newsletter)
+- **Newsletter:** [fluxx.vexarr.com/newsletter](https://fluxx.vexarr.com/newsletter)
 - **Twitter:** [@fluxxagent](https://twitter.com/fluxxagent)
 - **Discord:** [discord.gg/fluxx](https://discord.gg/fluxx)
 - **ServiceNow:** [servicenow.com/fluxx-dev/fluxx-agent](https://servicenow.com/fluxx-dev/fluxx-agent)

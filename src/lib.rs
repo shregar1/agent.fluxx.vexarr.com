@@ -35,6 +35,9 @@ pub mod ai;
 // Synthetic monitoring (HTTP checks, API tests, SSL)
 pub mod synthetic;
 
+// Subscription / license validation
+pub mod license;
+
 // 500+ integrations framework
 pub mod integrations;
 

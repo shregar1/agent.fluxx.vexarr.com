@@ -46,6 +46,7 @@ use crate::utils::init_logging;
 use crate::core::AgentService;
 use crate::cli::dev::DevManager;
 use crate::cli::banner::{print_banner, print_compact_banner, SystemInfo, print_shutdown};
+use crate::license;
 use tracing::info;
 
 /// CLI interface: Parser and Entry Point for the Fluxx agent.
@@ -143,29 +144,47 @@ pub async fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
     let mut service = AgentService::new();
 
+    let requires_license = matches!(cli.command, Commands::Dev | Commands::Start { .. } | Commands::Mesh(_));
+
+    if requires_license {
+        match license::validate_subscription().await {
+            Ok(info) => {
+                info!(
+                    "License OK: tier={}",
+                    info.tier.as_deref().unwrap_or("free")
+                );
+            }
+            Err(msg) if msg == "OFFLINE_OK" => {
+                info!("Running in offline mode — license check skipped");
+            }
+            Err(msg) => {
+                license::print_license_error(&msg);
+                std::process::exit(1);
+            }
+        }
+    }
+
     match cli.command {
         Commands::Dev => {
-            // Show full banner for dev mode
             let info = SystemInfo::new();
             print_banner(&info);
-            
+
             let mut dev = DevManager::new();
             dev.run().await?;
-            
+
             print_shutdown();
         }
         Commands::Start { config } => {
-            // Show full banner for start command
-            let info = SystemInfo::with_stats(45, 0); // Placeholder stats
+            let info = SystemInfo::with_stats(45, 0);
             print_banner(&info);
-            
+
             info!("CLI: Initializing Start flow...");
             let cfg = match config {
                 Some(path) => Config::load_from_path(&path).unwrap_or_default(),
                 None => Config::load().unwrap_or_default(),
             };
             service.run_agent(cfg).await?;
-            
+
             print_shutdown();
         }
         Commands::Inspect { target } => {

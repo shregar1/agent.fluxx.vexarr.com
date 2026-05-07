@@ -409,7 +409,7 @@ We're building towards fully autonomous operations:
 
 ```bash
 # Install Fluxx
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 
 # Enable AI
 export OPENAI_API_KEY="sk-..."
@@ -423,4 +423,4 @@ fluxx ask "Why is the database slow?"
 
 **Questions about AI observability?** Join our [Discord](https://discord.gg/fluxx) or comment below.
 
-*Want to see more examples? Check our [AI cookbook](https://fluxx.dev/docs/ai-cookbook).*
+*Want to see more examples? Check our [AI cookbook](https://fluxx.vexarr.com/docs/ai-cookbook).*

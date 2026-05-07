@@ -256,7 +256,7 @@ cargo build --release
 
 - **ServiceNow:** servicenow.com/fluxx-dev/fluxx-agent
 - **Discord:** discord.gg/fluxx (10,000+ developers)
-- **Forum:** discuss.fluxx.dev
+- **Forum:** discuss.fluxx.vexarr.com
 - **Twitter:** @fluxxagent
 
 ### Contribute

@@ -497,11 +497,11 @@ The future of incident response is here. It's automated. It's intelligent. It's 
 
 ```bash
 # Install Fluxx Agent
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 
 # Enable diagnostics
 export OPENAI_API_KEY="sk-..."
 fluxx-agent start --enable-diagnostics
 ```
 
-[Documentation](https://fluxx.dev/docs/diagnostics) | [API Reference](https://fluxx.dev/api) | [ServiceNow](https://servicenow.com/fluxx/agent)
+[Documentation](https://fluxx.vexarr.com/docs/diagnostics) | [API Reference](https://fluxx.vexarr.com/api) | [ServiceNow](https://servicenow.com/fluxx/agent)

@@ -31,7 +31,7 @@ Fluxx bridges this gap: **SaaS simplicity with open-source economics**.
 One command. That's it.
 
 ```bash
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 ```
 
 This installs the `fluxx` binary (only 3MB!) to `/usr/local/bin/`.
@@ -284,14 +284,14 @@ FLUXX_BUFFER_SIZE=10000 fluxx start
 
 - **Discord:** [discord.gg/fluxx](https://discord.gg/fluxx)
 - **ServiceNow:** [servicenow.com/fluxx/agent](https://servicenow.com/fluxx/agent)
-- **Docs:** [fluxx.dev/docs](https://fluxx.dev/docs)
+- **Docs:** [fluxx.vexarr.com/docs](https://fluxx.vexarr.com/docs)
 
 ---
 
 **Ready to get started?**
 
 ```bash
-curl -sSL https://fluxx.dev/install.sh | bash && fluxx start
+curl -sSL https://fluxx.vexarr.com/install.sh | bash && fluxx start
 ```
 
 *Questions? Drop a comment below or join our Discord!*

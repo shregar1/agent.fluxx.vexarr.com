@@ -11,9 +11,9 @@ keywords:
   - metrics
   - logs
   - apm
-home: https://fluxx.dev
+home: https://fluxx.vexarr.com
 sources:
   - https://github.com/fluxx/agent
 maintainers:
   - name: Fluxx Team
-    email: team@fluxx.dev
+    email: team@fluxx.vexarr.com

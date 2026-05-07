@@ -575,8 +575,8 @@ projections:
 ## Resources
 
 - **Advanced Examples:** [servicenow.com/fluxx/agent/examples/advanced](https://servicenow.com/fluxx/agent/examples/advanced)
-- **Custom Integration SDK:** [fluxx.dev/docs/sdk](https://fluxx.dev/docs/sdk)
-- **WASM Plugin Guide:** [fluxx.dev/docs/wasm](https://fluxx.dev/docs/wasm)
+- **Custom Integration SDK:** [fluxx.vexarr.com/docs/sdk](https://fluxx.vexarr.com/docs/sdk)
+- **WASM Plugin Guide:** [fluxx.vexarr.com/docs/wasm](https://fluxx.vexarr.com/docs/wasm)
 
 ---
 

@@ -559,4 +559,4 @@ export JIRA_TOKEN="..."
 fluxx-agent restart
 ```
 
-[Full Documentation](https://fluxx.dev/docs/diagnostics) | [API Reference](https://fluxx.dev/api) | [ServiceNow](https://servicenow.com/fluxx/agent)
+[Full Documentation](https://fluxx.vexarr.com/docs/diagnostics) | [API Reference](https://fluxx.vexarr.com/api) | [ServiceNow](https://servicenow.com/fluxx/agent)

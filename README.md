@@ -8,9 +8,9 @@ One command. One binary. Complete observability.
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Crates.io](https://img.shields.io/crates/v/fluxx-agent.svg)](https://crates.io/crates/fluxx-agent)
 
-[Documentation](https://fluxx.dev/docs) | [Quick Start](#quick-start) | [Installation](docs/INSTALL.md) | [Blog](blogs/)
+[Documentation](https://fluxx.vexarr.com/docs) | [Quick Start](#quick-start) | [Installation](docs/INSTALL.md) | [Blog](blogs/)
 
-[![Install](https://img.shields.io/badge/install-%20%20-blue)](https://fluxx.dev/install.sh)
+[![Install](https://img.shields.io/badge/install-%20%20-blue)](https://fluxx.vexarr.com/install.sh)
 
 ---
 
@@ -186,13 +186,13 @@ brew tap fluxx/tap
 ### macOS & Linux (One-line)
 
 ```bash
-curl -fsSL https://fluxx.dev/install.sh | bash
+curl -fsSL https://fluxx.vexarr.com/install.sh | bash
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-iwr -useb https://fluxx.dev/install.ps1 | iex
+iwr -useb https://fluxx.vexarr.com/install.ps1 | iex
 ```
 
 ### From Source
@@ -529,4 +529,4 @@ Built with:
 
 **Made with ❤️ by the Fluxx community.**
 
-[Get Started](#quick-start) · [Documentation](https://fluxx.dev/docs) · [Report Bug](https://servicenow.com/fluxx/agent/issues) · [Request Feature](https://servicenow.com/fluxx/agent/issues)
+[Get Started](#quick-start) · [Documentation](https://fluxx.vexarr.com/docs) · [Report Bug](https://servicenow.com/fluxx/agent/issues) · [Request Feature](https://servicenow.com/fluxx/agent/issues)

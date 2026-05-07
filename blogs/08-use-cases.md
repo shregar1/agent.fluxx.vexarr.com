@@ -323,7 +323,7 @@ Not sure if Fluxx fits? Ask yourself:
 ```bash
 # Tell us your use case
 # We'll provide a custom architecture
-curl -X POST https://fluxx.dev/consult \
+curl -X POST https://fluxx.vexarr.com/consult \
   -d "use_case=YOUR_USE_CASE" \
   -d "scale=YOUR_SCALE"
 

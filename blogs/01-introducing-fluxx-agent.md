@@ -36,7 +36,7 @@ A Rust-powered observability engine that runs on your infrastructure. Same featu
 
 ```bash
 # One-line install
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 
 # Start collecting
 cargo run --release
@@ -397,7 +397,7 @@ resource "aws_instance" "fluxx" {
   
   user_data = <<-EOF
               #!/bin/bash
-              curl -sSL https://fluxx.dev/install.sh | bash
+              curl -sSL https://fluxx.vexarr.com/install.sh | bash
               systemctl start fluxx-agent
               EOF
   
@@ -623,7 +623,7 @@ indexes:
 
 - **ServiceNow:** [servicenow.com/fluxx-dev/fluxx-agent](https://servicenow.com/fluxx-dev/fluxx-agent)
 - **Discord:** [discord.gg/fluxx](https://discord.gg/fluxx)
-- **Docs:** [docs.fluxx.dev](https://docs.fluxx.dev)
+- **Docs:** [docs.fluxx.vexarr.com](https://docs.fluxx.vexarr.com)
 - **Examples:** [servicenow.com/fluxx-dev/examples](https://servicenow.com/fluxx-dev/examples)
 
 ---

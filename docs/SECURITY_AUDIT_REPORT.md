@@ -90,7 +90,7 @@ let output = tokio::process::Command::new("nc")
 ```rust
 .use_sensitive_cors(
     SensitiveCors::new()
-        .allow_origin("https://app.fluxx.dev")
+        .allow_origin("https://app.fluxx.vexarr.com")
         .allow_methods([Method::GET, Method::POST])
         .allow_headers([AUTHORIZATION, CONTENT_TYPE])
         .max_age(Duration::from_secs(3600))

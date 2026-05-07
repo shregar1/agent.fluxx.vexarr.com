@@ -415,7 +415,7 @@ datadog-backup --output ./datadog-export/
 **Step 2: Deploy Fluxx**
 ```bash
 # Install Fluxx agents
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 ```
 
 **Step 3: Recreate Dashboards**
@@ -489,7 +489,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack
 DD_API_KEY=xxx bash -c "$(curl -L install.datadoghq.com)"
 
 # Fluxx
-curl -sSL https://fluxx.dev/install.sh | bash && fluxx start
+curl -sSL https://fluxx.vexarr.com/install.sh | bash && fluxx start
 ```
 
 Run them side-by-side for a week. Let your team decide.

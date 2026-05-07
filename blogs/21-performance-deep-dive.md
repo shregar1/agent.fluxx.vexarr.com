@@ -363,7 +363,7 @@ We're pushing performance even further:
 
 ```bash
 # Install
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 
 # Run benchmark
 fluxx benchmark --duration 60s

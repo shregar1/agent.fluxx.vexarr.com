@@ -236,7 +236,7 @@ All of them now have the tools to do it well.
 
 Are you using Fluxx Agent? We want to hear from you.
 
-stories@fluxx.dev
+stories@fluxx.vexarr.com
 
 Tell us:
 - What you're building

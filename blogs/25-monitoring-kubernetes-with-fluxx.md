@@ -72,7 +72,7 @@ Not just raw metrics—contextual understanding:
 ### 1. Install Fluxx
 
 ```bash
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 ```
 
 ### 2. Configure Kubernetes Integration
@@ -651,7 +651,7 @@ kubectl edit -n monitoring configmap/fluxx-config
 
 ```bash
 # 1. Install Fluxx
-curl -sSL https://fluxx.dev/install.sh | bash
+curl -sSL https://fluxx.vexarr.com/install.sh | bash
 
 # 2. Create config
 cat > k8s-fluxx.yaml << 'EOF'

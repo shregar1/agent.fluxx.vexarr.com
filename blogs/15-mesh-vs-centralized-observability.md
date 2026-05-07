@@ -487,6 +487,6 @@ We've never had someone choose centralized after a fair comparison.
 
 ---
 
-*Ready to decentralize? [Get started in 5 minutes](https://fluxx.dev/docs/quickstart)*
+*Ready to decentralize? [Get started in 5 minutes](https://fluxx.vexarr.com/docs/quickstart)*
 
-*Want to discuss your architecture? [Book a free consultation](https://fluxx.dev/consulting)*
+*Want to discuss your architecture? [Book a free consultation](https://fluxx.vexarr.com/consulting)*
