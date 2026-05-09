@@ -19,6 +19,7 @@ pub mod processing;
 pub mod models;
 pub mod cli;
 pub mod utils;
+pub mod cloud_forwarder;
 
 // High-performance optimizations module
 pub mod perf;

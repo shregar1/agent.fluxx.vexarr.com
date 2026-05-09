@@ -204,6 +204,13 @@ impl AgentService {
             }
         });
 
+        // 5a. Spawn the cloud forwarder so the per-customer global
+        // dashboard at dashboard.fluxx.vexarr.com sees this agent.
+        // Best-effort: silently no-ops when FLUXX_API_URL or
+        // FLUXX_API_KEY are unset, or when explicitly disabled via
+        // FLUXX_FORWARD_TO_CLOUD=false.
+        crate::cloud_forwarder::spawn(event_store.clone());
+
         // 5b. Start embedded dashboard on a random port
         match crate::api::dashboard::start_dashboard_server(api_port).await {
             Ok(dash_port) => {
