@@ -1,6 +1,6 @@
 use crate::core::Agent;
 use crate::config::Config;
-use crate::protocols::pcap::PcapCapture;
+// use crate::protocols::pcap::PcapCapture;  // disabled
 use crate::processing::{TagProcessor, LatencyProcessor, LatencyBucketProcessor};
 use crate::sessions::{SessionProcessor, InMemorySessionStore, SessionManager};
 use crate::storage::{StorageProcessor, InMemoryEventStore, InMemoryMetricStore, InMemoryLogStore};
@@ -169,9 +169,9 @@ impl AgentService {
         }
 
         if config.monitoring.enable_pcap {
-            let pcap_cap = Arc::new(PcapCapture::new("En0Capture", "en0"));
-            self.agent.add_capturer(pcap_cap.clone());
-            self.agent.add_protocol(pcap_cap);
+            // let pcap_cap = Arc::new(PcapCapture::new("En0Capture", "en0"));  // disabled
+            // self.agent.add_capturer(pcap_cap.clone());  // disabled
+            // self.agent.add_protocol(pcap_cap);  // disabled
         }
 
         // 3. Register System Resource Monitoring (CPU/RAM/Load)

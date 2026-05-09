@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Fluxx Agent — One-line Install Script
-# Usage: curl -fsSL https://api.fluxx.vexarr.com/install.sh | bash
+# Usage: curl -fsSL https://get.fluxx.vexarr.com | bash
 #
 # Options (via env vars):
 #   FLUXX_VERSION=0.1.0          — pin to a specific version

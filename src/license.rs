@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
 
-const DEFAULT_API_URL: &str = "https://api.fluxx.dev";
+const DEFAULT_API_URL: &str = "https://api.fluxx.vexarr.com";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LicenseInfo {
+    #[serde(default = "_default_valid")]
     pub valid: bool,
     pub tier: Option<String>,
     pub limits: Option<TierLimits>,
@@ -27,6 +28,8 @@ struct ApiEnvelope {
     response_message: String,
 }
 
+fn _default_valid() -> bool { true }
+
 pub async fn validate_subscription() -> Result<LicenseInfo, String> {
     let api_key = std::env::var("FLUXX_API_KEY")
         .map_err(|_| "FLUXX_API_KEY environment variable is not set.\n\nTo use Fluxx, you need an active subscription.\n  1. Sign up at https://dashboard.fluxx.dev\n  2. Choose a plan (Free tier available)\n  3. Copy your API key from the dashboard\n  4. Set it: export FLUXX_API_KEY=flx_your_key_here".to_string())?;
@@ -38,7 +41,7 @@ pub async fn validate_subscription() -> Result<LicenseInfo, String> {
     let api_url = std::env::var("FLUXX_API_URL")
         .unwrap_or_else(|_| DEFAULT_API_URL.to_string());
 
-    let url = format!("{}/v1/subscriptions/validate-key", api_url);
+    let url = format!("{}/api/v1/license/verify?key={}", api_url, urlencoding::encode(&api_key));
     info!("Validating subscription against {}", api_url);
 
     let client = reqwest::Client::builder()
@@ -47,8 +50,7 @@ pub async fn validate_subscription() -> Result<LicenseInfo, String> {
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
     let response = client
-        .post(&url)
-        .json(&serde_json::json!({ "apiKey": api_key }))
+        .get(&url)
         .send()
         .await
         .map_err(|e| {

@@ -3,7 +3,7 @@ use crate::config::Config;
 use crate::protocols::http::HttpCapturer;
 use crate::protocols::quic::QuicCapturer;
 use crate::protocols::grpc::GrpcCapturer;
-use crate::protocols::ebpf::EbpfCapturer;
+// use crate::protocols::ebpf::EbpfCapturer;  // disabled
 use crate::protocols::modbus::ModbusCapturer;
 use crate::core::processor::{TagProcessor, LatencyProcessor, LatencyBucketProcessor, FilterProcessor, SecurityProcessor};
 use crate::transport::{StdoutTransporter, HttpTransport, ManagedTransporter};
@@ -34,7 +34,7 @@ impl AgentService {
 
         self.agent.add_capturer(Arc::new(QuicCapturer::new("QuicPrimary", "0.0.0.0:4433")));
         self.agent.add_capturer(Arc::new(GrpcCapturer::new("GrpcInterseptor", "0.0.0.0:50051")));
-        self.agent.add_capturer(Arc::new(EbpfCapturer::new("eth0")));
+        // self.agent.add_capturer(Arc::new(EbpfCapturer::new("eth0")));  // disabled
         self.agent.add_capturer(Arc::new(ModbusCapturer::new("Robotic-Arm", "192.168.1.100")));
 
         // 2. Configure Processors (Modular & Composable)
