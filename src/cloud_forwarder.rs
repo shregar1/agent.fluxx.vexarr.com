@@ -170,6 +170,23 @@ struct EventForCloud<'a> {
     _phantom: std::marker::PhantomData<&'a ()>,
 }
 
+/// Translate the agent's operational-health severity buckets into the
+/// log/trace severity vocabulary the cloud schemas (and the dashboard's
+/// LogLevelSchema) actually understand. The agent uses Low/Medium/High
+/// because those map naturally to anomaly scores; the dashboard speaks
+/// info/warn/error/critical because that's what humans expect when
+/// reading log lines or trace spans.
+fn normalize_severity(s: &crate::models::event::EventSeverity) -> String {
+    use crate::models::event::EventSeverity::*;
+    match s {
+        Info | Low => "info",
+        Medium => "warn",
+        High => "error",
+        Critical => "critical",
+    }
+    .to_string()
+}
+
 async fn build_event_batch(
     event_store: &Arc<dyn EventStore>,
     agent_id: &str,
@@ -190,18 +207,35 @@ async fn build_event_batch(
             if (e.timestamp_us as u64) > new_watermark {
                 new_watermark = e.timestamp_us as u64;
             }
+            // Stitch the per-span duration into the JSONB data map so the
+            // cloud's /service-map and /events endpoints can read it
+            // without us adding a new column. (The Event struct already
+            // tracks latency_us at top level — earlier we were dropping
+            // it on the floor when serializing only `metadata.extra`.)
+            let mut data_map = e.metadata.extra.clone();
+            if e.latency_us > 0 {
+                data_map.insert(
+                    "duration_us".to_string(),
+                    e.latency_us.to_string(),
+                );
+            }
             EventForCloud {
                 event_id: e.id.clone(),
                 service_id: e.service_id.clone(),
                 protocol: format!("{:?}", e.protocol),
-                severity: format!("{:?}", e.severity).to_lowercase(),
+                // Map operational-health buckets (Low/Medium/High) to the
+                // log/trace severity vocabulary the dashboard schemas use
+                // (info/warn/error/critical). Without this, a `?severity=
+                // error` query returns 0 hits because every error span
+                // was tagged "high" by the agent.
+                severity: normalize_severity(&e.severity),
                 trace_id: e.metadata.extra.get("trace_id").cloned(),
                 span_id: e.metadata.extra.get("span_id").cloned(),
                 payload: e.payload.as_ref().map(|p| {
                     let s = p.to_string();
                     if s.len() > 4000 { s[..4000].to_string() } else { s }
                 }),
-                data: serde_json::to_value(&e.metadata.extra)
+                data: serde_json::to_value(&data_map)
                     .unwrap_or_else(|_| serde_json::json!({})),
                 event_time_us: e.timestamp_us as u64,
                 _phantom: std::marker::PhantomData,
