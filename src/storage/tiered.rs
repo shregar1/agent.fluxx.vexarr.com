@@ -266,6 +266,38 @@ impl EventStore for TieredEventStore {
             .collect()
     }
 
+    async fn list_events_since(&self, since_us: u64) -> Vec<Event> {
+        let mut results = Vec::new();
+
+        // Hot tier: BTreeMap range scan for keys > since_us.
+        {
+            let hot = self.hot.read().await;
+            for (_, evs) in hot.range((std::ops::Bound::Excluded(since_us), std::ops::Bound::Unbounded)) {
+                results.extend(evs.iter().cloned());
+            }
+        }
+
+        // Warm tier: decompress batches that overlap the time range.
+        {
+            let warm = self.warm.read().await;
+            for batch in warm.iter() {
+                if batch.max_ts <= since_us {
+                    continue; // entire batch is before the watermark
+                }
+                let decompressed = compression::fast_decompress(
+                    &batch.compressed_data,
+                    batch.original_size * 2,
+                )
+                .unwrap_or_default();
+                let events: Vec<Event> = serde_json::from_slice(&decompressed).unwrap_or_default();
+                results.extend(events.into_iter().filter(|e| e.timestamp_us > since_us));
+            }
+        }
+
+        results.sort_by_key(|e| e.timestamp_us);
+        results
+    }
+
     async fn get_stats(&self) -> serde_json::Value {
         self.get_tier_stats().await
     }

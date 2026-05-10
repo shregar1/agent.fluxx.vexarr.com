@@ -58,6 +58,14 @@ impl EventStore for InMemoryEventStore {
             .collect()
     }
 
+    async fn list_events_since(&self, since_us: u64) -> Vec<Event> {
+        let map = self.events.read().expect("RwLock poisoned");
+        // BTreeMap range scan: only visit keys > since_us.
+        map.range((std::ops::Bound::Excluded(since_us), std::ops::Bound::Unbounded))
+            .flat_map(|(_, evs)| evs.iter().cloned())
+            .collect()
+    }
+
     async fn get_stats(&self) -> serde_json::Value {
         let map = self.events.read().expect("RwLock poisoned");
         let total = map.values().map(|v| v.len()).sum::<usize>();

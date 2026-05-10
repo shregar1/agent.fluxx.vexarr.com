@@ -14,7 +14,7 @@ use std::fs::{self, OpenOptions};
 use std::io::{BufRead, BufReader, Write as IoWrite};
 use std::path::{Path, PathBuf};
 use parking_lot::RwLock;
-use tracing::{info, warn, error};
+use tracing::{info, warn};
 
 /// WAL-backed persistent event store.
 #[derive(Debug)]
@@ -199,9 +199,11 @@ impl WalEventStore {
 #[async_trait]
 impl EventStore for WalEventStore {
     async fn insert(&self, event: Event) -> Result<()> {
-        // Write to WAL first (durability)
+        // Write to WAL first (durability). Propagate failures so callers
+        // (and operators) know the event was NOT persisted to disk.
         if let Err(e) = self.write_event(&event) {
-            error!("WAL write failed: {}", e);
+            warn!(event_id = %event.id, error = %e, "WAL write failed — event not persisted to disk");
+            return Err(e.into());
         }
 
         // Update in-memory index
@@ -247,6 +249,14 @@ impl EventStore for WalEventStore {
                 p && pr && s && si
             })
             .cloned()
+            .collect()
+    }
+
+    async fn list_events_since(&self, since_us: u64) -> Vec<Event> {
+        let idx = self.index.read();
+        // BTreeMap range scan: only visit keys > since_us.
+        idx.range((std::ops::Bound::Excluded(since_us), std::ops::Bound::Unbounded))
+            .flat_map(|(_, evs)| evs.iter().cloned())
             .collect()
     }
 

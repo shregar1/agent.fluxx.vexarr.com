@@ -197,15 +197,15 @@ async fn build_event_batch(
     watermark: u64,
 ) -> Result<(EventBatch<'static>, u64), String> {
     let recent = event_store
-        .list_events(None, None, None, None)
+        .list_events_since(watermark)
         .await;
 
-    // Keep only events past the watermark, capped to RECENT_EVENT_CAP so
-    // we never overshoot the server's 256 KB limit.
+    // Events are already filtered to timestamp_us > watermark by
+    // list_events_since. Cap to RECENT_EVENT_CAP so we never overshoot
+    // the server's 256 KB limit.
     let mut new_watermark = watermark;
     let events: Vec<EventForCloud<'static>> = recent
         .iter()
-        .filter(|e| e.timestamp_us as u64 > watermark)
         .take(RECENT_EVENT_CAP)
         .map(|e| {
             if (e.timestamp_us as u64) > new_watermark {
@@ -290,7 +290,7 @@ async fn push_events(
 async fn build_snapshot(
     event_store: &Arc<dyn EventStore>,
     agent_id: &str,
-    agent_version: &str,
+    agent_version: &'static str,
     hostname: &str,
 ) -> Result<SnapshotPayload<'static>, String> {
     // Total in-store. The agent's own /v1/stats also derives from this.
@@ -345,7 +345,7 @@ async fn build_snapshot(
 
     Ok(SnapshotPayload {
         agent_id: agent_id.to_string(),
-        agent_version: Box::leak(agent_version.to_string().into_boxed_str()),
+        agent_version,
         hostname: hostname.to_string(),
         total_events,
         data: SnapshotData {

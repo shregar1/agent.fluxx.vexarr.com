@@ -32,6 +32,10 @@ pub trait EventStore: Send + Sync + std::fmt::Debug {
     /// Lists events with optional filtering.
     async fn list_events(&self, project_id: Option<String>, protocol: Option<crate::models::event::ProtocolType>, severity: Option<crate::models::event::EventSeverity>, service_id: Option<String>) -> Vec<Event>;
 
+    /// Lists events with timestamp_us strictly greater than `since_us`.
+    /// Used by the cloud forwarder to avoid full-table scans on every tick.
+    async fn list_events_since(&self, since_us: u64) -> Vec<Event>;
+
     /// Returns aggregate statistics for the event store.
     async fn get_stats(&self) -> serde_json::Value;
 }
