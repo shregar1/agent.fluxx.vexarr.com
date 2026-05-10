@@ -211,6 +211,13 @@ impl AgentService {
         // FLUXX_FORWARD_TO_CLOUD=false.
         crate::cloud_forwarder::spawn(event_store.clone());
 
+        // 5a.1 Tier-1 integration loop. Reads FLUXX_INTEGRATIONS_*
+        // env vars and starts a periodic collector that turns each
+        // integration's metrics/events into fluxx Events on the same
+        // event_store the cloud forwarder reads from. Skips itself
+        // entirely when no integrations are configured.
+        crate::integration_spawner::spawn(event_store.clone());
+
         // Self-telemetry: announce boot to our own log store so the
         // dashboard sees this agent come online.
         crate::self_telemetry::emit(

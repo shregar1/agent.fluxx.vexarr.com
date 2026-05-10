@@ -21,6 +21,7 @@ pub mod cli;
 pub mod utils;
 pub mod cloud_forwarder;
 pub mod self_telemetry;
+pub mod integration_spawner;
 
 // High-performance optimizations module
 pub mod perf;

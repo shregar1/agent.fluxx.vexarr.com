@@ -32,8 +32,12 @@ use crate::storage::event_store::EventStore;
 const SNAPSHOT_INTERVAL: Duration = Duration::from_secs(30);
 
 /// Maximum recent events to attach to each snapshot. Larger payloads get
-/// rejected (the cloud caps at 256 KB).
-const RECENT_EVENT_CAP: usize = 20;
+/// rejected (the cloud caps at 256 KB). 200 keeps each push well under
+/// the cap (≈100KB at 500 bytes/event) while ensuring lower-frequency
+/// integrations (redis, postgres, probes) actually make it into the
+/// batch alongside the fluxx-api OTLP firehose; with the old cap of 20,
+/// fluxx-api events crowded out everything else.
+const RECENT_EVENT_CAP: usize = 200;
 
 #[derive(Debug, Serialize)]
 struct SnapshotPayload<'a> {
