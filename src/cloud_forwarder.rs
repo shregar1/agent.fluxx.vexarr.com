@@ -83,11 +83,18 @@ pub fn spawn(event_store: Arc<dyn EventStore>) {
     let agent_id = stable_agent_id();
     let hostname = gethostname_string();
     let agent_version = env!("CARGO_PKG_VERSION");
-    let url = format!("{}/api/v1/telemetry/snapshot", api_url.trim_end_matches('/'));
+    let snapshot_url = format!("{}/api/v1/telemetry/snapshot", api_url.trim_end_matches('/'));
+    let events_url = format!("{}/api/v1/telemetry/events", api_url.trim_end_matches('/'));
+    // Track the highest event-id we've forwarded so we don't re-send.
+    // Using a simple high-water-mark: store the timestamp_us of the
+    // most recent event we pushed. Subsequent pushes only include
+    // events with timestamp_us > watermark.
+    let last_pushed_ts = Arc::new(std::sync::atomic::AtomicU64::new(0));
 
     info!(
         agent_id = %agent_id,
-        endpoint = %url,
+        snapshot = %snapshot_url,
+        events = %events_url,
         interval_secs = SNAPSHOT_INTERVAL.as_secs(),
         "cloud forwarder: spawning"
     );
@@ -109,19 +116,137 @@ pub fn spawn(event_store: Arc<dyn EventStore>) {
         tokio::time::sleep(Duration::from_secs(5)).await;
 
         loop {
+            // Push 1: rolled-up snapshot (counters, service map summary).
             match build_snapshot(&event_store, &agent_id, agent_version, &hostname).await {
                 Ok(payload) => {
-                    if let Err(e) = push(&client, &url, &api_key, &payload).await {
-                        warn!(error = %e, "cloud forwarder: push failed");
+                    if let Err(e) = push_snapshot(&client, &snapshot_url, &api_key, &payload).await {
+                        warn!(error = %e, "cloud forwarder: snapshot push failed");
                     }
                 }
                 Err(e) => {
                     warn!(error = %e, "cloud forwarder: snapshot build failed");
                 }
             }
+
+            // Push 2: raw events newer than our watermark, so the cloud
+            // dashboard can search across the fleet at per-event grain.
+            let watermark = last_pushed_ts.load(std::sync::atomic::Ordering::Relaxed);
+            match build_event_batch(&event_store, &agent_id, watermark).await {
+                Ok((batch, new_watermark)) if !batch.events.is_empty() => {
+                    match push_events(&client, &events_url, &api_key, &batch).await {
+                        Ok(()) => {
+                            last_pushed_ts.store(new_watermark, std::sync::atomic::Ordering::Relaxed);
+                        }
+                        Err(e) => warn!(error = %e, "cloud forwarder: events push failed"),
+                    }
+                }
+                Ok(_) => { /* no new events */ }
+                Err(e) => warn!(error = %e, "cloud forwarder: events build failed"),
+            }
+
             tokio::time::sleep(SNAPSHOT_INTERVAL).await;
         }
     });
+}
+
+#[derive(Debug, Serialize)]
+struct EventBatch<'a> {
+    agent_id: String,
+    events: Vec<EventForCloud<'a>>,
+}
+
+#[derive(Debug, Serialize)]
+struct EventForCloud<'a> {
+    event_id: String,
+    service_id: Option<String>,
+    protocol: String,
+    severity: String,
+    trace_id: Option<String>,
+    span_id: Option<String>,
+    payload: Option<String>,
+    data: serde_json::Value,
+    event_time_us: u64,
+    #[serde(skip)]
+    _phantom: std::marker::PhantomData<&'a ()>,
+}
+
+async fn build_event_batch(
+    event_store: &Arc<dyn EventStore>,
+    agent_id: &str,
+    watermark: u64,
+) -> Result<(EventBatch<'static>, u64), String> {
+    let recent = event_store
+        .list_events(None, None, None, None)
+        .await;
+
+    // Keep only events past the watermark, capped to RECENT_EVENT_CAP so
+    // we never overshoot the server's 256 KB limit.
+    let mut new_watermark = watermark;
+    let events: Vec<EventForCloud<'static>> = recent
+        .iter()
+        .filter(|e| e.timestamp_us as u64 > watermark)
+        .take(RECENT_EVENT_CAP)
+        .map(|e| {
+            if (e.timestamp_us as u64) > new_watermark {
+                new_watermark = e.timestamp_us as u64;
+            }
+            EventForCloud {
+                event_id: e.id.clone(),
+                service_id: e.service_id.clone(),
+                protocol: format!("{:?}", e.protocol),
+                severity: format!("{:?}", e.severity).to_lowercase(),
+                trace_id: e.metadata.extra.get("trace_id").cloned(),
+                span_id: e.metadata.extra.get("span_id").cloned(),
+                payload: e.payload.as_ref().map(|p| {
+                    let s = p.to_string();
+                    if s.len() > 4000 { s[..4000].to_string() } else { s }
+                }),
+                data: serde_json::to_value(&e.metadata.extra)
+                    .unwrap_or_else(|_| serde_json::json!({})),
+                event_time_us: e.timestamp_us as u64,
+                _phantom: std::marker::PhantomData,
+            }
+        })
+        .collect();
+
+    Ok((
+        EventBatch {
+            agent_id: agent_id.to_string(),
+            events,
+        },
+        new_watermark,
+    ))
+}
+
+async fn push_events(
+    client: &reqwest::Client,
+    url: &str,
+    api_key: &str,
+    payload: &EventBatch<'_>,
+) -> Result<(), String> {
+    let resp = client
+        .post(url)
+        .header("X-API-Key", api_key)
+        .header("Authorization", format!("Bearer {}", api_key))
+        .json(payload)
+        .send()
+        .await
+        .map_err(|e| format!("HTTP error: {}", e))?;
+
+    let status = resp.status();
+    if !status.is_success() {
+        let body = resp
+            .text()
+            .await
+            .unwrap_or_else(|_| "<unreadable body>".into());
+        return Err(format!("HTTP {}: {}", status, body));
+    }
+
+    debug!(
+        count = payload.events.len(),
+        "cloud forwarder: events pushed"
+    );
+    Ok(())
 }
 
 async fn build_snapshot(
@@ -193,7 +318,7 @@ async fn build_snapshot(
     })
 }
 
-async fn push(
+async fn push_snapshot(
     client: &reqwest::Client,
     url: &str,
     api_key: &str,

@@ -211,14 +211,45 @@ impl AgentService {
         // FLUXX_FORWARD_TO_CLOUD=false.
         crate::cloud_forwarder::spawn(event_store.clone());
 
+        // Self-telemetry: announce boot to our own log store so the
+        // dashboard sees this agent come online.
+        crate::self_telemetry::emit(
+            &log_store,
+            crate::self_telemetry::Severity::Info,
+            &format!("agent.boot.complete version={}", env!("CARGO_PKG_VERSION")),
+            std::collections::HashMap::from([
+                ("event".to_string(), serde_json::json!("agent.boot.complete")),
+                ("version".to_string(), serde_json::json!(env!("CARGO_PKG_VERSION"))),
+                ("api_port".to_string(), serde_json::json!(api_port)),
+            ]),
+        ).await;
+
         // 5b. Start embedded dashboard on a random port
         match crate::api::dashboard::start_dashboard_server(api_port).await {
             Ok(dash_port) => {
                 info!("Runtime: Dashboard available at http://localhost:{}", dash_port);
                 println!("\n  \x1b[1;36m→ Dashboard:\x1b[0m http://localhost:{}\n", dash_port);
+                crate::self_telemetry::emit(
+                    &log_store,
+                    crate::self_telemetry::Severity::Info,
+                    &format!("agent.dashboard.ready port={}", dash_port),
+                    std::collections::HashMap::from([
+                        ("event".to_string(), serde_json::json!("agent.dashboard.ready")),
+                        ("port".to_string(), serde_json::json!(dash_port)),
+                    ]),
+                ).await;
             }
             Err(e) => {
                 error!("Runtime: Dashboard server failed to start: {}", e);
+                crate::self_telemetry::emit(
+                    &log_store,
+                    crate::self_telemetry::Severity::Error,
+                    &format!("agent.dashboard.failed error={}", e),
+                    std::collections::HashMap::from([
+                        ("event".to_string(), serde_json::json!("agent.dashboard.failed")),
+                        ("error".to_string(), serde_json::json!(e.to_string())),
+                    ]),
+                ).await;
             }
         }
 

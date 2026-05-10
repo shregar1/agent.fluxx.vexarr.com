@@ -20,6 +20,7 @@ pub mod models;
 pub mod cli;
 pub mod utils;
 pub mod cloud_forwarder;
+pub mod self_telemetry;
 
 // High-performance optimizations module
 pub mod perf;
