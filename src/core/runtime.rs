@@ -286,6 +286,32 @@ impl AgentService {
                 }
             });
             info!("Runtime: OTLP gRPC server enabled on port {}", otlp_port);
+
+            // 6a. Canonical OTLP HTTP receiver on a separate port (4318
+            // by default). Most language SDKs default to HTTP for OTLP
+            // because gRPC adds protobuf-compile pain; ship it. Same
+            // event_store, same downstream pipeline as the gRPC route,
+            // so cloud forwarding / dashboard rendering treats spans
+            // pushed via either transport identically.
+            if config.otlp.http_enabled {
+                let http_port = config.otlp.http_port;
+                let state = crate::protocols::otlp::http_server::OtlpHttpState {
+                    event_store: event_store.clone(),
+                    event_bus: self.event_bus.clone(),
+                    metric_store: metric_store.clone(),
+                    metric_bus: metric_tx.clone(),
+                    log_store: log_store.clone(),
+                    log_bus: log_tx.clone(),
+                };
+                tokio::spawn(async move {
+                    if let Err(e) =
+                        crate::protocols::otlp::http_server::start_otlp_http_server(http_port, state).await
+                    {
+                        error!("Runtime: OTLP HTTP server failure: {}", e);
+                    }
+                });
+                info!("Runtime: OTLP HTTP server enabled on port {}", http_port);
+            }
         }
 
         // 7. Start StatsD UDP receiver if enabled

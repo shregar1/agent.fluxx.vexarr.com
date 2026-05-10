@@ -41,7 +41,14 @@ pub struct OtlpConfig {
     pub enabled: bool,
     pub grpc_port: u16,
     pub http_enabled: bool,
+    /// Canonical OTLP HTTP listener port. The OTel ecosystem defaults
+    /// to 4318 for HTTP exporters, so SDKs that ship `localhost:4318`
+    /// as the user-set endpoint Just Work.
+    #[serde(default = "default_http_port")]
+    pub http_port: u16,
 }
+
+fn default_http_port() -> u16 { 4318 }
 
 impl Default for OtlpConfig {
     fn default() -> Self {
@@ -49,6 +56,7 @@ impl Default for OtlpConfig {
             enabled: true,
             grpc_port: 4317,
             http_enabled: true,
+            http_port: 4318,
         }
     }
 }
