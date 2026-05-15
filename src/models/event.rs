@@ -68,6 +68,34 @@ impl std::fmt::Display for EventSeverity {
     }
 }
 
+impl EventSeverity {
+    /// Translate the agent's operational-health vocabulary (Info / Low /
+    /// Medium / High / Critical) into the log-trace vocabulary the
+    /// dashboard schemas and cloud `/security/alerts` filter expect
+    /// (info / warn / error / critical).
+    ///
+    /// Mapping:
+    ///   Info, Low    → "info"
+    ///   Medium       → "warn"
+    ///   High         → "error"
+    ///   Critical     → "critical"
+    ///
+    /// Why this lives here and not in the cloud forwarder or the
+    /// integration spawner: both used to carry their own copy of this
+    /// table, with the obvious "they'll drift" risk. Putting it on the
+    /// enum itself means there is exactly one source of truth — and
+    /// the unit tests below pin every variant so a future enum addition
+    /// either has to extend this mapping or be deliberately rejected.
+    pub fn to_log_severity(&self) -> &'static str {
+        match self {
+            EventSeverity::Info | EventSeverity::Low => "info",
+            EventSeverity::Medium => "warn",
+            EventSeverity::High => "error",
+            EventSeverity::Critical => "critical",
+        }
+    }
+}
+
 /// The centralized, high-performance event definition for Fluxx.
 /// Using 'String' for payloads to ensure seamless serialization across the fleet.
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -120,6 +148,65 @@ impl Event {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ── EventSeverity::to_log_severity ────────────────────────────────────
+    // Pins the agent-operational → log-trace severity mapping. Both the
+    // cloud forwarder and the integration spawner used to carry their own
+    // copies of this table; consolidating them here means a change has
+    // to land in exactly one place. Anyone adding a new EventSeverity
+    // variant gets a compile error from the exhaustive match below,
+    // forcing them to think about how it maps.
+
+    #[test]
+    fn severity_info_maps_to_info() {
+        assert_eq!(EventSeverity::Info.to_log_severity(), "info");
+    }
+
+    #[test]
+    fn severity_low_maps_to_info() {
+        // Low is operational-only; the dashboard's log/trace schema
+        // doesn't have a "low" bucket, so we fold it into info.
+        assert_eq!(EventSeverity::Low.to_log_severity(), "info");
+    }
+
+    #[test]
+    fn severity_medium_maps_to_warn() {
+        assert_eq!(EventSeverity::Medium.to_log_severity(), "warn");
+    }
+
+    #[test]
+    fn severity_high_maps_to_error() {
+        // Critical for the cloud's /security/alerts filter, which uses
+        // severity IN ('error','critical','high') and depends on this
+        // being the string the cloud sees.
+        assert_eq!(EventSeverity::High.to_log_severity(), "error");
+    }
+
+    #[test]
+    fn severity_critical_maps_to_critical() {
+        assert_eq!(EventSeverity::Critical.to_log_severity(), "critical");
+    }
+
+    #[test]
+    fn severity_log_severity_is_one_of_the_canonical_set() {
+        // Belt-and-braces: every variant must map into the canonical
+        // vocabulary the dashboard's LogLevelSchema accepts.
+        const CANON: &[&str] = &["trace", "debug", "info", "warn", "error", "fatal", "critical"];
+        for s in [
+            EventSeverity::Info,
+            EventSeverity::Low,
+            EventSeverity::Medium,
+            EventSeverity::High,
+            EventSeverity::Critical,
+        ] {
+            assert!(
+                CANON.contains(&s.to_log_severity()),
+                "{:?}.to_log_severity() = {:?} is not in canonical set",
+                s,
+                s.to_log_severity()
+            );
+        }
+    }
 
     // Test 1: Event creation with HTTP protocol
     #[test]

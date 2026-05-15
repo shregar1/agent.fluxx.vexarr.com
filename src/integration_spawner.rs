@@ -315,3 +315,156 @@ fn timestamp_us(t: SystemTime) -> u64 {
         .map(|d| d.as_micros() as u64)
         .unwrap_or(0)
 }
+
+// ─── Tests ──────────────────────────────────────────────────────────────────
+//
+// Pure-function tests for the env-parsing + redaction helpers. The
+// async spawn paths (event_store inserts, HTTP probes) aren't covered
+// here — they're exercised by the integration tests under tests/.
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── split_csv ────────────────────────────────────────────────────────
+    #[test]
+    fn split_csv_handles_empty_string() {
+        assert_eq!(split_csv(""), Vec::<String>::new());
+    }
+
+    #[test]
+    fn split_csv_single_item_no_comma() {
+        assert_eq!(split_csv("foo"), vec!["foo"]);
+    }
+
+    #[test]
+    fn split_csv_trims_whitespace_around_items() {
+        // Production env vars often arrive with stray spaces around commas;
+        // a missed trim would produce a redis host of "  127.0.0.1:6379".
+        assert_eq!(
+            split_csv(" a, b ,c "),
+            vec!["a", "b", "c"]
+        );
+    }
+
+    #[test]
+    fn split_csv_drops_empty_segments() {
+        // Avoids the silent gotcha of `FLUXX_INTEGRATIONS_REDIS=,` turning
+        // into a list with an empty host that then fails parse_host_port.
+        assert_eq!(split_csv(",a,,b,"), vec!["a", "b"]);
+    }
+
+    // ── parse_host_port ──────────────────────────────────────────────────
+    #[test]
+    fn parse_host_port_simple_ipv4() {
+        assert_eq!(
+            parse_host_port("127.0.0.1:6379"),
+            Some(("127.0.0.1".into(), 6379))
+        );
+    }
+
+    #[test]
+    fn parse_host_port_hostname() {
+        assert_eq!(
+            parse_host_port("redis.internal:6380"),
+            Some(("redis.internal".into(), 6380))
+        );
+    }
+
+    #[test]
+    fn parse_host_port_rejects_missing_port() {
+        assert_eq!(parse_host_port("127.0.0.1"), None);
+    }
+
+    #[test]
+    fn parse_host_port_rejects_non_numeric_port() {
+        assert_eq!(parse_host_port("redis:six-three-eight-zero"), None);
+    }
+
+    #[test]
+    fn parse_host_port_rejects_port_above_u16() {
+        // Anything above 65535 is not a valid TCP port and `p.parse::<u16>()`
+        // correctly rejects it. Pin so a future refactor that switches to u32
+        // doesn't silently accept garbage.
+        assert_eq!(parse_host_port("127.0.0.1:99999"), None);
+    }
+
+    #[test]
+    fn parse_host_port_uses_rsplit_for_ipv6_safety() {
+        // IPv6 addresses contain colons too. rsplit_once on the LAST colon
+        // means "[::1]:6379" parses to host="[::1]", port=6379 — the right
+        // thing. Even if we don't enable IPv6 today, the behaviour shouldn't
+        // be that "::1:6379" interprets the wrong colon as the port boundary.
+        assert_eq!(
+            parse_host_port("[::1]:6379"),
+            Some(("[::1]".into(), 6379))
+        );
+    }
+
+    // ── redact_creds ─────────────────────────────────────────────────────
+    #[test]
+    fn redact_creds_strips_userinfo_from_postgres_uri() {
+        // Most common case: "postgres://user:pass@host/db" must NOT leak
+        // creds to logs.
+        assert_eq!(
+            redact_creds("postgres://fluxx:hunter2@127.0.0.1:5432/db"),
+            "postgres://***@127.0.0.1:5432/db"
+        );
+    }
+
+    #[test]
+    fn redact_creds_passes_through_uri_with_no_userinfo() {
+        // No '@' means nothing to redact. The function must not corrupt
+        // the URI in that case (early-returning unchanged).
+        assert_eq!(
+            redact_creds("postgres://127.0.0.1:5432/db"),
+            "postgres://127.0.0.1:5432/db"
+        );
+    }
+
+    #[test]
+    fn redact_creds_passes_through_non_uri_string() {
+        // Inputs without "://" should be returned verbatim — the function
+        // is best-effort, not a URI validator.
+        assert_eq!(redact_creds("not a uri"), "not a uri");
+    }
+
+    #[test]
+    fn redact_creds_uses_last_at_so_passwords_with_at_dont_leak() {
+        // Passwords legitimately contain '@'. rfind('@') keeps the right
+        // split (the userinfo terminator '@' is always the LAST '@' before
+        // the host). A naive find('@') would leak everything after the
+        // first '@'.
+        assert_eq!(
+            redact_creds("postgres://user:p@ss@host/db"),
+            "postgres://***@host/db"
+        );
+    }
+
+    // ── timestamp_us ─────────────────────────────────────────────────────
+    #[test]
+    fn timestamp_us_for_unix_epoch_is_zero() {
+        assert_eq!(timestamp_us(SystemTime::UNIX_EPOCH), 0);
+    }
+
+    #[test]
+    fn timestamp_us_grows_monotonically() {
+        // Sanity: two SystemTime::now() reads, the second is >= the first
+        // by the elapsed micros. Avoids the regression where the function
+        // started returning constant 0 due to an Err in duration_since
+        // (which IS possible on systems with clock skew that pushes "now"
+        // before the epoch — we treat that as 0 deliberately).
+        let a = timestamp_us(SystemTime::now());
+        std::thread::sleep(std::time::Duration::from_micros(50));
+        let b = timestamp_us(SystemTime::now());
+        assert!(
+            b > a,
+            "expected b ({}) > a ({}), spread = {}us",
+            b,
+            a,
+            b as i128 - a as i128
+        );
+    }
+
+    // ── hex_prefix is in http_server.rs; not duplicated here. ────────────
+}

@@ -170,6 +170,176 @@ fn hex_prefix(b: &[u8], n: usize) -> String {
     s
 }
 
+// ─── Tests ──────────────────────────────────────────────────────────────────
+//
+// decode_body has bitten us once already: gzipped payloads silently 400'd
+// every export until we added the Content-Encoding branch. These tests
+// pin the matrix of (content-type × encoding × body) so a future refactor
+// that breaks gzip — or assumes Content-Type is always present — fails
+// loud at `cargo test` instead of in production at 3 am.
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::Bytes;
+    use axum::http::HeaderMap;
+    use flate2::write::GzEncoder;
+    use flate2::Compression;
+    use opentelemetry_proto::tonic::collector::trace::v1::ExportTraceServiceRequest;
+    use prost::Message;
+    use std::io::Write;
+
+    /// Construct a HeaderMap. Pass `&[]` for "no headers", or
+    /// `&[("content-type", "application/x-protobuf"), ...]` for specific ones.
+    fn headers(kv: &[(&str, &str)]) -> HeaderMap {
+        let mut h = HeaderMap::new();
+        for (k, v) in kv {
+            h.insert(
+                axum::http::HeaderName::from_bytes(k.as_bytes()).unwrap(),
+                v.parse().unwrap(),
+            );
+        }
+        h
+    }
+
+    /// An empty `ExportTraceServiceRequest` serialized as protobuf is just
+    /// zero bytes — proto3 represents "all fields default" as empty wire.
+    fn empty_proto_bytes() -> Vec<u8> {
+        let msg = ExportTraceServiceRequest::default();
+        msg.encode_to_vec()
+    }
+
+    fn gzip(b: &[u8]) -> Vec<u8> {
+        let mut e = GzEncoder::new(Vec::new(), Compression::default());
+        e.write_all(b).unwrap();
+        e.finish().unwrap()
+    }
+
+    // ── protobuf branch ──────────────────────────────────────────────────
+
+    #[test]
+    fn decode_body_accepts_protobuf_with_explicit_content_type() {
+        let body = Bytes::from(empty_proto_bytes());
+        let h = headers(&[("content-type", "application/x-protobuf")]);
+        let result: Result<ExportTraceServiceRequest, _> = decode_body(&h, &body);
+        assert!(result.is_ok(), "protobuf path returned {:?}", result.err());
+    }
+
+    #[test]
+    fn decode_body_defaults_to_protobuf_when_content_type_missing() {
+        // Some SDKs omit Content-Type entirely. The OTel spec says default
+        // is application/x-protobuf, so we do the same. A regression that
+        // returned 415 here would break perfectly valid clients.
+        let body = Bytes::from(empty_proto_bytes());
+        let h = headers(&[]);
+        let result: Result<ExportTraceServiceRequest, _> = decode_body(&h, &body);
+        assert!(result.is_ok(), "missing content-type path returned {:?}", result.err());
+    }
+
+    #[test]
+    fn decode_body_rejects_malformed_protobuf_with_400() {
+        let body = Bytes::from_static(b"not-real-protobuf-bytes");
+        let h = headers(&[("content-type", "application/x-protobuf")]);
+        let result: Result<ExportTraceServiceRequest, _> = decode_body(&h, &body);
+        let (status, _msg) = result.expect_err("expected decode failure");
+        assert_eq!(status.as_u16(), 400);
+    }
+
+    // ── gzip branch ──────────────────────────────────────────────────────
+
+    #[test]
+    fn decode_body_ungzips_protobuf_when_content_encoding_is_gzip() {
+        // The whole reason this test exists: SDKs that enable gzip used
+        // to silently 400 because we didn't ungzip. Pin the happy path.
+        let body = Bytes::from(gzip(&empty_proto_bytes()));
+        let h = headers(&[
+            ("content-type", "application/x-protobuf"),
+            ("content-encoding", "gzip"),
+        ]);
+        let result: Result<ExportTraceServiceRequest, _> = decode_body(&h, &body);
+        assert!(result.is_ok(), "gzip path returned {:?}", result.err());
+    }
+
+    #[test]
+    fn decode_body_rejects_gzip_with_corrupt_body_as_400() {
+        // If Content-Encoding says gzip but the body isn't actually gzip,
+        // we want a 400 with a "gzip decode failed" message, not a panic
+        // or 500.
+        let body = Bytes::from_static(b"plain-bytes-not-actually-gzip");
+        let h = headers(&[
+            ("content-type", "application/x-protobuf"),
+            ("content-encoding", "gzip"),
+        ]);
+        let result: Result<ExportTraceServiceRequest, _> = decode_body(&h, &body);
+        let (status, msg) = result.expect_err("expected gzip-decode failure");
+        assert_eq!(status.as_u16(), 400);
+        assert!(msg.contains("gzip"), "expected error mentions gzip: {:?}", msg);
+    }
+
+    #[test]
+    fn decode_body_is_case_insensitive_for_content_encoding() {
+        // `Content-Encoding: GZIP` (uppercase) is just as valid as lowercase.
+        let body = Bytes::from(gzip(&empty_proto_bytes()));
+        let h = headers(&[
+            ("content-type", "application/x-protobuf"),
+            ("content-encoding", "GZIP"),
+        ]);
+        let result: Result<ExportTraceServiceRequest, _> = decode_body(&h, &body);
+        assert!(result.is_ok(), "uppercase GZIP path returned {:?}", result.err());
+    }
+
+    // ── content-type variants ────────────────────────────────────────────
+
+    #[test]
+    fn decode_body_strips_content_type_parameters() {
+        // "application/json; charset=utf-8" must dispatch to the JSON
+        // branch, not be rejected as unsupported. Real curl + many SDKs
+        // send the charset parameter. We send a minimal-but-valid
+        // ExportTraceServiceRequest body so we're testing the dispatch
+        // logic, not the JSON deserialization correctness (which has
+        // its own dedicated tests).
+        let body = Bytes::from_static(br#"{"resourceSpans":[]}"#);
+        let h = headers(&[("content-type", "application/json; charset=utf-8")]);
+        let result: Result<ExportTraceServiceRequest, _> = decode_body(&h, &body);
+        assert!(result.is_ok(), "json with charset returned {:?}", result.err());
+    }
+
+    #[test]
+    fn decode_body_accepts_plain_json() {
+        // The "no charset" branch of the JSON path. A separate test
+        // from the strips-params one above so a regression that breaks
+        // only one branch fails only that branch's test (clearer signal).
+        let body = Bytes::from_static(br#"{"resourceSpans":[]}"#);
+        let h = headers(&[("content-type", "application/json")]);
+        let result: Result<ExportTraceServiceRequest, _> = decode_body(&h, &body);
+        assert!(result.is_ok(), "plain json returned {:?}", result.err());
+    }
+
+    #[test]
+    fn decode_body_rejects_unsupported_content_type_with_415() {
+        let body = Bytes::from_static(b"<xml />");
+        let h = headers(&[("content-type", "application/xml")]);
+        let result: Result<ExportTraceServiceRequest, _> = decode_body(&h, &body);
+        let (status, _) = result.expect_err("expected 415");
+        assert_eq!(status.as_u16(), 415);
+    }
+
+    // ── hex_prefix (used for diagnostic logs) ────────────────────────────
+
+    #[test]
+    fn hex_prefix_renders_first_n_bytes_lowercase() {
+        assert_eq!(hex_prefix(&[0xde, 0xad, 0xbe, 0xef], 2), "dead");
+        assert_eq!(hex_prefix(&[0xde, 0xad, 0xbe, 0xef], 4), "deadbeef");
+    }
+
+    #[test]
+    fn hex_prefix_handles_shorter_than_requested_input() {
+        // Don't panic when caller asks for more bytes than available.
+        assert_eq!(hex_prefix(&[0x01, 0x02], 16), "0102");
+        assert_eq!(hex_prefix(&[], 16), "");
+    }
+}
+
 // ─── Handlers ──────────────────────────────────────────────────────────────
 
 async fn ingest_traces(

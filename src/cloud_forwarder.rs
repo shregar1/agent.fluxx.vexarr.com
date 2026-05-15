@@ -174,22 +174,10 @@ struct EventForCloud<'a> {
     _phantom: std::marker::PhantomData<&'a ()>,
 }
 
-/// Translate the agent's operational-health severity buckets into the
-/// log/trace severity vocabulary the cloud schemas (and the dashboard's
-/// LogLevelSchema) actually understand. The agent uses Low/Medium/High
-/// because those map naturally to anomaly scores; the dashboard speaks
-/// info/warn/error/critical because that's what humans expect when
-/// reading log lines or trace spans.
-fn normalize_severity(s: &crate::models::event::EventSeverity) -> String {
-    use crate::models::event::EventSeverity::*;
-    match s {
-        Info | Low => "info",
-        Medium => "warn",
-        High => "error",
-        Critical => "critical",
-    }
-    .to_string()
-}
+// Severity normalization lives on `EventSeverity` itself
+// (`to_log_severity()`) — single source of truth. This file used to
+// carry a duplicate copy that quietly drifted from the integration
+// spawner's copy; both now delegate.
 
 async fn build_event_batch(
     event_store: &Arc<dyn EventStore>,
@@ -232,7 +220,7 @@ async fn build_event_batch(
                 // (info/warn/error/critical). Without this, a `?severity=
                 // error` query returns 0 hits because every error span
                 // was tagged "high" by the agent.
-                severity: normalize_severity(&e.severity),
+                severity: e.severity.to_log_severity().to_string(),
                 trace_id: e.metadata.extra.get("trace_id").cloned(),
                 span_id: e.metadata.extra.get("span_id").cloned(),
                 payload: e.payload.as_ref().map(|p| {
