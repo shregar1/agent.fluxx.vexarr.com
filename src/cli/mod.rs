@@ -3,6 +3,7 @@ pub mod mesh;
 pub mod banner;
 pub mod verify;
 pub mod init;
+pub mod register;
 
 use std::path::{Path, PathBuf};
 
@@ -138,6 +139,13 @@ pub enum Commands {
     /// the detected language/framework. Safe to re-run (won't
     /// overwrite an existing fluxx.toml without --force).
     Init(init::InitArgs),
+
+    /// Manually announce a service to Fluxx by sending one synthetic
+    /// OTel span to the local agent. The service appears in the
+    /// dashboard /service-map within ~30s, before any real production
+    /// traffic flows. Useful for pre-warming the dashboard or attaching
+    /// owner/tier/description metadata on a low-traffic service.
+    Register(register::RegisterArgs),
 }
 
 #[derive(Subcommand)]
@@ -293,6 +301,11 @@ pub async fn run() -> anyhow::Result<()> {
             // invoked inside a producer repo, sometimes as part of a
             // template or CI workflow, so we skip the ASCII banner.
             init::run(args).await?;
+        }
+        Commands::Register(args) => {
+            // Like verify/init, intended for CI and one-off operator
+            // invocations. Skip banner; print only the success line.
+            register::run(args).await?;
         }
     }
 
