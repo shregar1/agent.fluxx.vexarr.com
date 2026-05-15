@@ -1,6 +1,7 @@
 pub mod dev;
 pub mod mesh;
 pub mod banner;
+pub mod verify;
 
 use std::path::{Path, PathBuf};
 
@@ -125,6 +126,11 @@ pub enum Commands {
         #[command(subcommand)]
         subcommand: OpenclawSubcommands,
     },
+
+    /// Verify that a producer service is emitting OTLP spans to this
+    /// agent. Last-mile wiring check, designed as a CI / post-deploy
+    /// gate. Exit 0 = at least one fresh span seen, exit 1 otherwise.
+    Verify(verify::VerifyArgs),
 }
 
 #[derive(Subcommand)]
@@ -268,6 +274,12 @@ pub async fn run() -> anyhow::Result<()> {
                     println!("Status: Active (using MCP stdio transport)");
                 }
             }
+        }
+        Commands::Verify(args) => {
+            // No banner / no logging-init noise — `verify` is meant
+            // for CI pipelines, where every extra line of stderr is
+            // a downstream parsing headache. Just run it.
+            verify::run(args).await?;
         }
     }
 
