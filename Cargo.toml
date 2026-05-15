@@ -38,6 +38,11 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4.5", features = ["derive"] }
 reqwest = { version = "0.12", features = ["json"] }
 config = "0.14"
+# `fluxx init` writes + validates fluxx.toml at the repo root. We
+# use the toml crate directly (rather than going through `config`)
+# because we need to parse with `deny_unknown_fields` for forward-
+# compat — typos in producer config should fail loudly, not silently.
+toml = "0.8"
 tokio-tungstenite = "0.21"
 futures-util = "0.3"
 tokio-retry = "0.3"

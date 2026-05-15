@@ -279,7 +279,6 @@ mod tests {
             timestamp_us: ts_us,
             metadata: EventMeta {
                 trace_id: trace.map(str::to_string),
-                span_name: None,
             },
         }
     }

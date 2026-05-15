@@ -804,6 +804,7 @@ dependencies = [
  "tokio-retry",
  "tokio-tungstenite 0.21.0",
  "tokio-util",
+ "toml",
  "tonic",
  "tower 0.4.13",
  "tower-http 0.5.2",

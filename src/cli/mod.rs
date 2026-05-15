@@ -2,6 +2,7 @@ pub mod dev;
 pub mod mesh;
 pub mod banner;
 pub mod verify;
+pub mod init;
 
 use std::path::{Path, PathBuf};
 
@@ -131,6 +132,12 @@ pub enum Commands {
     /// agent. Last-mile wiring check, designed as a CI / post-deploy
     /// gate. Exit 0 = at least one fresh span seen, exit 1 otherwise.
     Verify(verify::VerifyArgs),
+
+    /// Initialise a repo as a Fluxx producer. Detects the stack,
+    /// writes `fluxx.toml`, and prints the SDK-wiring snippet for
+    /// the detected language/framework. Safe to re-run (won't
+    /// overwrite an existing fluxx.toml without --force).
+    Init(init::InitArgs),
 }
 
 #[derive(Subcommand)]
@@ -280,6 +287,12 @@ pub async fn run() -> anyhow::Result<()> {
             // for CI pipelines, where every extra line of stderr is
             // a downstream parsing headache. Just run it.
             verify::run(args).await?;
+        }
+        Commands::Init(args) => {
+            // Same reasoning as verify: this command is meant to be
+            // invoked inside a producer repo, sometimes as part of a
+            // template or CI workflow, so we skip the ASCII banner.
+            init::run(args).await?;
         }
     }
 
