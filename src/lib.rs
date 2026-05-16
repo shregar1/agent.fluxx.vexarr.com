@@ -2,6 +2,7 @@
 
 pub mod config;
 pub mod core;
+pub mod install;
 pub mod protocols;
 pub mod plugins;
 pub mod security;

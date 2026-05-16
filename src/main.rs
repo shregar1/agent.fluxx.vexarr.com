@@ -1,3 +1,5 @@
+mod install;
+
 use anyhow::Result;
 
 #[tokio::main]
