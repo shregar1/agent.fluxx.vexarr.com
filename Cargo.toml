@@ -2,7 +2,7 @@
 name = "fluxx-agent"
 version = "0.1.0"
 edition = "2021"
-authors = ["Fluxx Team <team@fluxx.vexarr.com>"]
+authors = ["Fluxx Team <team@fluxx.dev>"]
 description = "High-performance observability agent"
 license = "Apache-2.0"
 repository = "https://github.com/fluxx/agent"
@@ -36,7 +36,7 @@ anyhow = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4.5", features = ["derive"] }
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls", "stream"], default-features = false }
 config = "0.14"
 # `fluxx init` writes + validates fluxx.toml at the repo root. We
 # use the toml crate directly (rather than going through `config`)
@@ -72,6 +72,11 @@ flate2 = "1"
 [dev-dependencies]
 tower = { version = "0.4", features = ["util"] }
 tempfile = "3"
+# testcontainers powers `tests/clickhouse_integration.rs`. The test
+# module is gated behind `#[ignore]` so the dep is only fetched when
+# someone actually runs the integration suite — no impact on default
+# `cargo test` runs (and no Docker requirement for them).
+testcontainers = "0.23"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 aya = "0.12"

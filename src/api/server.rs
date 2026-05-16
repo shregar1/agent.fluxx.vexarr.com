@@ -179,6 +179,10 @@ impl ApiServer {
 
         info!("API: Binding Fluxx layer to {} (auth required if configured)", self.addr);
         let listener = tokio::net::TcpListener::bind(&self.addr).await?;
+    // Mount install endpoints (gateway-streamed installer + binary download).
+    let install_state = std::sync::Arc::new(crate::install::InstallState::new());
+    let app = crate::install::router(install_state).merge(app);
+
         axum::serve(listener, app).await?;
         Ok(())
     }
