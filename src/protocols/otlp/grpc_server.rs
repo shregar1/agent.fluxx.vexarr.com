@@ -15,6 +15,8 @@ use opentelemetry_proto::tonic::collector::trace::v1::{
     trace_service_server::{TraceService, TraceServiceServer},
     ExportTraceServiceRequest, ExportTraceServiceResponse,
 };
+use opentelemetry_proto::tonic::trace::v1::ResourceSpans;
+use opentelemetry_proto::tonic::common::v1::any_value::Value as AnyValueValue;
 use opentelemetry_proto::tonic::collector::metrics::v1::{
     metrics_service_server::{MetricsService, MetricsServiceServer},
     ExportMetricsServiceRequest, ExportMetricsServiceResponse,
@@ -49,6 +51,12 @@ impl TraceService for OtlpTraceService {
         request: Request<ExportTraceServiceRequest>,
     ) -> Result<Response<ExportTraceServiceResponse>, Status> {
         let req = request.into_inner();
+        // Per-batch release tag from the OTel resource. Picks the first
+        // `service.version` we see across all resource_spans. Real-world
+        // OTLP batches are almost always single-service, so this is a
+        // safe approximation; a future revision could carry per-span
+        // resource context through `convert::otlp_spans_to_events`.
+        let release = extract_release_from_resource_spans(&req.resource_spans);
         let events = convert::otlp_spans_to_events(&req.resource_spans);
         let count = events.len();
 
@@ -58,7 +66,9 @@ impl TraceService for OtlpTraceService {
                 if matches!(event.severity, EventSeverity::High | EventSeverity::Critical) {
                     let span_name = event.metadata.extra.get("span_name").cloned().unwrap_or_default();
                     let service = event.service_id.clone().unwrap_or_else(|| "unknown".to_string());
-                    tracker.track("SpanError", &span_name, &service, None);
+                    let mut ctx = crate::analysis::error_tracking::TrackContext::default();
+                    ctx.release = release.clone();
+                    tracker.track_with("SpanError", &span_name, &service, None, &ctx);
                 }
             }
 
@@ -74,6 +84,27 @@ impl TraceService for OtlpTraceService {
             partial_success: None,
         }))
     }
+}
+
+/// Extract the `service.version` resource attribute as the release tag.
+/// Returns the first non-empty value found across all resource_spans;
+/// the empty string when no resource declares it.
+fn extract_release_from_resource_spans(spans: &[ResourceSpans]) -> String {
+    for rs in spans {
+        let Some(resource) = rs.resource.as_ref() else { continue };
+        for kv in &resource.attributes {
+            if kv.key != "service.version" {
+                continue;
+            }
+            let Some(any) = kv.value.as_ref() else { continue };
+            if let Some(AnyValueValue::StringValue(s)) = &any.value {
+                if !s.is_empty() {
+                    return s.clone();
+                }
+            }
+        }
+    }
+    String::new()
 }
 
 /// OTLP Metrics gRPC service.
@@ -179,4 +210,62 @@ pub async fn start_otlp_grpc_server(
         .await?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use opentelemetry_proto::tonic::common::v1::{AnyValue, KeyValue};
+    use opentelemetry_proto::tonic::resource::v1::Resource;
+
+    fn rs_with_attrs(attrs: Vec<(&str, &str)>) -> ResourceSpans {
+        ResourceSpans {
+            resource: Some(Resource {
+                attributes: attrs
+                    .into_iter()
+                    .map(|(k, v)| KeyValue {
+                        key: k.to_string(),
+                        value: Some(AnyValue {
+                            value: Some(AnyValueValue::StringValue(v.to_string())),
+                        }),
+                    })
+                    .collect(),
+                dropped_attributes_count: 0,
+                ..Default::default()
+            }),
+            scope_spans: vec![],
+            schema_url: String::new(),
+        }
+    }
+
+    #[test]
+    fn extract_release_returns_service_version_when_present() {
+        let spans = vec![rs_with_attrs(vec![
+            ("service.name", "checkout"),
+            ("service.version", "1.4.2"),
+        ])];
+        assert_eq!(extract_release_from_resource_spans(&spans), "1.4.2");
+    }
+
+    #[test]
+    fn extract_release_returns_empty_when_attr_missing() {
+        let spans = vec![rs_with_attrs(vec![("service.name", "checkout")])];
+        assert_eq!(extract_release_from_resource_spans(&spans), "");
+    }
+
+    #[test]
+    fn extract_release_returns_empty_for_no_resources() {
+        let spans: Vec<ResourceSpans> = vec![];
+        assert_eq!(extract_release_from_resource_spans(&spans), "");
+    }
+
+    #[test]
+    fn extract_release_picks_first_non_empty_across_resources() {
+        let spans = vec![
+            rs_with_attrs(vec![("service.version", "")]),
+            rs_with_attrs(vec![("service.version", "2.0.0")]),
+            rs_with_attrs(vec![("service.version", "3.0.0")]),
+        ];
+        assert_eq!(extract_release_from_resource_spans(&spans), "2.0.0");
+    }
 }

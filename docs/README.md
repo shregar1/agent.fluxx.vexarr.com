@@ -149,7 +149,7 @@ We welcome contributions! See:
 
 - [Discord](https://discord.gg/fluxx) - Community chat
 - [ServiceNow Issues](https://servicenow.com/fluxx/agent/issues) - Bug reports
-- [Email](mailto:support@fluxx.vexarr.com) - Direct support
+- [Email](mailto:support@fluxx.dev) - Direct support
 
 ## License
 
@@ -158,7 +158,7 @@ Fluxx Agent is licensed under the MIT License. See [LICENSE](../LICENSE) for det
 ---
 
 **Quick Links:**
-[Home](https://fluxx.vexarr.com) |
+[Home](https://fluxx.dev) |
 [ServiceNow](https://servicenow.com/fluxx/agent) |
 [Twitter](https://twitter.com/fluxxagent) |
 [Docker Hub](https://hub.docker.com/r/fluxx/agent)

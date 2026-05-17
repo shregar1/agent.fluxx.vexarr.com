@@ -1,6 +1,6 @@
 //! Self-monitoring helpers — let the Fluxx agent surface its own
 //! lifecycle events in its own log store, so the embedded dashboard
-//! at /v1/logs (and dashboard.fluxx.vexarr.com via the cloud forwarder)
+//! at /v1/logs (and dashboard.fluxx.dev via the cloud forwarder)
 //! can show "agent booted", "license validated", "OTLP server up", etc.
 //! alongside customer telemetry.
 //!

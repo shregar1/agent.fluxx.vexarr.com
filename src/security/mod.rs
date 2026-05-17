@@ -10,6 +10,7 @@ pub mod masking;
 pub mod rbac;
 pub mod sso;
 pub mod audit;
+pub mod bootstrap_token;
 
 /// SecurityProcessor: A high-performance middleware component that enforces 
 /// PII masking, payload encryption, and local-only data privacy.

@@ -25,3 +25,11 @@ target
 
 /target
 .DS_Store
+
+# Python SDK build/runtime artifacts (we ship sources only)
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Test coverage reports — generated, never checked in
+coverage/

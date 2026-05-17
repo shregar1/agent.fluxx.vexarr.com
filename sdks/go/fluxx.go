@@ -26,8 +26,13 @@ type Client struct {
 	ProjectID     string
 	EnvironmentID string
 	Service       string
-	httpClient    *http.Client
-	udpConn       *net.UDPConn
+	// Release is the build/version of this application. Forwarded as
+	// `service.version` in log resource attributes and as a top-level
+	// `release` field on events, so the agent can attribute errors to
+	// a specific release and detect regressions.
+	Release    string
+	httpClient *http.Client
+	udpConn    *net.UDPConn
 }
 
 // New creates a Fluxx client pointing at the given agent endpoint.
@@ -46,10 +51,11 @@ func New(endpoint string, opts ...Option) *Client {
 // Option configures the client.
 type Option func(*Client)
 
-func WithProject(id string) Option        { return func(c *Client) { c.ProjectID = id } }
-func WithEnvironment(id string) Option     { return func(c *Client) { c.EnvironmentID = id } }
-func WithService(name string) Option       { return func(c *Client) { c.Service = name } }
-func WithStatsdAddr(addr string) Option    { return func(c *Client) { c.StatsdAddr = addr } }
+func WithProject(id string) Option      { return func(c *Client) { c.ProjectID = id } }
+func WithEnvironment(id string) Option  { return func(c *Client) { c.EnvironmentID = id } }
+func WithService(name string) Option    { return func(c *Client) { c.Service = name } }
+func WithStatsdAddr(addr string) Option { return func(c *Client) { c.StatsdAddr = addr } }
+func WithRelease(version string) Option { return func(c *Client) { c.Release = version } }
 
 // ── Logs ──
 
@@ -59,6 +65,8 @@ type LogOpts struct {
 	TraceID    string
 	SpanID     string
 	Attributes map[string]interface{}
+	// Release overrides the client's default release for this entry.
+	Release string
 }
 
 // Log sends a structured log entry.
@@ -71,6 +79,14 @@ func (c *Client) Log(level, message string, opts ...LogOpts) error {
 	if svc == "" {
 		svc = c.Service
 	}
+	release := o.Release
+	if release == "" {
+		release = c.Release
+	}
+	resource := map[string]string{}
+	if release != "" {
+		resource["service.version"] = release
+	}
 
 	entry := map[string]interface{}{
 		"id":             uuid.New().String(),
@@ -81,9 +97,10 @@ func (c *Client) Log(level, message string, opts ...LogOpts) error {
 		"trace_id":       o.TraceID,
 		"span_id":        o.SpanID,
 		"attributes":     o.Attributes,
-		"resource":       map[string]string{},
+		"resource":       resource,
 		"project_id":     c.ProjectID,
 		"environment_id": c.EnvironmentID,
+		"release":        release,
 	}
 	return c.post("/v1/logs", []interface{}{entry})
 }
@@ -130,6 +147,7 @@ func (c *Client) Event(source, protocol string, latencyUs int64, severity string
 		"project_id":     c.ProjectID,
 		"environment_id": c.EnvironmentID,
 		"metadata":       map[string]string{},
+		"release":        c.Release,
 	}
 	return c.post("/v1/events", evt)
 }

@@ -61,6 +61,7 @@ pub mod manager;
 pub mod metric_evaluator;
 pub mod models;
 pub mod rules;
+pub mod webhook_sink;
 
 // Re-exports
 pub use channels::{AlertChannel, ChannelError, ChannelType};

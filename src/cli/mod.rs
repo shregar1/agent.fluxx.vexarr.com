@@ -4,6 +4,8 @@ pub mod banner;
 pub mod verify;
 pub mod init;
 pub mod register;
+pub mod errors_cmd;
+pub mod release_cmd;
 
 use std::path::{Path, PathBuf};
 
@@ -146,6 +148,17 @@ pub enum Commands {
     /// traffic flows. Useful for pre-warming the dashboard or attaching
     /// owner/tier/description metadata on a low-traffic service.
     Register(register::RegisterArgs),
+
+    /// Query the local agent's error tracker. Reads `/v1/errors/*`
+    /// on the running agent and prints a terminal-friendly view —
+    /// useful for CI gates ("fluxx errors top -n 10 | grep YourError")
+    /// and operator triage.
+    Errors(errors_cmd::ErrorsArgs),
+
+    /// Declare application releases for issue / regression tracking.
+    /// Calls api.fluxx.dev's `/api/v1/app-releases`. Auth via
+    /// FLUXX_API_KEY.
+    Release(release_cmd::ReleaseArgs),
 }
 
 #[derive(Subcommand)]
@@ -163,11 +176,31 @@ pub enum OpenclawSubcommands {
 pub async fn run() -> anyhow::Result<()> {
     init_logging();
     let cli = Cli::parse();
+    // Bootstrap the admin token before we mount the auth middleware.
+    // First run mints + prints; subsequent runs silently load the hash.
+    // Subcommands that only talk to the API (errors, release, verify)
+    // don't need to mint anything, but it's cheap to call regardless.
+    let auth_outcome = crate::security::bootstrap_token::init_admin_token();
+    if !matches!(cli.command, Commands::Errors(_) | Commands::Release(_) | Commands::Verify(_) | Commands::Init(_) | Commands::Register(_)) {
+        info!("Auth bootstrap: {:?}", auth_outcome);
+    }
     let mut service = AgentService::new();
 
     let requires_license = matches!(cli.command, Commands::Dev | Commands::Start { .. } | Commands::Mesh(_));
 
-    if requires_license {
+    // Self-hosted mode: the customer is running Fluxx entirely on their
+    // own infrastructure and not talking to api.fluxx.dev. Trigger on
+    // either the explicit env flag or the absence of *both* the SaaS
+    // URL and an API key — that combination means there's nowhere for
+    // the license check to even resolve to, so insisting on it would
+    // just block startup with no upside.
+    let self_hosted = std::env::var("FLUXX_SELF_HOSTED")
+        .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "on"))
+        .unwrap_or(false)
+        || (std::env::var("FLUXX_API_URL").is_err()
+            && std::env::var("FLUXX_API_KEY").is_err());
+
+    if requires_license && !self_hosted {
         match license::validate_subscription().await {
             Ok(info) => {
                 info!(
@@ -183,6 +216,8 @@ pub async fn run() -> anyhow::Result<()> {
                 std::process::exit(1);
             }
         }
+    } else if requires_license {
+        info!("Self-hosted mode — license check, cloud forwarder, and runtime grants disabled");
     }
 
     match cli.command {
@@ -306,6 +341,14 @@ pub async fn run() -> anyhow::Result<()> {
             // Like verify/init, intended for CI and one-off operator
             // invocations. Skip banner; print only the success line.
             register::run(args).await?;
+        }
+        Commands::Errors(args) => {
+            // No banner — CI / shell tooling pipes the output.
+            errors_cmd::run(args).await?;
+        }
+        Commands::Release(args) => {
+            // No banner — invoked from CI post-deploy hooks.
+            release_cmd::run(args).await?;
         }
     }
 

@@ -32,13 +32,21 @@ class Fluxx:
         project_id: Optional[str] = None,
         environment_id: Optional[str] = None,
         service: Optional[str] = None,
+        release: Optional[str] = None,
     ):
+        """
+        :param release: Build/release version of this application.
+            Forwarded as ``service.version`` in log resource attributes
+            and as a top-level ``release`` field on events, so the agent
+            can attribute errors to a specific release.
+        """
         self.endpoint = endpoint.rstrip("/")
         self.statsd_host = statsd_host
         self.statsd_port = statsd_port
         self.project_id = project_id
         self.environment_id = environment_id
         self.service = service
+        self.release = release
         self._udp_socket: Optional[socket.socket] = None
 
     # ── Logs ──
@@ -51,8 +59,13 @@ class Fluxx:
         trace_id: Optional[str] = None,
         span_id: Optional[str] = None,
         attributes: Optional[Dict[str, Any]] = None,
+        release: Optional[str] = None,
     ) -> bool:
         """Send a structured log entry."""
+        effective_release = release or self.release
+        resource: Dict[str, Any] = {}
+        if effective_release:
+            resource["service.version"] = effective_release
         entry = {
             "id": str(uuid.uuid4()),
             "timestamp_us": _now_us(),
@@ -62,9 +75,10 @@ class Fluxx:
             "trace_id": trace_id,
             "span_id": span_id,
             "attributes": attributes or {},
-            "resource": {},
+            "resource": resource,
             "project_id": self.project_id,
             "environment_id": self.environment_id,
+            "release": effective_release,
         }
         return self._post("/v1/logs", [entry])
 
@@ -122,6 +136,7 @@ class Fluxx:
         severity: str = "info",
         payload: Optional[str] = None,
         metadata: Optional[Dict[str, str]] = None,
+        release: Optional[str] = None,
     ) -> bool:
         """Send an event to the agent."""
         evt = {
@@ -135,6 +150,7 @@ class Fluxx:
             "project_id": self.project_id,
             "environment_id": self.environment_id,
             "metadata": metadata or {},
+            "release": release or self.release,
         }
         return self._post("/v1/events", evt)
 

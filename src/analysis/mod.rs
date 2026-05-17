@@ -8,6 +8,7 @@ pub mod protocol;
 pub mod industrial;
 pub mod anomaly;
 pub mod error_tracking;
+pub mod sourcemaps;
 
 /// Protocol Intelligence Interface: Performs stateless analysis of network events.
 /// Enforces modular detection of anomalies (surges, high latency, reconnects).

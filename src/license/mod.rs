@@ -1,7 +1,19 @@
+//! Fluxx license & runtime-grant client surface.
+//!
+//! The classic free-tier license verify lives in this file (it predates the
+//! grant subsystem). Premium agent operations should go through the new
+//! grant client in [`grant`] — see that module's docs for the full lifecycle.
+
+pub mod cache;
+pub mod cert_pin;
+pub mod fingerprint;
+pub mod grant;
+pub mod signing;
+
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
 
-const DEFAULT_API_URL: &str = "https://api.fluxx.vexarr.com";
+const DEFAULT_API_URL: &str = "https://api.fluxx.dev";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LicenseInfo {

@@ -188,9 +188,104 @@ pub async fn ingest_rum(
     Json(events): Json<Vec<RumEvent>>,
 ) -> impl IntoResponse {
     let count = events.len();
+
+    // Feed error-typed events into the ErrorTracker so they show up in
+    // the issues dashboard. We do this BEFORE handing the vec to the
+    // store so we can read each event without cloning the whole list.
+    // RUM SDKs don't currently post a separate error endpoint, so this
+    // is the entry point for all browser-side exceptions.
+    let mut tracked = 0usize;
+    for ev in &events {
+        if let Some(call) = error_call_from_rum_event(ev) {
+            state.error_tracker.track_with(
+                &call.error_type,
+                &call.message,
+                &call.service,
+                call.stack.as_deref(),
+                &call.ctx,
+            );
+            tracked += 1;
+        }
+    }
+    if tracked > 0 {
+        info!("RUM: forwarded {} error event(s) to ErrorTracker", tracked);
+    }
+
     state.rum_store.ingest(events);
     info!("RUM: Ingested {} browser events", count);
     StandardResponse::ok(serde_json::json!({"ingested": count}), "RUM events ingested.")
+}
+
+/// Materialized form of an error event's tracker call. Extracted into a
+/// struct so the handler can run the (potentially blocking) `track_with`
+/// in a single line, and so the extraction is unit-testable.
+struct ErrorTrackCall {
+    error_type: String,
+    message: String,
+    service: String,
+    stack: Option<String>,
+    ctx: crate::analysis::error_tracking::TrackContext,
+}
+
+/// Extract the tracker payload from a RUM event, returning `None` for
+/// non-error events. The browser SDK posts errors under
+/// `event_type = "error"` with `error_*` fields flattened into `data`.
+fn error_call_from_rum_event(ev: &RumEvent) -> Option<ErrorTrackCall> {
+    if ev.event_type != "error" {
+        return None;
+    }
+    let message = ev
+        .data
+        .get("error_message")
+        .and_then(|v| v.as_str())
+        .unwrap_or("(no message)")
+        .to_string();
+    let error_type = ev
+        .data
+        .get("error_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("Error")
+        .to_string();
+    let stack = ev
+        .data
+        .get("error_stack")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    // Browsers don't really have a "service" — use application_id so the
+    // dashboard can group by app the way it would by backend service.
+    let service = if ev.application_id.is_empty() {
+        "browser".to_string()
+    } else {
+        ev.application_id.clone()
+    };
+
+    let mut ctx = crate::analysis::error_tracking::TrackContext::default();
+    ctx.release = ev.app_version.clone().unwrap_or_default();
+    ctx.environment = ev.environment.clone().unwrap_or_default();
+    ctx.session_id = ev.session_id.clone();
+    ctx.user_id = ev.user_id.clone().unwrap_or_default();
+    ctx.url = ev.url.clone().unwrap_or_default();
+    ctx.user_agent = ev.user_agent.clone().unwrap_or_default();
+    ctx.project_id = ev.application_id.clone();
+
+    // Browser breadcrumbs (the last ~30 clicks/console/http events
+    // before the error). Carried opaquely as a tag so the error
+    // tracker doesn't need to know the schema; the dashboard reads
+    // it back from `tags["breadcrumbs"]`.
+    if let Some(crumbs) = ev.data.get("breadcrumbs") {
+        if !crumbs.is_null() {
+            ctx.tags.insert("breadcrumbs".to_string(), crumbs.to_string());
+        }
+    }
+
+    Some(ErrorTrackCall {
+        error_type,
+        message,
+        service,
+        stack,
+        ctx,
+    })
 }
 
 /// GET /v1/rum/sessions — List RUM sessions.
@@ -393,5 +488,76 @@ mod tests {
         let v = store.get_vitals("app");
         assert_eq!(v.sample_count, 4);
         assert!(v.lcp_p75_ms >= 3000.0);
+    }
+
+    // --- F-105: RUM error event → ErrorTracker extraction -----------------
+
+    fn mk_error(
+        app: &str,
+        release: Option<&str>,
+        message: &str,
+        error_type: &str,
+        stack: Option<&str>,
+    ) -> RumEvent {
+        let mut e = mk_event("error", "s1", app, 1);
+        e.app_version = release.map(|s| s.to_string());
+        e.url = Some("https://x/y".into());
+        e.environment = Some("production".into());
+        e.user_id = Some("u".into());
+        e.data
+            .insert("error_message".into(), serde_json::json!(message));
+        e.data
+            .insert("error_type".into(), serde_json::json!(error_type));
+        if let Some(s) = stack {
+            e.data.insert("error_stack".into(), serde_json::json!(s));
+        }
+        e
+    }
+
+    #[test]
+    fn error_extractor_returns_none_for_non_error_event() {
+        let ev = mk_event("view", "s1", "app", 1);
+        assert!(error_call_from_rum_event(&ev).is_none());
+    }
+
+    #[test]
+    fn error_extractor_pulls_message_type_and_stack() {
+        let ev = mk_error("app1", Some("1.4.2"), "x is undefined", "TypeError", Some("at f (a.js:1:2)"));
+        let call = error_call_from_rum_event(&ev).expect("error event extracted");
+        assert_eq!(call.error_type, "TypeError");
+        assert_eq!(call.message, "x is undefined");
+        assert_eq!(call.stack.as_deref(), Some("at f (a.js:1:2)"));
+        assert_eq!(call.service, "app1");
+    }
+
+    #[test]
+    fn error_extractor_threads_app_version_into_release() {
+        let ev = mk_error("app1", Some("9.9.9"), "boom", "E", None);
+        let call = error_call_from_rum_event(&ev).unwrap();
+        assert_eq!(call.ctx.release, "9.9.9");
+        assert_eq!(call.ctx.environment, "production");
+        assert_eq!(call.ctx.session_id, "s1");
+        assert_eq!(call.ctx.project_id, "app1");
+    }
+
+    #[test]
+    fn error_extractor_handles_missing_release_as_empty() {
+        let ev = mk_error("app1", None, "boom", "E", None);
+        let call = error_call_from_rum_event(&ev).unwrap();
+        assert!(call.ctx.release.is_empty());
+    }
+
+    #[test]
+    fn error_extractor_falls_back_when_fields_missing() {
+        let mut ev = mk_event("error", "s1", "app1", 1);
+        // No error_message / error_type / error_stack in data
+        let call = error_call_from_rum_event(&ev).unwrap();
+        assert_eq!(call.error_type, "Error"); // fallback
+        assert_eq!(call.message, "(no message)"); // fallback
+        assert!(call.stack.is_none());
+
+        ev.application_id = String::new();
+        let call = error_call_from_rum_event(&ev).unwrap();
+        assert_eq!(call.service, "browser"); // empty application_id fallback
     }
 }

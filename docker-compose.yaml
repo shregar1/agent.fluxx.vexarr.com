@@ -1,42 +1,80 @@
-version: '3.8'
+# Self-hosted Fluxx — single-binary agent + optional ClickHouse.
+#
+# Quickstart:
+#   docker compose up -d
+#   open http://localhost:7007/
+#
+# The agent binary embeds the per-node dashboard, so port 7007 serves
+# both the JSON API at /v1/* and the React UI at /. ClickHouse is
+# optional; with `clickhouse_error_events.enabled=false` the agent
+# tracks errors in memory only (lost on restart).
+#
+# To talk to api.fluxx.dev's control plane (for hosted licensing,
+# release tracking, etc.) export FLUXX_API_URL + FLUXX_API_KEY in the
+# fluxx-agent environment block. Without them, self-hosted mode kicks
+# in automatically and the agent never phones home.
 
 services:
   fluxx-agent:
     build: .
     image: fluxx-agent:latest
     container_name: fluxx-agent
+    restart: unless-stopped
     environment:
-      - FLUXX_NODE_ID=standalone-node
       - RUST_LOG=info
+      # Self-hosted mode is enabled by default; uncomment to override:
+      # - FLUXX_SELF_HOSTED=true
+      # ClickHouse persistence (matches the `clickhouse` service below).
+      # Comment these out to run with in-memory error tracking only.
+      - APP_CLICKHOUSE_ERROR_EVENTS__ENABLED=true
+      - APP_CLICKHOUSE_ERROR_EVENTS__HOST=clickhouse
+      - APP_CLICKHOUSE_ERROR_EVENTS__PORT=8123
+      - APP_CLICKHOUSE_ERROR_EVENTS__DATABASE=fluxx
     ports:
-      - "3000:3000"
-      - "7946:7946"
+      - "7007:7007"   # HTTP API + dashboard (single port)
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8125:8125/udp" # StatsD UDP
     volumes:
-      - ./data/agent:/data
+      - fluxx-wal:/var/lib/fluxx
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+        required: false
     networks:
-      - fluxx-network
+      - fluxx
 
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: fluxx-prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    networks:
-      - fluxx-network
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: fluxx-grafana
-    ports:
-      - "3001:3000"
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: fluxx-clickhouse
+    restart: unless-stopped
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
+      # Keep things simple in single-node self-hosted: no per-user auth
+      # at the CH layer, the agent is the only client.
+      - CLICKHOUSE_SKIP_USER_SETUP=1
+    ports:
+      # Expose to host for `clickhouse-client` queries during ops. Drop
+      # this in a hardened setup — the agent reaches CH over the
+      # internal docker network either way.
+      - "127.0.0.1:8123:8123"
+    volumes:
+      - fluxx-ch:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8123/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
     networks:
-      - fluxx-network
+      - fluxx
+
+volumes:
+  fluxx-wal:
+  fluxx-ch:
 
 networks:
-  fluxx-network:
+  fluxx:
     driver: bridge

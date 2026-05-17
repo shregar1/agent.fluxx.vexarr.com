@@ -36,7 +36,7 @@ anyhow = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4.5", features = ["derive"] }
-reqwest = { version = "0.12", features = ["json", "rustls-tls", "stream"], default-features = false }
+reqwest = { version = "0.12", features = ["json", "rustls-tls", "stream", "multipart"], default-features = false }
 config = "0.14"
 # `fluxx init` writes + validates fluxx.toml at the repo root. We
 # use the toml crate directly (rather than going through `config`)
@@ -50,7 +50,7 @@ url = "2.5"
 quinn = "0.11"
 tonic = "0.12"
 prost = "0.13"
-axum = { version = "0.7", features = ["ws"] }
+axum = { version = "0.7", features = ["ws", "multipart"] }
 tower-http = { version = "0.5", features = ["cors"] }
 bytes = "1.6"
 rand = "0.8"
@@ -59,6 +59,24 @@ chrono = { version = "0.4", features = ["serde"] }
 serde_yaml = "0.9"
 whoami = "1.5"
 base64 = "0.22"
+sha2 = "0.10"
+# Runtime-grant signing: HMAC-SHA256 over (body || nonce || timestamp) using
+# the per-grant key from the control plane. See src/license/grant.rs.
+hmac = "0.12"
+hex = "0.4"
+# Machine fingerprint stable inputs. `dirs` resolves ~/.fluxx/ for the
+# 7-day license cache; `hostname` and `mac_address` are inputs to the
+# fingerprint sha256.
+dirs = "5.0"
+hostname = "0.4"
+mac_address = "1.1"
+# TLS SPKI pinning support for the API client. Version pinned to match
+# what reqwest 0.12 pulls in transitively so we get the same TLS types.
+rustls = { version = "0.23", features = ["std"] }
+# JS sourcemap parsing for on-ingest symbolication. The `sourcemap`
+# crate is BSD-licensed, mature, and powers Sentry's symbolication
+# stack.
+sourcemap = "9"
 sysinfo = "0.30"
 opentelemetry-proto = { version = "0.7", features = ["gen-tonic-messages", "with-serde"] }
 prost-types = "0.13"

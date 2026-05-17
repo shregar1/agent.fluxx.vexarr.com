@@ -18,6 +18,12 @@ pub use in_memory_log::InMemoryLogStore;
 pub mod tiered;
 pub mod wal;
 pub mod cold;
+pub mod clickhouse_error_events;
 pub use tiered::{TieredEventStore, TieredStorageConfig};
 pub use wal::WalEventStore;
 pub use cold::{ColdStorageConfig, LocalColdBackend, S3ColdBackend};
+pub use clickhouse_error_events::{
+    fetch_recent_groups, ClickHouseConfig, ClickHouseErrorEventSink, ClickHouseErrorReadStore,
+    ErrorEventRow, ErrorEventSink, ErrorReadStore, GroupSnapshot, LatestEvent, ReadStoreStats,
+    SinkStats,
+};

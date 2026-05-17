@@ -24,6 +24,10 @@ class Fluxx {
    * @param {string} [options.projectId]
    * @param {string} [options.environmentId]
    * @param {string} [options.service]
+   * @param {string} [options.release] Release/build version of this
+   *   application. Forwarded as `service.version` in log resource
+   *   attributes and as a top-level `release` on events, so the agent
+   *   can group errors per release and detect regressions.
    */
   constructor(endpoint = 'http://localhost:7007', options = {}) {
     this.endpoint = endpoint.replace(/\/$/, '');
@@ -32,6 +36,7 @@ class Fluxx {
     this.projectId = options.projectId || null;
     this.environmentId = options.environmentId || null;
     this.service = options.service || null;
+    this.release = options.release || null;
     this._udpSocket = null;
   }
 
@@ -45,6 +50,9 @@ class Fluxx {
    * @returns {Promise<boolean>}
    */
   async log(level, message, options = {}) {
+    const release = options.release || this.release;
+    const resource = {};
+    if (release) resource['service.version'] = release;
     const entry = {
       id: randomUUID(),
       timestamp_us: nowUs(),
@@ -54,9 +62,10 @@ class Fluxx {
       trace_id: options.traceId || null,
       span_id: options.spanId || null,
       attributes: options.attributes || {},
-      resource: {},
+      resource,
       project_id: this.projectId,
       environment_id: this.environmentId,
+      release,
     };
     return this._post('/v1/logs', [entry]);
   }
@@ -104,6 +113,7 @@ class Fluxx {
       project_id: this.projectId,
       environment_id: this.environmentId,
       metadata: options.metadata || {},
+      release: options.release || this.release,
     };
     return this._post('/v1/events', evt);
   }

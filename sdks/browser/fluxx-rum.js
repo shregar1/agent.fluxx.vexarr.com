@@ -54,6 +54,27 @@
   let initialized = false;
   let pageViewId = generateId();
 
+  // Breadcrumb ring buffer. Captures up to 30 user-facing events
+  // (clicks, console messages, network calls, navigation) and is
+  // attached to every error event so triage starts with context, not
+  // just a stack trace. Bounded so a chatty page can't blow memory.
+  const BREADCRUMB_MAX = 30;
+  let breadcrumbs = [];
+  function pushBreadcrumb(category, message, data) {
+    breadcrumbs.push({
+      ts: Date.now(),
+      category,
+      message: String(message).slice(0, 256),
+      data: data || null,
+    });
+    if (breadcrumbs.length > BREADCRUMB_MAX) {
+      breadcrumbs.splice(0, breadcrumbs.length - BREADCRUMB_MAX);
+    }
+  }
+  function snapshotBreadcrumbs() {
+    return breadcrumbs.slice();
+  }
+
   // ── Public API ──
 
   const FluxxRUM = {
@@ -65,6 +86,13 @@
     init(options) {
       if (initialized) return;
       Object.assign(config, options);
+
+      // `release` is the canonical option (matches Node/Python/Go SDKs
+      // and Sentry conventions). `version` is the legacy name kept as
+      // an alias — either populates the same underlying field.
+      if (options && options.release && !options.version) {
+        config.version = options.release;
+      }
 
       if (!config.endpoint) {
         console.warn('[FluxxRUM] No endpoint configured');
@@ -285,7 +313,9 @@
   // ── Error Tracking ──
 
   function setupErrorTracking() {
-    // Uncaught errors
+    // Uncaught errors. Attach the current breadcrumb snapshot so the
+    // agent's error UI can show what the user did right before things
+    // went sideways — the killer Sentry feature.
     window.addEventListener('error', (event) => {
       addEvent('error', {
         error_message: event.message,
@@ -294,6 +324,7 @@
         error_filename: event.filename,
         error_lineno: event.lineno,
         error_colno: event.colno,
+        breadcrumbs: snapshotBreadcrumbs(),
       });
     });
 
@@ -304,18 +335,47 @@
         error_message: reason instanceof Error ? reason.message : String(reason),
         error_type: 'UnhandledRejection',
         error_stack: reason instanceof Error ? reason.stack : '',
+        breadcrumbs: snapshotBreadcrumbs(),
       });
     });
 
     // Console errors
     const originalError = console.error;
     console.error = function (...args) {
+      const message = args.map(String).join(' ');
+      pushBreadcrumb('console', message, { level: 'error' });
       addEvent('error', {
-        error_message: args.map(String).join(' '),
+        error_message: message,
         error_type: 'ConsoleError',
+        breadcrumbs: snapshotBreadcrumbs(),
       });
       originalError.apply(console, args);
     };
+
+    // Lightweight breadcrumb sources. None of these should be heavy —
+    // they all just `pushBreadcrumb` and return. Wiring is best-effort:
+    // if a particular DOM API is missing, the rest still work.
+    try {
+      window.addEventListener('click', (e) => {
+        const t = e.target;
+        const tag = t && t.tagName ? t.tagName.toLowerCase() : '?';
+        const id = t && t.id ? `#${t.id}` : '';
+        const cls = t && t.className && typeof t.className === 'string'
+          ? '.' + t.className.split(/\s+/).filter(Boolean).slice(0, 2).join('.')
+          : '';
+        pushBreadcrumb('ui.click', `${tag}${id}${cls}`);
+      }, { capture: true, passive: true });
+    } catch (_) { /* noop */ }
+
+    try {
+      ['log', 'info', 'warn', 'debug'].forEach((level) => {
+        const orig = console[level];
+        console[level] = function (...args) {
+          pushBreadcrumb('console', args.map(String).join(' '), { level });
+          orig.apply(console, args);
+        };
+      });
+    } catch (_) { /* noop */ }
   }
 
   // ── Network Tracking ──
@@ -330,12 +390,17 @@
 
       return originalFetch.apply(this, arguments).then(
         (response) => {
+          const ms = performance.now() - start;
           addEvent('network', {
             request_url: url,
             request_method: method,
             response_status: response.status,
-            duration_ms: performance.now() - start,
+            duration_ms: ms,
             request_type: 'fetch',
+          });
+          pushBreadcrumb('http', `${method} ${url} → ${response.status}`, {
+            status: response.status,
+            duration_ms: Math.round(ms),
           });
           return response;
         },
@@ -448,7 +513,11 @@
       page_view_id: pageViewId,
       application_id: config.applicationId,
       environment: config.environment,
+      // Emit both names so the agent (which consumes `app_version` on
+      // RumEvent) and downstream consumers expecting `release` both
+      // work without a coordinated rollout.
       app_version: config.version,
+      release: config.version,
       user_id: config.userId,
       user_email: config.userEmail,
       url: window.location.href,

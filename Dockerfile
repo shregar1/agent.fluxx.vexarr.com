@@ -1,11 +1,23 @@
-# Multi-stage Dockerfile for Fluxx Agent
-# Optimized for high-performance and minimal footprint
+# Multi-stage Dockerfile for the self-hosted Fluxx single-binary deploy.
+#
+# Stage 1 (dashboard): build the React/Vite per-node UI to `dist/`.
+# Stage 2 (rust):      compile the Rust agent — rust-embed pulls the
+#                      previous stage's `dist/` straight into the binary.
+# Stage 3 (runtime):   minimal Debian image with just the binary + TLS
+#                      roots. One process listens on 7007 and serves
+#                      both /v1/* (API) and / (dashboard).
 
-# --- Build Stage ---
-FROM rust:1.70-slim-bookworm AS builder
+# --- Stage 1: dashboard build ---
+FROM node:20-bookworm-slim AS dashboard
+WORKDIR /dashboard
+COPY node.dashboard.fluxx.dev/package.json node.dashboard.fluxx.dev/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY node.dashboard.fluxx.dev/ ./
+RUN npm run build
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
+# --- Stage 2: rust build ---
+FROM rust:1.83-slim-bookworm AS builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libssl-dev \
     libpcap-dev \
@@ -15,41 +27,46 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy dependency manifests first for caching
+# Cache the dependency build by copying manifests first.
 COPY Cargo.toml Cargo.lock ./
-RUN mkdir src && echo "fn main() {}" > src/main.rs
-RUN cargo build --profile dist
+RUN mkdir -p src \
+    && echo "fn main() {}" > src/main.rs \
+    && cargo build --profile dist || true
 
-# Copy full source and rebuild
+# Bring in the real source, plus the dashboard bundle that rust-embed
+# expects to find at `node.dashboard.fluxx.dev/dist/`. The empty SDK
+# directories under `sdks/` are also kept so future SDK-bundled builds
+# don't fail.
 COPY . .
-RUN cargo build --profile dist
+COPY --from=dashboard /dashboard/dist ./node.dashboard.fluxx.dev/dist
+RUN touch src/main.rs && cargo build --profile dist
 
-# --- Runtime Stage ---
+# --- Stage 3: runtime ---
 FROM debian:bookworm-slim
-
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libpcap0.8 \
     libssl3 \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy binary from builder
-COPY --from=builder /app/target/dist/fluxx /usr/local/bin/
+COPY --from=builder /app/target/dist/fluxx /usr/local/bin/fluxx
 
-# Create config directory
-RUN mkdir -p /etc/fluxx
+# WAL + cold storage default to /var/lib/fluxx; mount a volume here in
+# production if you need durability across restarts.
+RUN mkdir -p /var/lib/fluxx /etc/fluxx
+VOLUME ["/var/lib/fluxx"]
 
-# Default configuration
-COPY config/default.json /etc/fluxx/config.json
+# 7007 = API + dashboard. 4317/4318 = OTLP gRPC/HTTP. 8125 = StatsD.
+EXPOSE 7007 4317 4318 8125/udp
 
-# Expose API and Mesh ports
-EXPOSE 3000 8080 7946/tcp 7946/udp
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget -q -O - http://127.0.0.1:7007/v1/status >/dev/null 2>&1 || exit 1
 
-# Standard labels
 LABEL org.opencontainers.image.source="https://github.com/fluxx/agent"
-LABEL org.opencontainers.image.description="Fluxx: High-performance observability agent"
+LABEL org.opencontainers.image.description="Fluxx — self-hosted observability agent + dashboard, one binary"
 
-# Start the agent
+# `start` honours config from FLUXX_* env vars; no on-disk config file
+# is required for a typical self-hosted deploy.
 ENTRYPOINT ["fluxx"]
-CMD ["start", "--config", "/etc/fluxx/config.json"]
+CMD ["start"]

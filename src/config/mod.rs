@@ -17,6 +17,44 @@ pub struct Config {
     pub statsd: StatsdConfig,
     #[serde(default)]
     pub metric_alerts: MetricAlertConfig,
+    #[serde(default)]
+    pub clickhouse_error_events: ClickHouseErrorEventsConfig,
+}
+
+/// Configuration for persisting error events to ClickHouse.
+///
+/// Opt-in: disabled by default. When enabled, the ErrorTracker writes
+/// every tracked occurrence into `fluxx.error_events` via the HTTP
+/// interface, batched. See `src/storage/clickhouse_error_events.rs`.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ClickHouseErrorEventsConfig {
+    pub enabled: bool,
+    pub host: String,
+    pub port: u16,
+    pub database: String,
+    pub username: Option<String>,
+    pub password: Option<String>,
+    pub flush_interval_secs: u64,
+    pub flush_batch_size: usize,
+    pub queue_capacity: usize,
+    pub http_timeout_secs: u64,
+}
+
+impl Default for ClickHouseErrorEventsConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            host: "localhost".to_string(),
+            port: 8123,
+            database: "fluxx".to_string(),
+            username: None,
+            password: None,
+            flush_interval_secs: 5,
+            flush_batch_size: 1000,
+            queue_capacity: 100_000,
+            http_timeout_secs: 30,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -180,6 +218,7 @@ impl Default for Config {
             logs: LogConfig::default(),
             statsd: StatsdConfig::default(),
             metric_alerts: MetricAlertConfig::default(),
+            clickhouse_error_events: ClickHouseErrorEventsConfig::default(),
         }
     }
 }
@@ -198,9 +237,18 @@ impl Config {
                 config::File::with_name(&format!("config/{}", run_mode))
                     .required(false),
             )
-            // Add in settings from the environment (with a prefix of APP)
-            // Eg.. `APP_DEBUG=1 ./target/app` would set the `debug` key
-            .add_source(config::Environment::with_prefix("APP"))
+            // Settings from environment vars, prefix `APP_`. Nested
+            // keys use `__` so `APP_SERVER__PORT=7007` sets
+            // `server.port`. `prefix_separator` makes the strip explicit
+            // so the crate doesn't get confused by single-underscore
+            // top-level keys like `APP_AGENT_NAME`. `try_parsing` lets
+            // numeric/boolean fields take their typed value.
+            .add_source(
+                config::Environment::with_prefix("APP")
+                    .prefix_separator("_")
+                    .separator("__")
+                    .try_parsing(true),
+            )
             .build()?;
 
         s.try_deserialize().context("Failed to deserialize configuration")
@@ -287,6 +335,7 @@ mod tests {
             logs: LogConfig::default(),
             statsd: StatsdConfig::default(),
             metric_alerts: MetricAlertConfig::default(),
+            clickhouse_error_events: ClickHouseErrorEventsConfig::default(),
         };
         assert_eq!(config.agent_name, "custom-agent");
         assert_eq!(config.server.port, 9090);

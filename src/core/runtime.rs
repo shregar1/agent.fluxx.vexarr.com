@@ -113,7 +113,27 @@ impl AgentService {
 
         // Initialize all stores
         let annotation_store = crate::api::annotations::AnnotationStore::new();
-        let error_tracker = Arc::new(crate::analysis::error_tracking::ErrorTracker::new());
+
+        // ErrorTracker: in-memory by default. When the ClickHouse sink
+        // is configured + reachable, every `track()` also enqueues a
+        // row for batched async insert. If the sink fails to open we
+        // log and fall back to memory-only — error tracking continues
+        // working, persistence just doesn't.
+        //
+        // Build the sourcemap store first so it can be attached to the
+        // ErrorTracker — frames coming in via ingest get symbolicated
+        // before they hit the sink.
+        let smap_dir_init = std::env::var("FLUXX_SOURCEMAP_DIR")
+            .unwrap_or_else(|_| "/var/lib/fluxx/sourcemaps".to_string());
+        let sourcemap_store_for_tracker =
+            match crate::analysis::sourcemaps::SourcemapStore::open(&smap_dir_init) {
+                Ok(s) => Some(s),
+                Err(e) => {
+                    error!("Sourcemap store open failed at {} ({}). Symbolication disabled.", smap_dir_init, e);
+                    None
+                }
+            };
+        let error_tracker = build_error_tracker(&config, sourcemap_store_for_tracker.clone()).await;
         let slo_store = crate::api::slo::SloStore::new();
         let incident_store = crate::api::incidents::IncidentStore::new();
         let notebook_store = crate::api::notebooks::NotebookStore::new();
@@ -130,6 +150,19 @@ impl AgentService {
         let quota_manager = crate::api::quotas::QuotaManager::new();
         let template_store = crate::api::templates::TemplateStore::new();
 
+        // Reuse the SourcemapStore already plumbed into the error
+        // tracker. If we couldn't open it earlier (rare — disk full
+        // or permission error), build a temp-dir fallback so /v1/sourcemaps
+        // still serves a non-500 response.
+        let sourcemap_store = match sourcemap_store_for_tracker.clone() {
+            Some(s) => s,
+            None => {
+                let tmp = std::env::temp_dir().join("fluxx-sourcemaps-fallback");
+                crate::analysis::sourcemaps::SourcemapStore::open(&tmp)
+                    .expect("temp dir must be writable")
+            }
+        };
+
         // 1. Configure UI API API Stack
         let api_state = Arc::new(ApiState {
             session_manager,
@@ -141,6 +174,7 @@ impl AgentService {
             log_bus: log_tx.clone(),
             annotation_store,
             error_tracker: error_tracker.clone(),
+            sourcemap_store: sourcemap_store.clone(),
             slo_store,
             incident_store,
             notebook_store,
@@ -205,7 +239,7 @@ impl AgentService {
         });
 
         // 5a. Spawn the cloud forwarder so the per-customer global
-        // dashboard at dashboard.fluxx.vexarr.com sees this agent.
+        // dashboard at dashboard.fluxx.dev sees this agent.
         // Best-effort: silently no-ops when FLUXX_API_URL or
         // FLUXX_API_KEY are unset, or when explicitly disabled via
         // FLUXX_FORWARD_TO_CLOUD=false.
@@ -231,34 +265,20 @@ impl AgentService {
             ]),
         ).await;
 
-        // 5b. Start embedded dashboard on a random port
-        match crate::api::dashboard::start_dashboard_server(api_port).await {
-            Ok(dash_port) => {
-                info!("Runtime: Dashboard available at http://localhost:{}", dash_port);
-                println!("\n  \x1b[1;36m→ Dashboard:\x1b[0m http://localhost:{}\n", dash_port);
-                crate::self_telemetry::emit(
-                    &log_store,
-                    crate::self_telemetry::Severity::Info,
-                    &format!("agent.dashboard.ready port={}", dash_port),
-                    std::collections::HashMap::from([
-                        ("event".to_string(), serde_json::json!("agent.dashboard.ready")),
-                        ("port".to_string(), serde_json::json!(dash_port)),
-                    ]),
-                ).await;
-            }
-            Err(e) => {
-                error!("Runtime: Dashboard server failed to start: {}", e);
-                crate::self_telemetry::emit(
-                    &log_store,
-                    crate::self_telemetry::Severity::Error,
-                    &format!("agent.dashboard.failed error={}", e),
-                    std::collections::HashMap::from([
-                        ("event".to_string(), serde_json::json!("agent.dashboard.failed")),
-                        ("error".to_string(), serde_json::json!(e.to_string())),
-                    ]),
-                ).await;
-            }
-        }
+        // 5b. Dashboard is bundled into the API binary via rust-embed
+        // (see `src/dashboard_assets.rs`) — same port, same process, no
+        // second bind. Print the URL so operators can copy/paste it.
+        let dashboard_url = format!("http://{}:{}/", display_host(&config.server.host), api_port);
+        println!("\n  \x1b[1;36m→ Dashboard:\x1b[0m {}\n", dashboard_url);
+        crate::self_telemetry::emit(
+            &log_store,
+            crate::self_telemetry::Severity::Info,
+            &format!("agent.dashboard.ready url={}", dashboard_url),
+            std::collections::HashMap::from([
+                ("event".to_string(), serde_json::json!("agent.dashboard.ready")),
+                ("url".to_string(), serde_json::json!(dashboard_url)),
+            ]),
+        ).await;
 
         // 6. Start OTLP gRPC server if enabled
         if config.otlp.enabled {
@@ -453,4 +473,107 @@ impl AgentService {
         deployment_status.push_str("✅ Agent successfully provisioned and streaming heartbeat.");
         Ok(deployment_status)
     }
+}
+
+/// Translate a bind host into a friendly host for the printed URL.
+/// `0.0.0.0` (wildcard) is still bound — we just don't tell the operator
+/// to navigate to `http://0.0.0.0:7007/`, which most browsers reject.
+fn display_host(bind: &str) -> &str {
+    match bind {
+        "0.0.0.0" | "::" | "[::]" => "localhost",
+        other => other,
+    }
+}
+
+/// Construct the `ErrorTracker`, optionally backed by a ClickHouse sink.
+///
+/// On `clickhouse_error_events.enabled = true`, attempts to open the
+/// sink (ping + run migrations + start drain task) and attaches it.
+/// Any failure logs and falls back to an unbacked tracker — the agent
+/// keeps tracking errors in memory regardless.
+async fn build_error_tracker(
+    config: &Config,
+    sourcemap_store: Option<Arc<crate::analysis::sourcemaps::SourcemapStore>>,
+) -> Arc<crate::analysis::error_tracking::ErrorTracker> {
+    use crate::analysis::error_tracking::ErrorTracker;
+    use crate::storage::clickhouse_error_events::{
+        fetch_recent_groups, ClickHouseConfig, ClickHouseErrorEventSink, ClickHouseErrorReadStore,
+    };
+    use std::time::Duration;
+    use tracing::warn;
+
+    let webhook_sink = crate::alerts::webhook_sink::WebhookSink::from_env();
+    if let Some(_) = webhook_sink.as_ref() {
+        info!("Runtime: Webhook alerts enabled (FLUXX_WEBHOOK_URL set)");
+    }
+
+    if !config.clickhouse_error_events.enabled {
+        let mut tracker = ErrorTracker::new();
+        if let Some(s) = sourcemap_store {
+            tracker = tracker.with_sourcemap_store(s);
+        }
+        if let Some(w) = webhook_sink {
+            tracker = tracker.with_webhook_sink(w);
+        }
+        return Arc::new(tracker);
+    }
+
+    let cfg = &config.clickhouse_error_events;
+    let ch_cfg = ClickHouseConfig {
+        host: cfg.host.clone(),
+        port: cfg.port,
+        database: cfg.database.clone(),
+        username: cfg.username.clone(),
+        password: cfg.password.clone(),
+        flush_interval: Duration::from_secs(cfg.flush_interval_secs),
+        flush_batch_size: cfg.flush_batch_size,
+        queue_capacity: cfg.queue_capacity,
+        http_timeout: Duration::from_secs(cfg.http_timeout_secs),
+    };
+
+    let sink = match ClickHouseErrorEventSink::open(ch_cfg.clone()).await {
+        Ok(s) => s,
+        Err(e) => {
+            warn!(
+                error = %e,
+                "Runtime: ClickHouse error sink failed to open; falling back to in-memory ErrorTracker"
+            );
+            return Arc::new(ErrorTracker::new());
+        }
+    };
+
+    // Read store reuses the same ClickHouse config; sink-open already
+    // verified connectivity and migrations, so we don't re-check here.
+    let read_store = ClickHouseErrorReadStore::new(ch_cfg.clone());
+
+    let mut tracker = ErrorTracker::new()
+        .with_sink(sink)
+        .with_read_store(read_store);
+    if let Some(s) = sourcemap_store {
+        tracker = tracker.with_sourcemap_store(s);
+    }
+    if let Some(w) = webhook_sink {
+        tracker = tracker.with_webhook_sink(w);
+    }
+
+    // Replay the last 24h into memory so the UI doesn't look empty
+    // after a restart. Best-effort: a replay failure should not block
+    // the agent from starting — live ingest will repopulate over time.
+    match fetch_recent_groups(&ch_cfg, 24).await {
+        Ok(snapshots) => {
+            let n = tracker.preload_groups(snapshots);
+            info!(
+                "Runtime: ErrorTracker backed by ClickHouse at {}:{}/{}; preloaded {} group(s) from last 24h",
+                cfg.host, cfg.port, cfg.database, n
+            );
+        }
+        Err(e) => {
+            warn!(
+                error = %e,
+                "Runtime: ClickHouse replay query failed; starting with empty in-memory tracker"
+            );
+        }
+    }
+
+    Arc::new(tracker)
 }

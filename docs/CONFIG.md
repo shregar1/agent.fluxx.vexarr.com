@@ -429,7 +429,7 @@ export SMTP_PASS="..."
 ### Development
 
 ```yaml
-# fluxx.vexarr.com.yaml
+# fluxx.dev.yaml
 node_id: "dev"
 
 logging:

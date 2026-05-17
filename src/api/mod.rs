@@ -17,6 +17,8 @@ pub mod dbm;
 pub mod ci;
 pub mod npm;
 pub mod rum;
+pub mod errors;
+pub mod sourcemaps;
 pub mod cspm;
 pub mod profiling;
 pub mod cost;
@@ -45,6 +47,7 @@ use crate::api::dbm::DbmStore;
 use crate::api::ci::CiStore;
 use crate::api::npm::NpmStore;
 use crate::analysis::error_tracking::ErrorTracker;
+use crate::analysis::sourcemaps::SourcemapStore;
 use crate::security::audit::AuditLog;
 use crate::api::rum::RumStore;
 use crate::api::changes::ChangeStore;
@@ -65,6 +68,7 @@ pub struct ApiState {
     pub log_bus: broadcast::Sender<Arc<LogEntry>>,
     pub annotation_store: AnnotationStore,
     pub error_tracker: Arc<ErrorTracker>,
+    pub sourcemap_store: Arc<SourcemapStore>,
     pub slo_store: SloStore,
     pub incident_store: IncidentStore,
     pub notebook_store: NotebookStore,

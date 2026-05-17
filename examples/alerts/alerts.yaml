@@ -115,7 +115,7 @@ alerts:
       username: "${EMAIL_USER}"
       password: "${EMAIL_PASS}"
       use_tls: true
-      from: "alerts@fluxx.vexarr.com"
+      from: "alerts@fluxx.dev"
       to:
         - "ops@company.com"
         - "oncall@company.com"

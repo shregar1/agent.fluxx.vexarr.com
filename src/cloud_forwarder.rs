@@ -3,7 +3,7 @@
 //! Periodically pushes a rolled-up snapshot of this agent's state to the
 //! Fluxx cloud control plane (`POST /api/v1/telemetry/snapshot`). The
 //! cloud uses these snapshots to render the per-customer global dashboard
-//! at `dashboard.fluxx.vexarr.com` — every signed-in customer sees ONLY
+//! at `dashboard.fluxx.dev` — every signed-in customer sees ONLY
 //! the agents associated with their API key.
 //!
 //! What we send:

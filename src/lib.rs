@@ -45,6 +45,11 @@ pub mod license;
 // 500+ integrations framework
 pub mod integrations;
 
+// Embedded per-node dashboard. The Vite-built bundle in
+// `node.dashboard.fluxx.dev/dist/` is compiled into the binary so a
+// self-hosted user only runs one process.
+pub mod dashboard_assets;
+
 // Re-exports
 pub use core::Agent;
 pub use core::traits::{Capturer, Processor, Transporter, Protocol};

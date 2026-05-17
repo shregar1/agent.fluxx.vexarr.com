@@ -12,28 +12,86 @@ use std::sync::Arc;
 use tower_http::cors::{CorsLayer, AllowOrigin};
 use tracing::{info, error};
 
-/// Security middleware: API Key authentication
+/// Bootstrap-token auth middleware.
+///
+/// Accepts the configured admin token via either `Authorization:
+/// Bearer <token>` or `X-API-Key: <token>` (both for compatibility
+/// with curl and SDKs that already use one form). Constant-time
+/// compare lives in `security::bootstrap_token::verify_token`.
+///
+/// Carve-outs (no auth required):
+///   * `/`, `/index.html`, `/assets/*`, `/favicon*`, `/robots.txt` —
+///     the bundled dashboard. The dashboard itself prompts for the
+///     token on the client side and attaches it to subsequent /v1/*
+///     calls.
+///   * `/v1/status` — health-probe endpoint hit by container orchestrators.
+///   * SDK ingest endpoints: `/v1/rum`, `/v1/logs`, `/v1/events`,
+///     `/v1/otlp/*`, `/v1/prom/write`. Browser RUM has no server-side
+///     secret; gating these would defeat the SDK. Operators who want
+///     authenticated ingest set `FLUXX_REQUIRE_INGEST_AUTH=true`.
 async fn auth_middleware(
     headers: HeaderMap,
     request: axum::extract::Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    let api_key = headers.get("X-API-Key")
-        .and_then(|v| v.to_str().ok());
-    
-    let valid_key = std::env::var("FLUXX_API_KEY").ok();
-    
-    match (api_key, valid_key) {
-        (Some(key), Some(valid)) if key == valid => {},
-        (_, None) => {}, 
-        _ if std::env::var("FLUXX_DISABLE_AUTH").is_ok() => {}, 
-        _ => {
-            error!("Unauthorized API access attempt");
-            return Err(StatusCode::UNAUTHORIZED);
+    if crate::security::bootstrap_token::is_disabled() {
+        return Ok(next.run(request).await);
+    }
+
+    let path = request.uri().path();
+    if is_public_path(path) {
+        return Ok(next.run(request).await);
+    }
+    if is_ingest_path(path)
+        && std::env::var("FLUXX_REQUIRE_INGEST_AUTH").is_err()
+    {
+        return Ok(next.run(request).await);
+    }
+
+    if let Some(token) = extract_token(&headers) {
+        if crate::security::bootstrap_token::verify_token(token) {
+            return Ok(next.run(request).await);
         }
     }
-    
-    Ok(next.run(request).await)
+
+    error!(path = %path, "Unauthorized API access attempt");
+    Err(StatusCode::UNAUTHORIZED)
+}
+
+fn is_public_path(path: &str) -> bool {
+    if path == "/" || path == "/index.html" || path == "/v1/status" {
+        return true;
+    }
+    if path.starts_with("/assets/") {
+        return true;
+    }
+    if path == "/favicon.ico"
+        || path == "/favicon-light.svg"
+        || path == "/favicon-dark.svg"
+        || path == "/manifest.webmanifest"
+        || path == "/robots.txt"
+    {
+        return true;
+    }
+    // SPA deep links — anything non-`/v1/*`, non-asset is presumed to
+    // be a dashboard route that the React-router renders.
+    !path.starts_with("/v1/") && !path.starts_with("/metrics")
+}
+
+fn is_ingest_path(path: &str) -> bool {
+    matches!(
+        path,
+        "/v1/rum" | "/v1/logs" | "/v1/events" | "/v1/prom/write"
+    ) || path.starts_with("/v1/otlp/")
+}
+
+fn extract_token(headers: &HeaderMap) -> Option<&str> {
+    if let Some(v) = headers.get(header::AUTHORIZATION).and_then(|v| v.to_str().ok()) {
+        if let Some(rest) = v.strip_prefix("Bearer ").or_else(|| v.strip_prefix("bearer ")) {
+            return Some(rest.trim());
+        }
+    }
+    headers.get("X-API-Key").and_then(|v| v.to_str().ok())
 }
 
 /// Security middleware: Add security headers
@@ -52,6 +110,118 @@ async fn security_headers_middleware(
     response
 }
 
+/// Build the CORS layer from `FLUXX_CORS_ORIGIN`. See `start()` above for
+/// the policy. Returned as `anyhow::Result` so misconfigured origins fail
+/// loudly at startup instead of silently disabling cross-origin requests.
+fn build_cors_layer() -> anyhow::Result<CorsLayer> {
+    use axum::http::{header, HeaderValue, Method};
+
+    let base = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST, Method::OPTIONS, Method::PATCH, Method::DELETE])
+        .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE]);
+
+    let Ok(raw) = std::env::var("FLUXX_CORS_ORIGIN") else {
+        // No env set → same-origin only. The dashboard served from the
+        // agent's own host still works (same origin); browsers from any
+        // other origin get a CORS preflight failure.
+        return Ok(base);
+    };
+
+    if raw.trim() == "*" {
+        if std::env::var("FLUXX_CORS_ALLOW_ANY").ok().as_deref() != Some("true") {
+            anyhow::bail!(
+                "FLUXX_CORS_ORIGIN=* is refused unless FLUXX_CORS_ALLOW_ANY=true is also set. \
+                 Wildcard CORS is almost always a misconfiguration — set a concrete origin instead."
+            );
+        }
+        return Ok(base.allow_origin(AllowOrigin::any()));
+    }
+
+    let origins: Vec<HeaderValue> = raw
+        .split(',')
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .map(|s| HeaderValue::from_str(s).map_err(|e| anyhow::anyhow!("bad CORS origin {s:?}: {e}")))
+        .collect::<anyhow::Result<_>>()?;
+    if origins.is_empty() {
+        anyhow::bail!("FLUXX_CORS_ORIGIN is set but contains no valid origins");
+    }
+    Ok(base.allow_origin(AllowOrigin::list(origins)))
+}
+
+#[cfg(test)]
+mod cors_tests {
+    use super::build_cors_layer;
+    use std::sync::Mutex;
+
+    // Env-var manipulation needs serialization across tests.
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    #[test]
+    fn unset_returns_same_origin_only_layer() {
+        let _g = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("FLUXX_CORS_ORIGIN");
+        std::env::remove_var("FLUXX_CORS_ALLOW_ANY");
+        // Should not panic and should not allow cross-origin without explicit config.
+        let _ = build_cors_layer().expect("ok");
+    }
+
+    #[test]
+    fn exact_origin_is_accepted() {
+        let _g = ENV_LOCK.lock().unwrap();
+        std::env::set_var("FLUXX_CORS_ORIGIN", "https://app.example.com");
+        let _ = build_cors_layer().expect("ok");
+        std::env::remove_var("FLUXX_CORS_ORIGIN");
+    }
+
+    #[test]
+    fn multi_origin_csv_is_accepted() {
+        let _g = ENV_LOCK.lock().unwrap();
+        std::env::set_var(
+            "FLUXX_CORS_ORIGIN",
+            "https://a.example.com, https://b.example.com",
+        );
+        let _ = build_cors_layer().expect("ok");
+        std::env::remove_var("FLUXX_CORS_ORIGIN");
+    }
+
+    #[test]
+    fn wildcard_refused_without_explicit_opt_in() {
+        let _g = ENV_LOCK.lock().unwrap();
+        std::env::set_var("FLUXX_CORS_ORIGIN", "*");
+        std::env::remove_var("FLUXX_CORS_ALLOW_ANY");
+        let err = build_cors_layer().unwrap_err();
+        assert!(err.to_string().contains("FLUXX_CORS_ALLOW_ANY"));
+        std::env::remove_var("FLUXX_CORS_ORIGIN");
+    }
+
+    #[test]
+    fn wildcard_accepted_with_opt_in() {
+        let _g = ENV_LOCK.lock().unwrap();
+        std::env::set_var("FLUXX_CORS_ORIGIN", "*");
+        std::env::set_var("FLUXX_CORS_ALLOW_ANY", "true");
+        let _ = build_cors_layer().expect("ok");
+        std::env::remove_var("FLUXX_CORS_ORIGIN");
+        std::env::remove_var("FLUXX_CORS_ALLOW_ANY");
+    }
+
+    #[test]
+    fn empty_origin_list_is_an_error() {
+        let _g = ENV_LOCK.lock().unwrap();
+        std::env::set_var("FLUXX_CORS_ORIGIN", "  ,  ,");
+        assert!(build_cors_layer().is_err());
+        std::env::remove_var("FLUXX_CORS_ORIGIN");
+    }
+
+    #[test]
+    fn unparseable_origin_is_an_error() {
+        let _g = ENV_LOCK.lock().unwrap();
+        std::env::set_var("FLUXX_CORS_ORIGIN", "not\na\nheader\nvalue");
+        assert!(build_cors_layer().is_err());
+        std::env::remove_var("FLUXX_CORS_ORIGIN");
+    }
+}
+
 /// ApiServer: High-performance Axum-based web server for Fluxx telemetry.
 pub struct ApiServer {
     state: Arc<ApiState>,
@@ -67,14 +237,21 @@ impl ApiServer {
     }
 
     pub async fn start(&self) -> anyhow::Result<()> {
-        let cors = if let Ok(allowed_origin) = std::env::var("FLUXX_CORS_ORIGIN") {
-            CorsLayer::new()
-                .allow_origin(AllowOrigin::exact(allowed_origin.parse()?))
-                .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::OPTIONS])
-                .allow_headers([axum::http::header::AUTHORIZATION, axum::http::header::CONTENT_TYPE])
-        } else {
-            CorsLayer::permissive()
-        };
+        // CORS policy: default-deny for cross-origin requests.
+        //
+        // Three modes, in order of preference:
+        //   FLUXX_CORS_ORIGIN=https://app.example.com    → exact allowlist
+        //   FLUXX_CORS_ORIGIN=https://a,https://b,...    → multi-origin allowlist
+        //   FLUXX_CORS_ORIGIN=*                          → opt-in wildcard
+        //                                                  (only valid when
+        //                                                  FLUXX_CORS_ALLOW_ANY=true)
+        //   unset                                        → SAME-ORIGIN ONLY
+        //
+        // Closes audit finding SEC-002. Previously this fell back to
+        // `CorsLayer::permissive()` whenever the env var was unset, which
+        // meant any website could call the agent API from a logged-in
+        // browser. The default is now "no cross-origin requests."
+        let cors = build_cors_layer()?;
 
         let app = Router::new()
             .route("/v1/sessions", get(list_sessions))
@@ -128,6 +305,23 @@ impl ApiServer {
             .route("/v1/rum/sessions", get(crate::api::rum::list_rum_sessions))
             .route("/v1/rum/vitals", get(crate::api::rum::get_web_vitals))
             .route("/v1/rum/stats", get(crate::api::rum::rum_stats))
+            // Error tracking
+            .route("/v1/errors", get(crate::api::errors::list_errors))
+            .route("/v1/errors/top", get(crate::api::errors::top_errors))
+            .route("/v1/errors/trend", get(crate::api::errors::errors_trend))
+            .route("/v1/errors/stats", get(crate::api::errors::errors_stats))
+            .route("/v1/errors/:fingerprint", get(crate::api::errors::get_error))
+            .route("/v1/errors/:fingerprint/latest-event", get(crate::api::errors::latest_event))
+            .route("/v1/errors/:fingerprint/events", get(crate::api::errors::list_events))
+            .route("/v1/errors/:fingerprint/resolve", post(crate::api::errors::resolve_error))
+            .route("/v1/errors/:fingerprint/mute", post(crate::api::errors::mute_error))
+            // Sourcemap upload + list. The upload endpoint accepts a
+            // multipart payload (`release`, `bundle_url`, `map`).
+            .route(
+                "/v1/sourcemaps",
+                post(crate::api::sourcemaps::upload_sourcemap)
+                    .get(crate::api::sourcemaps::list_sourcemaps),
+            )
             // Cloud Security Posture Management (CSPM)
             .route("/v1/cspm/findings", post(crate::api::cspm::report_finding).get(crate::api::cspm::list_findings))
             .route("/v1/cspm/compliance", get(crate::api::cspm::get_compliance))
@@ -182,6 +376,19 @@ impl ApiServer {
     // Mount install endpoints (gateway-streamed installer + binary download).
     let install_state = std::sync::Arc::new(crate::install::InstallState::new());
     let app = crate::install::router(install_state).merge(app);
+
+    // Mount the embedded per-node dashboard *after* the API routes so
+    // its SPA fallback never shadows a real `/v1/*` handler. The
+    // dashboard is bundled at compile time; if it wasn't built, the
+    // router serves a one-line hint instead of a blank page.
+    if crate::dashboard_assets::is_bundled() {
+        info!("API: Dashboard bundle embedded — serving at http://{}/", self.addr);
+    } else {
+        info!(
+            "API: Dashboard bundle NOT embedded. Build with:\n  cd node.dashboard.fluxx.dev && npm run build && cd .. && cargo build"
+        );
+    }
+    let app = app.merge(crate::dashboard_assets::router());
 
         axum::serve(listener, app).await?;
         Ok(())
